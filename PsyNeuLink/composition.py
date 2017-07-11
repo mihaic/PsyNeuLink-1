@@ -33,7 +33,7 @@ from enum import Enum
 from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
-from PsyNeuLink.Globals.Keywords import EXECUTING
+from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Globals.TimeScale import TimeScale
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
@@ -745,6 +745,17 @@ class Composition(object):
         for k in self.input_mechanisms.keys():
             self.input_mechanisms[k]._execution_id = self._execution_id
 
+    def _identify_clamp_inputs(self, list_type, input_type, origins):
+        # clamp type of this list is same as the one the user set for the whole composition; return all mechanisms
+        if list_type == input_type:
+            return origins
+        # the user specified different types of clamps for each origin mechanism; generate a list accordingly
+        elif isinstance(input_type, dict):
+            return [k for k, v in input_type.items() if list_type == v]
+        # clamp type of this list is NOT same as the one the user set for the whole composition; return empty list
+        else:
+            return []
+
     def execute(
             self,
             inputs,
@@ -752,7 +763,8 @@ class Composition(object):
             scheduler_learning=None,
             call_before_timestep=None,
             call_before_pass=None,
-            execution_id = None):
+            execution_id = None,
+            clamp_input = None):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
             to receive and execute sets of mechanisms that are eligible to run until termination conditions are met.
@@ -779,6 +791,8 @@ class Composition(object):
             output value of the final mechanism executed in the composition
         '''
 
+        origin_mechanisms = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
+
         if scheduler_processing is None:
             scheduler_processing = self.scheduler_processing
 
@@ -789,6 +803,9 @@ class Composition(object):
         self._assign_values_to_input_mechanisms(inputs)
         self._assign_execution_ids(execution_id)
         self._current_pass = -1
+        if clamp_input:
+            soft_clamp_inputs = self._identify_clamp_inputs(SOFT_CLAMP, clamp_input, origin_mechanisms)
+            hard_clamp_inputs = self._identify_clamp_inputs(HARD_CLAMP, clamp_input, origin_mechanisms)
         # run scheduler to receive sets of mechanisms that may be executed at this time step in any order
         execution_scheduler = scheduler_processing
         num = None
@@ -812,6 +829,24 @@ class Composition(object):
                     print("result = ", num)
                     print()
                     print()
+
+                if mechanism in origin_mechanisms:
+                    if clamp_input:
+                        if mechanism in soft_clamp_inputs:
+                            print("soft clamp inputs:")
+                            print(mechanism)
+                            # * placeholder *
+                            # reset value based on soft clamp input method
+                        elif mechanism in hard_clamp_inputs:
+                            print("hard clamp inputs:")
+                            print(mechanism)
+                            # * placeholder *
+                            # reset value based on hard clamp input method
+                    else:
+                        # reset value based on hard clamp input method
+                        self.input_mechanisms[mechanism]._output_states[0].value = 0
+
+
         return num
 
     def run(
@@ -825,7 +860,8 @@ class Composition(object):
         num_trials=None,
         call_before_trial = None,
         call_before_timestep = None,
-        call_before_pass=None
+        call_before_pass=None,
+        clamp_input = None
     ):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
@@ -918,7 +954,8 @@ class Composition(object):
                                scheduler_learning,
                                call_before_timestep,
                                call_before_pass,
-                               execution_id)
+                               execution_id,
+                               clamp_input)
 
             if num is not None:
                 result = num
