@@ -14,7 +14,7 @@ from PsyNeuLink.Scheduling.Condition import EveryNCalls, AfterCall, AfterNCalls,
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.composition import Composition, CompositionError, MechanismRole
 from PsyNeuLink.Globals.TimeScale import TimeScale, CurrentTime, CentralClock
-from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP
+from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP
 
 logger = logging.getLogger(__name__)
 
@@ -903,7 +903,7 @@ class TestRun:
         # 5 * 1 = 5 ----> 5 x 5 = 25 --
 
         comp = Composition()
-        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=2.0))
         B = TransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
         D = TransferMechanism(name="D", function=Linear(slope=5.0))
@@ -930,15 +930,13 @@ class TestRun:
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched,
-            clamp_input=None
+            clamp_input=PULSE_CLAMP
         )
-        assert 250 == output[0][0]
+        assert 625 == output[0][0]
 
 
     def test_run_5_mechanisms_2_origins_1_terminal_both_clamp(self):
 
-        # ** under construction **
-        #
         #          __
         #         |  |
         #         V  |
@@ -946,13 +944,16 @@ class TestRun:
         #                       ==> E
         # 5 ----> B ----> D --
 
-        # 5 x 1 = 5 ----> 5 x 5 = 25 --
-        #                                25 + 25 = 50  ==> 50 * 5 = 250
-        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        #         v Recurrent
+        # 5 * 1 = (5 + 5) x 1 = 10
+        # 5 x 1 = 5 ---->      10 x 5 = 50 --
+        #                                       50 + 25 = 75  ==> 75 * 5 = 375
+        # 5 * 1 = 5 ---->       5 x 5 = 25 --
 
         comp = Composition()
-        A = TransferMechanism(name="A", function=Linear(slope=1.0))
-        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
+        B = RecurrentTransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
         D = TransferMechanism(name="D", function=Linear(slope=5.0))
         E = TransferMechanism(name="E", function=Linear(slope=5.0))
@@ -969,13 +970,20 @@ class TestRun:
         inputs_dict = {A: [5],
                        B: [5]}
         sched = Scheduler(composition=comp)
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 1))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched,
             clamp_input={A: SOFT_CLAMP,
                          B: HARD_CLAMP}
         )
-        assert 250 == output[0][0]
+        assert 375 == output[0][0]
 
 
 
