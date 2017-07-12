@@ -33,7 +33,7 @@ from enum import Enum
 from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
-from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP
+from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Globals.TimeScale import TimeScale
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
@@ -764,7 +764,7 @@ class Composition(object):
             call_before_timestep=None,
             call_before_pass=None,
             execution_id = None,
-            clamp_input = None):
+            clamp_input = SOFT_CLAMP):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
             to receive and execute sets of mechanisms that are eligible to run until termination conditions are met.
@@ -806,6 +806,7 @@ class Composition(object):
         if clamp_input:
             soft_clamp_inputs = self._identify_clamp_inputs(SOFT_CLAMP, clamp_input, origin_mechanisms)
             hard_clamp_inputs = self._identify_clamp_inputs(HARD_CLAMP, clamp_input, origin_mechanisms)
+            pulse_clamp_inputs = self._identify_clamp_inputs(PULSE_CLAMP, clamp_input, origin_mechanisms)
         # run scheduler to receive sets of mechanisms that may be executed at this time step in any order
         execution_scheduler = scheduler_processing
         num = None
@@ -823,6 +824,14 @@ class Composition(object):
                 call_before_timestep()
             # execute each mechanism with EXECUTING in context
             for mechanism in next_execution_set:
+
+                if mechanism in origin_mechanisms:
+                    if clamp_input:
+                        if mechanism in hard_clamp_inputs:
+                            # clamp = HARD_CLAMP --> "turn off" recurrent projection
+                            if hasattr(mechanism, "recurrent_projection"):
+                                mechanism.recurrent_projection.sender.value = [0.0]
+
                 if isinstance(mechanism, Mechanism):
                     num = mechanism.execute(context=EXECUTING + "composition")
                     print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
@@ -832,19 +841,9 @@ class Composition(object):
 
                 if mechanism in origin_mechanisms:
                     if clamp_input:
-                        if mechanism in soft_clamp_inputs:
-                            print("soft clamp inputs:")
-                            print(mechanism)
-                            # * placeholder *
-                            # reset value based on soft clamp input method
-                        elif mechanism in hard_clamp_inputs:
-                            print("hard clamp inputs:")
-                            print(mechanism)
-                            # * placeholder *
-                            # reset value based on hard clamp input method
-                    else:
-                        # reset value based on hard clamp input method
-                        self.input_mechanisms[mechanism]._output_states[0].value = 0
+                        if mechanism in pulse_clamp_inputs:
+                            # clamp = None --> "turn off" input mechanism
+                            self.input_mechanisms[mechanism]._output_states[0].value = 0
 
 
         return num
@@ -861,7 +860,7 @@ class Composition(object):
         call_before_trial = None,
         call_before_timestep = None,
         call_before_pass=None,
-        clamp_input = None
+        clamp_input = SOFT_CLAMP
     ):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler

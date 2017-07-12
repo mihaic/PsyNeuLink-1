@@ -798,16 +798,22 @@ class TestRun:
         assert 250 == output[0][0]
 
     def test_run_5_mechanisms_2_origins_1_terminal_hard_clamp(self):
-        # A ----> C --
-        #              ==> E
-        # B ----> D --
+        # HARD_CLAMP TBI
+
+        # recurrent projection ignored on the second execution of A
+        #          __
+        #         |  |
+        # 5 -#2-> x  |
+        # 5 -#1-> A -^--> C --
+        #                       ==> E
+        # 5 ----> B ----> D --
 
         # 5 x 1 = 5 ----> 5 x 5 = 25 --
         #                                25 + 25 = 50  ==> 50 * 5 = 250
         # 5 * 1 = 5 ----> 5 x 5 = 25 --
 
         comp = Composition()
-        A = RecurrentTransferMechanism(name="A", function=Linear(slope=5.0))
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
         B = TransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
         D = TransferMechanism(name="D", function=Linear(slope=5.0))
@@ -839,16 +845,20 @@ class TestRun:
         assert 250 == output[0][0]
 
     def test_run_5_mechanisms_2_origins_1_terminal_soft_clamp(self):
-        # A ----> C --
-        #              ==> E
-        # B ----> D --
+        # recurrent projection combines with input on the second execution of A
+        #          _r_
+        #         |   |
+        # 5 -#2-> V   |
+        # 5 -#1-> A --^ --> C --
+        #                       ==> E
+        # 5 ----> B ------> D --
 
         # 5 x 1 = 5 ----> 5 x 5 = 25 --
         #                                25 + 25 = 50  ==> 50 * 5 = 250
         # 5 * 1 = 5 ----> 5 x 5 = 25 --
 
         comp = Composition()
-        A = TransferMechanism(name="A", function=Linear(slope=1.0))
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
         B = TransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
         D = TransferMechanism(name="D", function=Linear(slope=5.0))
@@ -866,18 +876,75 @@ class TestRun:
         inputs_dict = {A: [5],
                        B: [5]}
         sched = Scheduler(composition=comp)
-        sched.add_condition(C, EveryNCalls(A, 2))
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 2))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched,
             clamp_input=SOFT_CLAMP
         )
+        assert 375 == output[0][0]
+
+    def test_run_5_mechanisms_2_origins_1_terminal_none_clamp(self):
+        # input ignored on the second execution of A
+        #          __
+        #         |  |
+        #         V  |
+        # 5 -#1-> A -^--> C --
+        #                       ==> E
+        # 5 ----> B ----> D --
+
+        # 5 x 1 = 5 ----> 5 x 5 = 25 --
+        #                                25 + 25 = 50  ==> 50 * 5 = 250
+        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        comp = Composition()
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [5],
+                       B: [5]}
+        sched = Scheduler(composition=comp)
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 2))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            clamp_input=None
+        )
         assert 250 == output[0][0]
 
+
     def test_run_5_mechanisms_2_origins_1_terminal_both_clamp(self):
-        # A ----> C --
-        #              ==> E
-        # B ----> D --
+
+        # ** under construction **
+        #
+        #          __
+        #         |  |
+        #         V  |
+        # 5 -#1-> A -^--> C --
+        #                       ==> E
+        # 5 ----> B ----> D --
 
         # 5 x 1 = 5 ----> 5 x 5 = 25 --
         #                                25 + 25 = 50  ==> 50 * 5 = 250
