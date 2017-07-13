@@ -12,7 +12,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.RecurrentTransferMech
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Scheduling.Condition import EveryNCalls, AfterCall, AfterNCalls, EveryNPasses, Any
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
-from PsyNeuLink.composition import Composition, CompositionError, MechanismRole
+from PsyNeuLink.composition import Composition, CompositionError, MechanismRole, System
 from PsyNeuLink.Globals.TimeScale import TimeScale, CurrentTime, CentralClock
 from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP
 
@@ -1302,6 +1302,36 @@ class TestCallBeforeTimescale:
         assert trial_array == [0, 1, 2 , 3]
         assert pass_array == [0, 1, 2, 3]
 
+class TestSystem:
+    def test_run_2_mechanisms_default_input_1(self):
+        sys = System()
+        A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        sys.add_mechanism(A)
+        sys.add_mechanism(B)
+        sys.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        sys._analyze_graph()
+        sched = Scheduler(composition=sys)
+        output = sys.run(
+            scheduler_processing=sched
+        )
+        assert 25 == output[0][0]
+
+    def test_run_2_mechanisms_input_5(self):
+        sys = System()
+        A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        sys.add_mechanism(A)
+        sys.add_mechanism(B)
+        sys.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        sys._analyze_graph()
+        inputs_dict = {A: [5]}
+        sched = Scheduler(composition=sys)
+        output = sys.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+        assert 125 == output[0][0]
                         # when self.sched is ready:
     # def test_run_default_scheduler(self):
     #     comp = Composition()

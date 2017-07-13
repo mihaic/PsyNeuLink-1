@@ -963,3 +963,20 @@ class Composition(object):
 
         # return the output of the LAST mechanism executed in the composition
         return result
+
+class System(Composition):
+    '''
+
+            Arguments
+            ----------
+
+            Attributes
+            ----------
+
+            Returns
+            ----------
+    '''
+
+    def __init__(self):
+        super(System, self).__init__()
+
