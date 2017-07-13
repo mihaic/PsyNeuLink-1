@@ -666,6 +666,10 @@ class Component(object):
     # IMPLEMENTATION NOTE: Primarily used to track and prevent recursive calls to assign_params from setters.
     prev_context = None
 
+    class Params:
+        variable = 'variable'
+        value = 'value'
+
     def __init__(self,
                  default_variable,
                  param_defaults,

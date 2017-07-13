@@ -418,6 +418,10 @@ class TransferMechanism(ProcessingMechanism_Base):
                                                                self.standard_output_states,
                                                                indices=PRIMARY_OUTPUT_STATE)
 
+        # add TransferMechanism params to superclassed Params (defined in Component currently)
+        TransferMechanism.Params.limit_range = 'limit_range' # same as range, to avoid overwriting built-in
+        TransferMechanism.Params.noise = 'noise'
+
         super(TransferMechanism, self).__init__(variable=default_variable,
                                                 size=size,
                                                 params=params,
