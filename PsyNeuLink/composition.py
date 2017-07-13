@@ -980,3 +980,19 @@ class System(Composition):
     def __init__(self):
         super(System, self).__init__()
 
+
+class Process(Composition):
+    '''
+
+            Arguments
+            ----------
+
+            Attributes
+            ----------
+
+            Returns
+            ----------
+    '''
+
+    def __init__(self):
+        super(Process, self).__init__()
