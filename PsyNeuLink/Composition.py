@@ -50,7 +50,7 @@ from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceMechanism \
     import CompositionInterfaceMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
-from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP
+from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
@@ -768,8 +768,8 @@ class Composition(object):
         call_before_pass=None,
         call_after_time_step=None,
         call_after_pass=None,
-	clamp_input = SOFT_CLAMP
-    ):
+	    clamp_input = SOFT_CLAMP
+        ):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
             to receive and execute sets of mechanisms that are eligible to run until termination conditions are met.
@@ -827,6 +827,7 @@ class Composition(object):
             soft_clamp_inputs = self._identify_clamp_inputs(SOFT_CLAMP, clamp_input, origin_mechanisms)
             hard_clamp_inputs = self._identify_clamp_inputs(HARD_CLAMP, clamp_input, origin_mechanisms)
             pulse_clamp_inputs = self._identify_clamp_inputs(PULSE_CLAMP, clamp_input, origin_mechanisms)
+            no_clamp_inputs = self._identify_clamp_inputs(NO_CLAMP, clamp_input, origin_mechanisms)
         # run scheduler to receive sets of mechanisms that may be executed at this time step in any order
         execution_scheduler = scheduler_processing
         num = None
@@ -858,6 +859,8 @@ class Composition(object):
                             # clamp = HARD_CLAMP --> "turn off" recurrent projection
                             if hasattr(mechanism, "recurrent_projection"):
                                 mechanism.recurrent_projection.sender.value = [0.0]
+                        elif mechanism in no_clamp_inputs:
+                            self.input_mechanisms[mechanism]._output_states[0].value = 0
 
                 if isinstance(mechanism, Mechanism):
                     num = mechanism.execute(context=EXECUTING + "composition")
@@ -1012,8 +1015,8 @@ class Composition(object):
                 call_after_time_step,
                 call_after_pass,
                 execution_id,
-		clamp_input
-            )
+		        clamp_input
+                )
 
             if num is not None:
                 result = num
