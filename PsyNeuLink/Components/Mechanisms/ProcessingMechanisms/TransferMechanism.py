@@ -377,6 +377,16 @@ class TransferMechanism(ProcessingMechanism_Base):
 
     variableClassDefault = [[0]]
 
+    # add TransferMechanism params to superclassed Params (defined in Component currently)
+    class Params(ProcessingMechanism_Base.Params):
+        def __init__(self):
+            self.limit_range = 'limit_range'  # same as range, to avoid overwriting built-in
+            self.noise = 'noise'
+
+            super().__init__()
+
+    params_volatile = Params()
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,

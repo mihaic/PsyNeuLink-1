@@ -667,8 +667,18 @@ class Component(object):
     prev_context = None
 
     class Params:
-        variable = 'variable'
-        value = 'value'
+        def __init__(self):
+            self.variable = 'variable'
+            self.value = 'value'
+
+        def __contains__(self, item):
+            return hasattr(self, item)
+
+        @property
+        def values(self):
+            return [x for x in self.__dict__ if x[:2]+x[-2:] != '____' and not callable(getattr(self, x))]
+
+    params_volatile = Params()
 
     def __init__(self,
                  default_variable,
