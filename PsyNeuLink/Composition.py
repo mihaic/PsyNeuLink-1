@@ -323,6 +323,8 @@ class Composition(object):
         self._scheduler_processing = None
         self._scheduler_learning = None
 
+        self.params_by_execution_id = {}
+
         # status attributes
         self.graph_consistent = True  # Tracks if the Composition is in a state that can be run (i.e. no dangling projections, (what else?))
         self.needs_update_graph = True   # Tracks if the Composition graph has been analyzed to assign roles to components
@@ -748,8 +750,14 @@ class Composition(object):
         if execution_id not in self.execution_ids:
             self.execution_ids.append(execution_id)
 
+        if execution_id not in self.params_by_execution_id:
+            self.params_by_execution_id[execution_id] = {}
+
         for v in self._graph_processing.vertices:
             v.component._execution_id = execution_id
+
+            if v.component not in self.params_by_execution_id:
+                self.params_by_execution_id[execution_id][v.component] = {}
 
         # Assign the uuid to all input mechanisms
         for k in self.input_mechanisms.keys():
