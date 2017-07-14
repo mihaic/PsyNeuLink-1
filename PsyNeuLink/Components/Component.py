@@ -750,6 +750,7 @@ class Component(object):
         self.recording = False
         # Used by run to store return value of execute
         self.results = []
+        self.compositions = set()
 
 
         # ENFORCE REQUIRED CLASS DEFAULTS
@@ -1851,6 +1852,26 @@ class Component(object):
         elif mode == ResetMode.ALL_TO_CLASS_DEFAULTS:
             self.params_current = self.paramClassDefaults.copy()
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
+
+    def update_volatile_params(self, composition=None, execution_id=None):
+        if composition is None:
+            comps = self.compositions
+        else:
+            comps = [composition]
+
+        if execution_id is None:
+            ids = [c._execution_id for c in self.compositions]
+        else:
+            ids = [execution_id]
+
+        for c in comps:
+            for eid in ids:
+                if self not in c.params_by_execution_id[eid]:
+                    c.params_by_execution_id[eid][self] = {}
+
+                for param in self.params_volatile.values:
+                    c.params_by_execution_id[eid][self][param] = getattr(self, param)
+
 
     def _validate_variable(self, variable, context=None):
         """Validate variable and assign validated values to self.variable

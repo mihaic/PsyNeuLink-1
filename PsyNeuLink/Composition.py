@@ -323,7 +323,9 @@ class Composition(object):
         self._scheduler_processing = None
         self._scheduler_learning = None
 
+        self._execution_id = self._get_unique_id()
         self.params_by_execution_id = {}
+        self.params_by_execution_id[self._execution_id] = {}
 
         # status attributes
         self.graph_consistent = True  # Tracks if the Composition is in a state that can be run (i.e. no dangling projections, (what else?))
@@ -418,6 +420,9 @@ class Composition(object):
             self.mechanisms.append(mech)
             self.mechanisms_to_roles[mech] = set()
 
+            mech.compositions.add(self)
+            mech.update_volatile_params(composition=self)
+
             self.needs_update_graph = True
             self.needs_update_graph_processing = True
             self.needs_update_scheduler_processing = True
@@ -448,6 +453,9 @@ class Composition(object):
             self.graph.connect_components(sender, projection)
             self.graph.connect_components(projection, receiver)
             self._validate_projection(sender, projection, receiver)
+
+            projection.compositions.add(self)
+            projection.update_volatile_params(composition=self)
 
             self.needs_update_graph = True
             self.needs_update_graph_processing = True
@@ -745,7 +753,7 @@ class Composition(object):
 
         # Traverse processing graph and assign one uuid to all of its mechanisms
         if execution_id is None:
-            execution_id = self._get_unique_id()
+            execution_id = self._execution_id
 
         if execution_id not in self.execution_ids:
             self.execution_ids.append(execution_id)
@@ -762,6 +770,9 @@ class Composition(object):
         # Assign the uuid to all input mechanisms
         for k in self.input_mechanisms.keys():
             self.input_mechanisms[k]._execution_id = execution_id
+
+            if self.input_mechanisms[k] not in self.params_by_execution_id[execution_id]:
+                self.params_by_execution_id[execution_id][self.input_mechanisms[k]] = {}
 
         self._execution_id = execution_id
         return execution_id
