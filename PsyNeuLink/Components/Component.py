@@ -1854,6 +1854,28 @@ class Component(object):
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
 
     def update_volatile_params(self, composition=None, execution_id=None):
+        '''
+        Updates the volatile params referenced in the Component's Params class, inside
+        **composition**'s internal storage, with execution_id.
+
+        Behavior changes based on length of inputs:
+            composition is iterable with length > 1 and execution_id is iterable with length > 1:
+                ith composition and ith execution_id will be updated in pairs
+            otherwise:
+                the singular argument will be updated with each of the multiple arguments as a pair
+
+        Arguments
+        ---------
+
+        composition : Composition
+            the Composition (or iterable of Compositions) to update
+            default : self.compositions
+
+        execution_id : UUID
+            the execution id (or iterable of execution ids) corresponding to an execution instance of
+            **composition** to update
+            default : [c._execution_id for c in self.compositions]
+        '''
         if composition is None:
             comps = self.compositions
         else:
@@ -1864,14 +1886,23 @@ class Component(object):
         else:
             ids = [execution_id]
 
-        for c in comps:
-            for eid in ids:
-                if self not in c.params_by_execution_id[eid]:
-                    c.params_by_execution_id[eid][self] = {}
+        def update_single(composition, execution_id):
+            if self not in composition.params_by_execution_id[execution_id]:
+                composition.params_by_execution_id[execution_id][self] = {}
 
-                for param in self.params_volatile.values:
-                    c.params_by_execution_id[eid][self][param] = getattr(self, param)
+            for param in self.params_volatile.values:
+                composition.params_by_execution_id[execution_id][self][param] = getattr(self, param)
 
+        if len(comps) > 1 and len(ids) > 1:
+            if len(comps) != len(ids):
+                raise ComponentError('update_volatile_params: composition and execution_id iterable length mismatch')
+
+            for i in range(len(comps)):
+                update_single(comps[i], ids[i])
+        else:
+            for c in comps:
+                for i in ids:
+                    update_single(c, i)
 
     def _validate_variable(self, variable, context=None):
         """Validate variable and assign validated values to self.variable
