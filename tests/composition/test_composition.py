@@ -13,10 +13,9 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.IntegratorMechanism i
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.RecurrentTransferMechanism import RecurrentTransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
-from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole
 from PsyNeuLink.Scheduling.Condition import EveryNCalls, AfterCall, AfterNCalls, EveryNPasses, Any
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
-from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, System
+from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, System, Pathway
 from PsyNeuLink.Scheduling.TimeScale import TimeScale, CurrentTime, CentralClock
 from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
 
@@ -948,26 +947,28 @@ class TestRun:
         )
         assert 75 == output[0][0]
 
+
+class TestPathway:
     def test_LPP(self):
 
-        comp = Composition()
+        path = Pathway()
         A = TransferMechanism(name="A", function=Linear(slope=2.0))   # 1 x 2 = 2
         B = TransferMechanism(name="B", function=Linear(slope=2.0))   # 2 x 2 = 4
         C = TransferMechanism(name="C", function=Linear(slope=2.0))   # 4 x 2 = 8
         D = TransferMechanism(name="D", function=Linear(slope=2.0))   # 8 x 2 = 16
         E = TransferMechanism(name="E", function=Linear(slope=2.0))  # 16 x 2 = 32
-        comp.add_linear_processing_pathway([A, B, C, D, E])
-        comp._analyze_graph()
+        path.add_linear_processing_pathway([A, B, C, D, E])
+        path._analyze_graph()
         inputs_dict = {A: [[1]]}
-        sched = Scheduler(composition=comp)
-        output = comp.execute(
+        sched = Scheduler(composition=path)
+        output = path.execute(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
         assert 32 == output[0][0]
 
     def test_LPP_with_projections(self):
-        comp = Composition()
+        path = Pathway()
         A = TransferMechanism(name="A", function=Linear(slope=2.0))  # 1 x 2 = 2
         B = TransferMechanism(name="B", function=Linear(slope=2.0))  # 2 x 2 = 4
         C = TransferMechanism(name="C", function=Linear(slope=2.0))  # 4 x 2 = 8
@@ -975,18 +976,18 @@ class TestRun:
         E = TransferMechanism(name="E", function=Linear(slope=2.0))  # 16 x 2 = 32
         A_to_B = MappingProjection(sender=A, receiver=B)
         D_to_E = MappingProjection(sender=D, receiver=E)
-        comp.add_linear_processing_pathway([A, A_to_B, B, C, D, D_to_E, E])
-        comp._analyze_graph()
+        path.add_linear_processing_pathway([A, A_to_B, B, C, D, D_to_E, E])
+        path._analyze_graph()
         inputs_dict = {A: [[1]]}
-        sched = Scheduler(composition=comp)
-        output = comp.execute(
+        sched = Scheduler(composition=path)
+        output = path.execute(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
         assert 32 == output[0][0]
 
     def test_LPP_end_with_projection(self):
-        comp = Composition()
+        path = Pathway()
         A = TransferMechanism(name="A", function=Linear(slope=2.0))
         B = TransferMechanism(name="B", function=Linear(slope=2.0))
         C = TransferMechanism(name="C", function=Linear(slope=2.0))
@@ -995,41 +996,41 @@ class TestRun:
         A_to_B = MappingProjection(sender=A, receiver=B)
         D_to_E = MappingProjection(sender=D, receiver=E)
         with pytest.raises(CompositionError) as error_text:
-            comp.add_linear_processing_pathway([A, A_to_B, B, C, D, E, D_to_E])
+            path.add_linear_processing_pathway([A, A_to_B, B, C, D, E, D_to_E])
 
         assert "A projection cannot be the last item in a linear processing pathway." in str(error_text.value)
 
     def test_LPP_two_projections_in_a_row(self):
-        comp = Composition()
+        path = Pathway()
         A = TransferMechanism(name="A", function=Linear(slope=2.0))
         B = TransferMechanism(name="B", function=Linear(slope=2.0))
         C = TransferMechanism(name="C", function=Linear(slope=2.0))
         A_to_B = MappingProjection(sender=A, receiver=B)
         B_to_C = MappingProjection(sender=B, receiver=C)
         with pytest.raises(CompositionError) as error_text:
-            comp.add_linear_processing_pathway([A, B_to_C, A_to_B, B, C])
+            path.add_linear_processing_pathway([A, B_to_C, A_to_B, B, C])
 
         assert "A projection in a linear processing pathway must be preceded by a mechanism and followed by a mechanism" \
                in str(error_text.value)
 
     def test_LPP_start_with_projection(self):
-        comp = Composition()
+        path = Pathway()
         Nonsense_Projection = MappingProjection()
         A = TransferMechanism(name="A", function=Linear(slope=2.0))
         B = TransferMechanism(name="B", function=Linear(slope=2.0))
         with pytest.raises(CompositionError) as error_text:
-            comp.add_linear_processing_pathway([Nonsense_Projection, A, B])
+            path.add_linear_processing_pathway([Nonsense_Projection, A, B])
 
         assert "The first item in a linear processing pathway must be a mechanism." in str(
             error_text.value)
 
     def test_LPP_wrong_component(self):
-        comp = Composition()
+        path = Pathway()
         Nonsense = "string"
         A = TransferMechanism(name="A", function=Linear(slope=2.0))
         B = TransferMechanism(name="B", function=Linear(slope=2.0))
         with pytest.raises(CompositionError) as error_text:
-            comp.add_linear_processing_pathway([A, Nonsense, B])
+            path.add_linear_processing_pathway([A, Nonsense, B])
 
         assert "A linear processing pathway must be made up of projections and mechanisms." in str(
             error_text.value)
@@ -1043,19 +1044,19 @@ class TestRun:
         #                                25 + 25 = 50  ==> 50 * 5 = 250
         # 5 * 1 = 5 ----> 5 x 5 = 25 --
 
-        comp = Composition()
+        path = Pathway()
         A = TransferMechanism(name="A", function=Linear(slope=1.0))
         B = TransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
         D = TransferMechanism(name="D", function=Linear(slope=5.0))
         E = TransferMechanism(name="E", function=Linear(slope=5.0))
-        comp.add_linear_processing_pathway([A, C, E])
-        comp.add_linear_processing_pathway([B, D, E])
-        comp._analyze_graph()
+        path.add_linear_processing_pathway([A, C, E])
+        path.add_linear_processing_pathway([B, D, E])
+        path._analyze_graph()
         inputs_dict = {A: [5],
                        B: [5]}
-        sched = Scheduler(composition=comp)
-        output = comp.run(
+        sched = Scheduler(composition=path)
+        output = path.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
@@ -1078,7 +1079,7 @@ class TestClampInput:
         #                                25 + 25 = 50  ==> 50 * 5 = 250
         # 5 * 1 = 5 ----> 5 x 5 = 25 --
 
-        comp = Composition()
+        comp = Composition
         A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
         B = TransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
