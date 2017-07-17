@@ -854,13 +854,16 @@ class Composition(object):
             for mechanism in next_execution_set:
 
                 if mechanism in origin_mechanisms:
+                    if scheduler_processing.times[TimeScale.TRIAL][TimeScale.TIME_STEP] == 0 and \
+                            hasattr(mechanism, "recurrent_projection"):
+                        mechanism.recurrent_projection.sender.value = [0.0]
                     if clamp_input:
                         if mechanism in hard_clamp_inputs:
                             # clamp = HARD_CLAMP --> "turn off" recurrent projection
                             if hasattr(mechanism, "recurrent_projection"):
                                 mechanism.recurrent_projection.sender.value = [0.0]
                         elif mechanism in no_clamp_inputs:
-                            self.input_mechanisms[mechanism]._output_states[0].value = 0
+                            self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
                     num = mechanism.execute(context=EXECUTING + "composition")
