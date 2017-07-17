@@ -18,7 +18,7 @@ from PsyNeuLink.Scheduling.Condition import EveryNCalls, AfterCall, AfterNCalls,
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, System
 from PsyNeuLink.Scheduling.TimeScale import TimeScale, CurrentTime, CentralClock
-from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP
+from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
 
 logger = logging.getLogger(__name__)
 
@@ -801,196 +801,6 @@ class TestRun:
         )
         assert 250 == output[0][0]
 
-    def test_run_5_mechanisms_2_origins_1_terminal_hard_clamp(self):
-        # HARD_CLAMP TBI
-
-        # recurrent projection ignored on the second execution of A
-        #          __
-        #         |  |
-        # 5 -#2-> x  |
-        # 5 -#1-> A -^--> C --
-        #                       ==> E
-        # 5 ----> B ----> D --
-
-        # 5 x 1 = 5 ----> 5 x 5 = 25 --
-        #                                25 + 25 = 50  ==> 50 * 5 = 250
-        # 5 * 1 = 5 ----> 5 x 5 = 25 --
-
-        comp = Composition()
-        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
-        B = TransferMechanism(name="B", function=Linear(slope=1.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_mechanism(D)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
-        comp.add_mechanism(E)
-        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
-        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
-        comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
-        sched = Scheduler(composition=comp)
-        sched.add_condition(A, EveryNPasses(1))
-        sched.add_condition(B, EveryNCalls(A, 2))
-        sched.add_condition(C, AfterNCalls(A, 2))
-        sched.add_condition(D, AfterNCalls(A, 2))
-        sched.add_condition(E, AfterNCalls(C, 1))
-        sched.add_condition(E, AfterNCalls(D, 1))
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            clamp_input=HARD_CLAMP
-        )
-        assert 250 == output[0][0]
-
-    def test_run_5_mechanisms_2_origins_1_terminal_soft_clamp(self):
-        # recurrent projection combines with input on the second execution of A
-        #          _r_
-        #         |   |
-        # 5 -#2-> V   |
-        # 5 -#1-> A --^ --> C --
-        #                       ==> E
-        # 5 ----> B ------> D --
-
-        # 5 x 1 = 5 ----> 5 x 5 = 25 --
-        #                                25 + 25 = 50  ==> 50 * 5 = 250
-        # 5 * 1 = 5 ----> 5 x 5 = 25 --
-
-        comp = Composition()
-        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
-        B = TransferMechanism(name="B", function=Linear(slope=1.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_mechanism(D)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
-        comp.add_mechanism(E)
-        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
-        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
-        comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
-        sched = Scheduler(composition=comp)
-        sched.add_condition(A, EveryNPasses(1))
-        sched.add_condition(B, EveryNCalls(A, 2))
-        sched.add_condition(C, AfterNCalls(A, 2))
-        sched.add_condition(D, AfterNCalls(A, 2))
-        sched.add_condition(E, AfterNCalls(C, 1))
-        sched.add_condition(E, AfterNCalls(D, 1))
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            clamp_input=SOFT_CLAMP
-        )
-        assert 375 == output[0][0]
-
-    def test_run_5_mechanisms_2_origins_1_terminal_none_clamp(self):
-        # input ignored on the second execution of A
-        #          __
-        #         |  |
-        #         V  |
-        # 5 -#1-> A -^--> C --
-        #                       ==> E
-        # 5 ----> B ----> D --
-
-        # 5 x 1 = 5 ----> 5 x 5 = 25 --
-        #                                25 + 25 = 50  ==> 50 * 5 = 250
-        # 5 * 1 = 5 ----> 5 x 5 = 25 --
-
-        comp = Composition()
-        A = RecurrentTransferMechanism(name="A", function=Linear(slope=2.0))
-        B = TransferMechanism(name="B", function=Linear(slope=1.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_mechanism(D)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
-        comp.add_mechanism(E)
-        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
-        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
-        comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
-        sched = Scheduler(composition=comp)
-        sched.add_condition(A, EveryNPasses(1))
-        sched.add_condition(B, EveryNCalls(A, 2))
-        sched.add_condition(C, AfterNCalls(A, 2))
-        sched.add_condition(D, AfterNCalls(A, 2))
-        sched.add_condition(E, AfterNCalls(C, 1))
-        sched.add_condition(E, AfterNCalls(D, 1))
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            clamp_input=PULSE_CLAMP
-        )
-        assert 625 == output[0][0]
-
-
-    def test_run_5_mechanisms_2_origins_1_terminal_both_clamp(self):
-
-        #          __
-        #         |  |
-        #         V  |
-        # 5 -#1-> A -^--> C --
-        #                       ==> E
-        # 5 ----> B ----> D --
-
-
-        #         v Recurrent
-        # 5 * 1 = (5 + 5) x 1 = 10
-        # 5 x 1 = 5 ---->      10 x 5 = 50 --
-        #                                       50 + 25 = 75  ==> 75 * 5 = 375
-        # 5 * 1 = 5 ---->       5 x 5 = 25 --
-
-        comp = Composition()
-        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
-        B = RecurrentTransferMechanism(name="B", function=Linear(slope=1.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_mechanism(D)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
-        comp.add_mechanism(E)
-        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
-        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
-        comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
-        sched = Scheduler(composition=comp)
-        sched.add_condition(A, EveryNPasses(1))
-        sched.add_condition(B, EveryNPasses(1))
-        sched.add_condition(B, EveryNCalls(A, 1))
-        sched.add_condition(C, AfterNCalls(A, 2))
-        sched.add_condition(D, AfterNCalls(A, 2))
-        sched.add_condition(E, AfterNCalls(C, 1))
-        sched.add_condition(E, AfterNCalls(D, 1))
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            clamp_input={A: SOFT_CLAMP,
-                         B: HARD_CLAMP}
-        )
-        assert 375 == output[0][0]
-
-
-
     def test_run_2_mechanisms_with_scheduling_AAB_integrator(self):
         comp = Composition()
 
@@ -1251,6 +1061,241 @@ class TestRun:
         )
         assert 250 == output[0][0]
 
+class TestClampInput:
+
+    def test_run_5_mechanisms_2_origins_1_terminal_hard_clamp(self):
+        # HARD_CLAMP TBI
+
+        # recurrent projection ignored on the second execution of A
+        #          __
+        #         |  |
+        # 5 -#2-> x  |
+        # 5 -#1-> A -^--> C --
+        #                       ==> E
+        # 5 ----> B ----> D --
+
+        # 5 x 1 = 5 ----> 5 x 5 = 25 --
+        #                                25 + 25 = 50  ==> 50 * 5 = 250
+        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        comp = Composition()
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [5],
+                       B: [5]}
+        sched = Scheduler(composition=comp)
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 2))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            clamp_input=HARD_CLAMP
+        )
+        assert 250 == output[0][0]
+
+    def test_run_5_mechanisms_2_origins_1_terminal_soft_clamp(self):
+        # recurrent projection combines with input on the second execution of A
+        #          _r_
+        #         |   |
+        # 5 -#2-> V   |
+        # 5 -#1-> A --^ --> C --
+        #                       ==> E
+        # 5 ----> B ------> D --
+
+        # 5 x 1 = 5 ----> 5 x 5 = 25 --
+        #                                25 + 25 = 50  ==> 50 * 5 = 250
+        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        comp = Composition()
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [5],
+                       B: [5]}
+        sched = Scheduler(composition=comp)
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 2))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            clamp_input=SOFT_CLAMP
+        )
+        assert 375 == output[0][0]
+
+    def test_run_5_mechanisms_2_origins_1_terminal_pulse_clamp(self):
+        # input ignored on the second execution of A
+        #          __
+        #         |  |
+        #         V  |
+        # 5 -#1-> A -^--> C --
+        #                       ==> E
+        # 5 ----> B ----> D --
+
+        # 5 x 1 = 5 ----> 5 x 5 = 25 --
+        #                                25 + 25 = 50  ==> 50 * 5 = 250
+        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        comp = Composition()
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=2.0))
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [5],
+                       B: [5]}
+        sched = Scheduler(composition=comp)
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 2))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            clamp_input=PULSE_CLAMP
+        )
+        assert 625 == output[0][0]
+
+    def test_run_5_mechanisms_2_origins_1_hard_clamp_1_soft_clamp(self):
+
+        #          __
+        #         |  |
+        #         V  |
+        # 5 -#1-> A -^--> C --
+        #                       ==> E
+        # 5 ----> B ----> D --
+
+
+        #         v Recurrent
+        # 5 * 1 = (5 + 5) x 1 = 10
+        # 5 x 1 = 5 ---->      10 x 5 = 50 --
+        #                                       50 + 25 = 75  ==> 75 * 5 = 375
+        # 5 * 1 = 5 ---->       5 x 5 = 25 --
+
+        comp = Composition()
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
+        B = RecurrentTransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [5],
+                       B: [5]}
+        sched = Scheduler(composition=comp)
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 1))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            clamp_input={A: SOFT_CLAMP,
+                         B: HARD_CLAMP}
+        )
+        assert 375 == output[0][0]
+
+    def test_run_5_mechanisms_2_origins_1_terminal_no_clamp(self):
+        # input ignored on all executions
+        #          _r_
+        #         |   |
+        # 0 -#2-> V   |
+        # 0 -#1-> A -^--> C --
+        #                       ==> E
+        # 0 ----> B ----> D --
+
+
+        # 1 * 2 + 1 = 3
+        # 0 x 2 + 1 = 1 ----> 4 x 5 = 20 --
+        #                                   20 + 5 = 25  ==> 25 * 5 = 125
+        # 0 x 1 + 1 = 1 ----> 1 x 5 = 5 --
+
+        comp = Composition()
+        A = RecurrentTransferMechanism(name="A", function=Linear(slope=2.0, intercept=1.0))
+        B = RecurrentTransferMechanism(name="B", function=Linear(slope=1.0, intercept=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [1],
+                       B: [1]}
+        sched = Scheduler(composition=comp)
+        sched.add_condition(A, EveryNPasses(1))
+        sched.add_condition(B, EveryNCalls(A, 2))
+        sched.add_condition(C, AfterNCalls(A, 2))
+        sched.add_condition(D, AfterNCalls(A, 2))
+        sched.add_condition(E, AfterNCalls(C, 1))
+        sched.add_condition(E, AfterNCalls(D, 1))
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            clamp_input=NO_CLAMP
+        )
+        assert 125 == output[0][0]
 
 class TestCallBeforeAfterTimescale:
 
