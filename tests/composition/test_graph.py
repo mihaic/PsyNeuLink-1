@@ -1,9 +1,6 @@
-import pytest
-
 from PsyNeuLink.Composition import Graph, Vertex
 
 
-@pytest.mark.skip
 class TestGraph:
 
     class DummyComponent:
