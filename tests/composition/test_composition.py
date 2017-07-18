@@ -1669,3 +1669,43 @@ class TestSystem:
     #     expected_Output_Layer_output = [np.array([0.97988347, 0.97988347, 0.97988347])]
     #
     #     np.testing.assert_allclose(expected_Output_Layer_output, Output_Layer.output_values)
+
+class TestNestedCompositions:
+    def test_one_pathway_inside_one_system(self):
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to the myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        stimulus = {myMech1: [[1]]}
+        output = myPath.execute(inputs=stimulus)
+        sys = System()
+        sys.add_pathway(myPath)
+        # A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
+        # B = TransferMechanism(function=Linear(slope=5.0))
+        # sys.add_mechanism(A)
+        # sys.add_mechanism(B)
+        # sys.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        # sys._analyze_graph()
+        from pprint import pprint
+        pprint(sys.graph.__dict__)
+        pprint(myPath.graph.__dict__)
+        pprint(myPath.__dict__)
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        pprint(sys.__dict__)
+        assert 8 == output[0][0]
+

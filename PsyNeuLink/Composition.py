@@ -438,6 +438,18 @@ class Composition(object):
             self.needs_update_graph = True
             self.needs_update_graph_processing = True
 
+    def add_pathway(self, path):
+        mechanisms = [x.component for x in path.graph.vertices if isinstance(x, Mechanism)]
+        projections = [x.component for x in path.graph.vertices if isinstance(x, Projection)]
+
+        for m in mechanisms:
+            self.add_mechanism(m)
+
+        for p in projections:
+            self.add_projection(p.sender, p, p.receiver)
+
+        self._analyze_graph()
+
     def _validate_projection(self, sender, projection, receiver):
 
         if hasattr(projection, "sender") and hasattr(projection, "receiver"):
@@ -1003,7 +1015,6 @@ class System(Composition):
 
     def __init__(self):
         super(System, self).__init__()
-
 
 class Pathway(Composition):
     '''
