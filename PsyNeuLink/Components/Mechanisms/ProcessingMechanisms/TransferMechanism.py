@@ -380,6 +380,7 @@ class TransferMechanism(ProcessingMechanism_Base):
     # add TransferMechanism params to superclassed Params (defined in Component currently)
     class Params(ProcessingMechanism_Base.Params):
         def __init__(self):
+            self.initial_value = 'initial_value'
             self.range = 'range'
             self.noise = 'noise'
 
