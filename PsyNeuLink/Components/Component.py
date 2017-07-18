@@ -326,7 +326,7 @@ from enum import Enum, IntEnum
 
 from PsyNeuLink.Globals.Keywords import COMMAND_LINE, COMPONENT_INIT, CONTEXT, CONTROL, CONTROL_PROJECTION, DEFERRED_DEFAULT_NAME, DEFERRED_INITIALIZATION, FUNCTION, FUNCTION_CHECK_ARGS, FUNCTION_PARAMS, INITIALIZING, INIT_FULL_EXECUTE_METHOD, INPUT_STATES, LEARNING, LEARNING_PROJECTION, MAPPING_PROJECTION, NAME, OUTPUT_STATES, PARAMS, PARAMS_CURRENT, PARAM_CLASS_DEFAULTS, PARAM_INSTANCE_DEFAULTS, PREFS_ARG, SEPARATOR_BAR, SET_ATTRIBUTE, SIZE, USER_PARAMS, VALUE, VARIABLE, kwComponentCategory
 from PsyNeuLink.Globals.Log import Log
-from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import kpVerbosePref, ComponentPreferenceSet
+from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import ComponentPreferenceSet, kpVerbosePref
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceEntry, PreferenceLevel, PreferenceSet
 from PsyNeuLink.Globals.Utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_to_np_array, is_same_function_spec, iscompatible, kwCompatibilityLength
 
@@ -1904,6 +1904,18 @@ class Component(object):
             for c in comps:
                 for i in ids:
                     update_single(c, i)
+
+    def get_param_value(self, param, composition=None, execution_id=None):
+        if param not in self.Params.values:
+            raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
+
+        if composition is None:
+            composition = next(iter(self.compositions))
+
+        if execution_id is None:
+            execution_id = composition._execution_id
+
+        return composition.params_by_execution_id[execution_id][self][param]
 
     def _validate_variable(self, variable, context=None):
         """Validate variable and assign validated values to self.variable
