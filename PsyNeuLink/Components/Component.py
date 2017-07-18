@@ -668,7 +668,6 @@ class Component(object):
 
     class Params:
         def __init__(self):
-            self.context = 'context'
             self.execution_status = 'execution_status'
             self.variable = 'variable'
             self.value = 'value'
