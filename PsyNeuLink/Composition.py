@@ -54,7 +54,7 @@ from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP, PULSE
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
-
+from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, FULL_CONNECTIVITY_MATRIX
 
 logger = logging.getLogger(__name__)
 
@@ -1064,3 +1064,23 @@ class Pathway(Composition):
             else:
                 raise CompositionError("{} is not a projection or mechanism. A linear processing pathway must be made "
                                        "up of projections and mechanisms.".format(pathway[c]))
+
+    def execute(
+        self,
+        inputs,
+        scheduler_processing=None,
+        scheduler_learning=None,
+        execution_id=None,
+        call_before_time_step=None,
+        call_before_pass=None,
+        call_after_time_step=None,
+        call_after_pass=None,
+	    clamp_input = SOFT_CLAMP
+        ):
+
+        if isinstance(inputs, list):
+            inputs = {self.get_mechanisms_by_role(MechanismRole.ORIGIN).pop(): inputs}
+
+        output = super(Pathway, self).execute(inputs)
+        return output
+
