@@ -50,8 +50,8 @@ from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceMechanism \
     import CompositionInterfaceMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
+from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
 from PsyNeuLink.Components.Projections.Projection import Projection
-from PsyNeuLink.Globals.Keywords import EXECUTING
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
@@ -452,50 +452,6 @@ class Composition(object):
             self.needs_update_scheduler_processing = True
             self.needs_update_scheduler_learning = True
 
-    def add_linear_processing_pathway(self, pathway):
-        # First, verify that the pathway begins with a mechanism
-        if isinstance(pathway[0], Mechanism):
-            self.add_mechanism(pathway[0])
-        else:
-            # 'MappingProjection has no attribute _name' error is thrown when pathway[0] is passed to the error msg
-            raise CompositionError("The first item in a linear processing pathway must be a "
-                                   "mechanism.")
-        # Then, add all of the remaining mechanisms in the pathway
-        for c in range(1, len(pathway)):
-            # if the current item is a mechanism, add it
-            if isinstance(pathway[c], Mechanism):
-                self.add_mechanism(pathway[c])
-
-        # Then, loop through and validate that the mechanism-projection relationships make sense
-        # and add MappingProjections where needed
-        for c in range(1, len(pathway)):
-            if isinstance(pathway[c], Mechanism):
-                if isinstance(pathway[c - 1], Mechanism):
-                    # if the previous item was also a mechanism, add a mapping projection between them
-                    self.add_projection(
-                        pathway[c - 1],
-                        MappingProjection(
-                            sender=pathway[c - 1],
-                            receiver=pathway[c]
-                        ),
-                        pathway[c]
-                    )
-            # if the current item is a projection
-            elif isinstance(pathway[c], Projection):
-                if c == len(pathway) - 1:
-                    raise CompositionError("{} is the last item in the pathway. A projection cannot be the last item in"
-                                           " a linear processing pathway.".format(pathway[c]))
-                # confirm that it is between two mechanisms, then add the projection
-                if isinstance(pathway[c - 1], Mechanism) and isinstance(pathway[c + 1], Mechanism):
-                    self.add_projection(pathway[c - 1], pathway[c], pathway[c + 1])
-                else:
-                    raise CompositionError(
-                        "{} is not between two mechanisms. A projection in a linear processing pathway must be preceded"
-                        " by a mechanism and followed by a mechanism".format(pathway[c]))
-            else:
-                raise CompositionError("{} is not a projection or mechanism. A linear processing pathway must be made "
-                                       "up of projections and mechanisms.".format(pathway[c]))
-
     def _validate_projection(self, sender, projection, receiver):
 
         if hasattr(projection, "sender") and hasattr(projection, "receiver"):
@@ -761,6 +717,17 @@ class Composition(object):
         for k in self.input_mechanisms.keys():
             self.input_mechanisms[k]._execution_id = self._execution_id
 
+    def _identify_clamp_inputs(self, list_type, input_type, origins):
+        # clamp type of this list is same as the one the user set for the whole composition; return all mechanisms
+        if list_type == input_type:
+            return origins
+        # the user specified different types of clamps for each origin mechanism; generate a list accordingly
+        elif isinstance(input_type, dict):
+            return [k for k, v in input_type.items() if list_type == v]
+        # clamp type of this list is NOT same as the one the user set for the whole composition; return empty list
+        else:
+            return []
+
     def execute(
         self,
         inputs,
@@ -770,8 +737,10 @@ class Composition(object):
         call_before_pass=None,
         call_after_time_step=None,
         call_after_pass=None,
-        execution_id=None
-    ):
+        execution_id=None,
+	    clamp_input = SOFT_CLAMP
+        ):
+
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
             to receive and execute sets of mechanisms that are eligible to run until termination conditions are met.
@@ -812,6 +781,8 @@ class Composition(object):
             output value of the final mechanism executed in the composition : various
         '''
 
+        origin_mechanisms = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
+
         if scheduler_processing is None:
             scheduler_processing = self.scheduler_processing
 
@@ -823,6 +794,11 @@ class Composition(object):
         self._assign_execution_ids(execution_id)
         next_pass_before = 1
         next_pass_after = 1
+        if clamp_input:
+            soft_clamp_inputs = self._identify_clamp_inputs(SOFT_CLAMP, clamp_input, origin_mechanisms)
+            hard_clamp_inputs = self._identify_clamp_inputs(HARD_CLAMP, clamp_input, origin_mechanisms)
+            pulse_clamp_inputs = self._identify_clamp_inputs(PULSE_CLAMP, clamp_input, origin_mechanisms)
+            no_clamp_inputs = self._identify_clamp_inputs(NO_CLAMP, clamp_input, origin_mechanisms)
         # run scheduler to receive sets of mechanisms that may be executed at this time step in any order
         execution_scheduler = scheduler_processing
         num = None
@@ -847,6 +823,19 @@ class Composition(object):
                 call_before_time_step()
             # execute each mechanism with EXECUTING in context
             for mechanism in next_execution_set:
+
+                if mechanism in origin_mechanisms:
+                    if scheduler_processing.times[TimeScale.TRIAL][TimeScale.TIME_STEP] == 0 and \
+                            hasattr(mechanism, "recurrent_projection"):
+                        mechanism.recurrent_projection.sender.value = [0.0]
+                    if clamp_input:
+                        if mechanism in hard_clamp_inputs:
+                            # clamp = HARD_CLAMP --> "turn off" recurrent projection
+                            if hasattr(mechanism, "recurrent_projection"):
+                                mechanism.recurrent_projection.sender.value = [0.0]
+                        elif mechanism in no_clamp_inputs:
+                            self.input_mechanisms[mechanism]._output_states[0].value = 0.0
+
                 if isinstance(mechanism, Mechanism):
                     num = mechanism.execute(context=EXECUTING + "composition")
                     print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
@@ -854,11 +843,17 @@ class Composition(object):
                     print()
                     print()
 
-            if call_after_time_step:
-                call_after_time_step()
+                if call_after_time_step:
+                    call_after_time_step()
 
-        if call_after_pass:
-            call_after_pass()
+                if mechanism in origin_mechanisms:
+                    if clamp_input:
+                        if mechanism in pulse_clamp_inputs:
+                            # clamp = None --> "turn off" input mechanism
+                            self.input_mechanisms[mechanism]._output_states[0].value = 0
+
+            if call_after_pass:
+                call_after_pass()
 
         return num
 
@@ -877,6 +872,7 @@ class Composition(object):
         call_after_pass=None,
         call_before_trial=None,
         call_after_trial=None,
+	clamp_input = SOFT_CLAMP
     ):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
@@ -993,7 +989,8 @@ class Composition(object):
                 call_after_time_step,
                 call_after_pass,
                 execution_id,
-            )
+		        clamp_input
+                )
 
             if num is not None:
                 result = num
@@ -1005,3 +1002,80 @@ class Composition(object):
 
         # return the output of the LAST mechanism executed in the composition
         return result
+
+class System(Composition):
+    '''
+
+            Arguments
+            ----------
+
+            Attributes
+            ----------
+
+            Returns
+            ----------
+    '''
+
+    def __init__(self):
+        super(System, self).__init__()
+
+
+class Pathway(Composition):
+    '''
+
+            Arguments
+            ----------
+
+            Attributes
+            ----------
+
+            Returns
+            ----------
+    '''
+
+    def __init__(self):
+        super(Pathway, self).__init__()
+
+    def add_linear_processing_pathway(self, pathway):
+        # First, verify that the pathway begins with a mechanism
+        if isinstance(pathway[0], Mechanism):
+            self.add_mechanism(pathway[0])
+        else:
+            # 'MappingProjection has no attribute _name' error is thrown when pathway[0] is passed to the error msg
+            raise CompositionError("The first item in a linear processing pathway must be a "
+                                   "mechanism.")
+        # Then, add all of the remaining mechanisms in the pathway
+        for c in range(1, len(pathway)):
+            # if the current item is a mechanism, add it
+            if isinstance(pathway[c], Mechanism):
+                self.add_mechanism(pathway[c])
+
+        # Then, loop through and validate that the mechanism-projection relationships make sense
+        # and add MappingProjections where needed
+        for c in range(1, len(pathway)):
+            if isinstance(pathway[c], Mechanism):
+                if isinstance(pathway[c - 1], Mechanism):
+                    # if the previous item was also a mechanism, add a mapping projection between them
+                    self.add_projection(
+                        pathway[c - 1],
+                        MappingProjection(
+                            sender=pathway[c - 1],
+                            receiver=pathway[c]
+                        ),
+                        pathway[c]
+                    )
+            # if the current item is a projection
+            elif isinstance(pathway[c], Projection):
+                if c == len(pathway) - 1:
+                    raise CompositionError("{} is the last item in the pathway. A projection cannot be the last item in"
+                                           " a linear processing pathway.".format(pathway[c]))
+                # confirm that it is between two mechanisms, then add the projection
+                if isinstance(pathway[c - 1], Mechanism) and isinstance(pathway[c + 1], Mechanism):
+                    self.add_projection(pathway[c - 1], pathway[c], pathway[c + 1])
+                else:
+                    raise CompositionError(
+                        "{} is not between two mechanisms. A projection in a linear processing pathway must be preceded"
+                        " by a mechanism and followed by a mechanism".format(pathway[c]))
+            else:
+                raise CompositionError("{} is not a projection or mechanism. A linear processing pathway must be made "
+                                       "up of projections and mechanisms.".format(pathway[c]))
