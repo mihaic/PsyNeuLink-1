@@ -446,7 +446,7 @@ class Composition(object):
             ---------
 
             path: the Pathway (Composition) to be added
-            
+
         '''
 
         # identify mechanisms and projections
@@ -1017,7 +1017,7 @@ class Composition(object):
         # return the output of the LAST mechanism executed in the composition
         return result
 
-class System(Composition):
+class Systemm(Composition):
     '''
 
             Arguments
@@ -1031,7 +1031,7 @@ class System(Composition):
     '''
 
     def __init__(self):
-        super(System, self).__init__()
+        super(Systemm, self).__init__()
 
 class Pathway(Composition):
     '''

@@ -283,6 +283,7 @@ from PsyNeuLink.Components.ShellClasses import *
 from PsyNeuLink.Globals.Registry import register_category
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
+from PsyNeuLink.Composition import Systemm
 
 logger = logging.getLogger(__name__)
 
@@ -468,22 +469,11 @@ def system(default_input_value=None,
     if not processes:
         processes = [process()]
 
-    return System_Base(default_input_value=default_input_value,
-                       size=size,
-                       processes=processes,
-                       controller=controller,
-                       scheduler=scheduler,
-                       initial_values=initial_values,
-                       enable_controller=enable_controller,
-                       monitor_for_control=monitor_for_control,
-                       control_signals=control_signals,
-                       # learning=learning,
-                       learning_rate=learning_rate,
-                       targets=targets,
-                       params=params,
-                       name=name,
-                       prefs=prefs,
-                       context=context)
+    s = Systemm()
+    for p in processes:
+        s.add_pathway(p)
+
+    return s
 
 
 class System_Base(System):
