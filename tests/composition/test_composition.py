@@ -1690,6 +1690,7 @@ class TestNestedCompositions:
         output = myPath.execute(inputs=stimulus)
         sys = System()
         sys.add_pathway(myPath)
+        sys._analyze_graph()
         # A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
         # B = TransferMechanism(function=Linear(slope=5.0))
         # sys.add_mechanism(A)

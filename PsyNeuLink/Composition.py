@@ -439,14 +439,31 @@ class Composition(object):
             self.needs_update_graph_processing = True
 
     def add_pathway(self, path):
-        mechanisms = [x.component for x in path.graph.vertices if isinstance(x, Mechanism)]
-        projections = [x.component for x in path.graph.vertices if isinstance(x, Projection)]
+        '''
+            Adds an existing Pathway to the current Composition
 
+            Arguments
+            ---------
+
+            path: the Pathway (Composition) to be added
+            
+        '''
+
+        # identify mechanisms and projections
+        mechanisms, projections = [], []
+        for c in path.graph.vertices:
+            if isinstance(c.component, Mechanism):
+                mechanisms.append(c.component)
+            elif isinstance(c.component, Projection):
+                projections.append(c.component)
+
+        # add all mechanisms first
         for m in mechanisms:
             self.add_mechanism(m)
 
+        # then projections
         for p in projections:
-            self.add_projection(p.sender, p, p.receiver)
+            self.add_projection(p.sender.owner, p, p.receiver.owner)
 
         self._analyze_graph()
 
