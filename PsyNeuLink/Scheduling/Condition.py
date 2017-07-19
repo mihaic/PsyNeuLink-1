@@ -469,9 +469,19 @@ class Condition(object):
         logger.debug('Condition ({0}) setting owner to {1}'.format(type(self).__name__, value))
         self._owner = value
 
-    def is_satisfied(self):
+    def is_satisfied(self, *args, **kwargs):
         '''
         the function called to determine satisfaction of this Condition.
+
+        Arguments
+        ---------
+        args : *args
+            specifies additional formal arguments to pass to `func` when the Condition is evaluated.
+            these are added to the **args** specified at instantiation of this Condition
+
+        kwargs : **kwargs
+            specifies additional keyword arguments to pass to `func` when the Condition is evaluated.
+            these are added to the **kwargs** specified at instantiation of this Condition
 
         Returns
         -------
@@ -479,15 +489,19 @@ class Condition(object):
             False - if the Condition is not satisfied
         '''
         logger.debug('Condition ({0}) using scheduler {1}'.format(type(self).__name__, self.scheduler))
-        has_args = len(self.args) > 0
-        has_kwargs = len(self.kwargs) > 0
+        all_args = self.args + args
+        all_kwargs = self.kwargs.copy()
+        all_kwargs.update(kwargs)
+
+        has_args = len(all_args) > 0
+        has_kwargs = len(all_kwargs) > 0
 
         if has_args and has_kwargs:
-            return self.func(*self.args, **self.kwargs)
+            return self.func(*all_args, **all_kwargs)
         if has_args:
-            return self.func(*self.args)
+            return self.func(*all_args)
         if has_kwargs:
-            return self.func(**self.kwargs)
+            return self.func(**all_kwargs)
         return self.func()
 
 #########################################################################################################
