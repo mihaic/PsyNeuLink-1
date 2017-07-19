@@ -1734,3 +1734,47 @@ class TestNestedCompositions:
         )
         assert 8 == output[0][0]
 
+
+    def test_multiple_paths_inside_one_system(self):
+
+        # mech1 ---> mech2 --
+        #                   --> mech3
+        # mech4 ---> mech5 --
+
+        # 1x2=2 ---> 2x2=4 --
+        #                   --> (4+4)x2=16
+        # 1x2=2 ---> 2x2=4 --
+
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        myPath2 = Pathway()
+        myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myPath.add_linear_processing_pathway([myMech4, myMech5, myMech3])
+        myPath._analyze_graph()
+
+        sys = Systemm()
+        sys.add_pathway(myPath)
+        sys.add_pathway(myPath2)
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]], myMech4: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 16 == output[0][0]
+
