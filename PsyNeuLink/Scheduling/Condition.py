@@ -379,7 +379,8 @@ class ConditionSet(object):
             cond.scheduler = value
 
     def add_condition(self, owner, condition):
-        """Add a `Condition` to the ConditionSet.
+        """Add a `Condition` to the ConditionSet. If **owner** already has a Condition, it is overwritten
+        with the new one.
 
         Arguments
         ---------
@@ -398,21 +399,20 @@ class ConditionSet(object):
         condition.scheduler = self.scheduler
         self.conditions[owner] = condition
 
-    def add_condition_set(self, conditions):
-        """Add a collection of `Conditions <Condition>` to the ConditionSet.
+    def add_condition_set(self, condition_set):
+        """Add another `ConditionSet` to the ConditionSet. If any owner in the ConditionSet already has a Condition,
+        it is overwritten with the new one.
 
         Arguments
         ---------
 
-        conditions : dict{`Component`: `Condition`}
-            specifies an iterable collection of Conditions to be added to the ConditionSet, in the form of a dict
-            each entry of which maps a `Component` (the key) to a `Condition <Condition>` (the value).
+        condition_set : `ConditionSet`
+            specifies another ConditionSet that will be merged to this one. Any conflicts are resolved in favor of the new
+            **condition_set**
 
         """
-        for owner in conditions:
-            conditions[owner].owner = owner
-            conditions[owner].scheduler = self.scheduler
-            self.conditions[owner] = conditions[owner]
+        for owner in condition_set.conditions:
+            self.add_condition(owner, condition_set.conditions[owner])
 
 
 class Condition(object):

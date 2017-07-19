@@ -5,7 +5,7 @@ from PsyNeuLink.Components.Functions.Function import Linear
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Composition import Composition
-from PsyNeuLink.Scheduling.Condition import AfterNCalls, AfterNTrials, AfterPass, All, Always, Any, AtPass, BeforePass, EveryNCalls, EveryNPasses, JustRan, WhenFinished
+from PsyNeuLink.Scheduling.Condition import AfterNCalls, AfterNTrials, AfterPass, All, Always, Any, AtPass, BeforePass, ConditionSet, EveryNCalls, EveryNPasses, JustRan, WhenFinished
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
@@ -879,7 +879,7 @@ class TestBranching:
 
         sched = Scheduler(composition=comp)
 
-        sched.add_condition_set({
+        sched.add_condition_set(ConditionSet(conditions={
             A1: Always(),
             A2: Always(),
             B1: EveryNCalls(A1, 2),
@@ -887,7 +887,7 @@ class TestBranching:
             B2: All(EveryNCalls(A1, 4), EveryNCalls(A2, 4)),
             C1: Any(AfterNCalls(B1, 2), AfterNCalls(B2, 2)),
             C2: Any(AfterNCalls(B2, 2), AfterNCalls(B3, 2)),
-        })
+        }))
 
         termination_conds = {}
         termination_conds[TimeScale.RUN] = AfterNTrials(1)
