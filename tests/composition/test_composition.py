@@ -1080,7 +1080,7 @@ class TestClampInput:
         #                                25 + 25 = 50  ==> 50 * 5 = 250
         # 5 * 1 = 5 ----> 5 x 5 = 25 --
 
-        comp = Composition
+        comp = Composition()
         A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
         B = TransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
