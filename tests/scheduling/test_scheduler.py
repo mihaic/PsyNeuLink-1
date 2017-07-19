@@ -14,11 +14,29 @@ logger = logging.getLogger(__name__)
 
 class TestScheduler:
 
-    def test_copy(self):
-        pass
+    def test_maintain_processing_schedule_after_add_mechanism(self):
+        comp = Composition()
+        A = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='A')
+        B = TransferMechanism(function=Linear(intercept=4.0), name='B')
+        C = TransferMechanism(function=Linear(intercept=1.5), name='C')
+        for m in [A, B]:
+            comp.add_mechanism(m)
+        comp.add_projection(A, MappingProjection(), B)
 
-    def test_deepcopy(self):
-        pass
+        comp.scheduler_processing.add_condition(A, EveryNPasses(1))
+        comp.scheduler_processing.add_condition(B, EveryNCalls(A, 2))
+
+        comp.add_mechanism(C)
+        comp.add_projection(B, MappingProjection(), C)
+
+        comp.scheduler_processing.add_condition(C, EveryNCalls(B, 3))
+
+        output = list(comp.scheduler_processing.run())
+
+        expected_output = [
+            A, A, B, A, A, B, A, A, B, C,
+        ]
+        assert output == pytest.helpers.setify_expected_output(expected_output)
 
 
 class TestLinear:

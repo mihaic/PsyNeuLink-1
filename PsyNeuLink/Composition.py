@@ -368,7 +368,12 @@ class Composition(object):
             :getter: Returns the default processing scheduler, and builds it if it needs updating since the last access.
         '''
         if self.needs_update_scheduler_processing or self._scheduler_processing is None:
+            old_scheduler = self._scheduler_processing
             self._scheduler_processing = Scheduler(graph=self.graph_processing)
+
+            if old_scheduler is not None:
+                self._scheduler_processing.add_condition_set(old_scheduler.condition_set)
+
             self.needs_update_scheduler_processing = False
 
         return self._scheduler_processing
@@ -382,7 +387,12 @@ class Composition(object):
             :getter: Returns the default learning scheduler, and builds it if it needs updating since the last access.
         '''
         if self.needs_update_scheduler_learning or self._scheduler_learning is None:
+            old_scheduler = self._scheduler_learning
             self._scheduler_learning = Scheduler(graph=self.graph)
+
+            if old_scheduler is not None:
+                self._scheduler_learning.add_condition_set(old_scheduler.condition_set)
+
             self.needs_update_scheduler_learning = False
 
         return self._scheduler_learning
@@ -408,6 +418,8 @@ class Composition(object):
 
             self.needs_update_graph = True
             self.needs_update_graph_processing = True
+            self.needs_update_scheduler_processing = True
+            self.needs_update_scheduler_learning = True
 
     def add_projection(self, sender, projection, receiver):
         '''
@@ -437,6 +449,8 @@ class Composition(object):
 
             self.needs_update_graph = True
             self.needs_update_graph_processing = True
+            self.needs_update_scheduler_processing = True
+            self.needs_update_scheduler_learning = True
 
     def add_linear_processing_pathway(self, pathway):
         # First, verify that the pathway begins with a mechanism
