@@ -1735,7 +1735,7 @@ class TestNestedCompositions:
         assert 8 == output[0][0]
 
 
-    def test_multiple_paths_inside_one_system(self):
+    def test_two_paths_converge_one_system(self):
 
         # mech1 ---> mech2 --
         #                   --> mech3
@@ -1768,7 +1768,7 @@ class TestNestedCompositions:
         sys = Systemm()
         sys.add_pathway(myPath)
         sys.add_pathway(myPath2)
-        # assign input to origin mech
+        # assign input to origin mechs
         stimulus = {myMech1: [[1]], myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
@@ -1777,4 +1777,50 @@ class TestNestedCompositions:
             # scheduler_processing=schedule
         )
         assert 16 == output[0][0]
+
+
+    def test_two_paths_in_series_one_system(self):
+
+        # [ mech1 --> mech2 --> mech3 ] -->   [ mech4  -->  mech5  -->  mech6 ]
+        #   1x2=2 --> 2x2=4 --> 4x2=8   --> (8+1)x2=18 --> 18x2=36 --> 36*2=64
+        #                                X
+        #                                |
+        #                                1
+        # (if mech4 were recognized as an origin mech, and used SOFT_CLAMP, we would expect the final result to be 72)
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        myPath2 = Pathway()
+        myMech4 = TransferMechanism(function=Linear(slope=2.0))
+        myMech5 = TransferMechanism(function=Linear(slope=2.0))
+        myMech6 = TransferMechanism(function=Linear(slope=2.0))
+        myPath.add_linear_processing_pathway([myMech4, myMech5, myMech6])
+        myPath._analyze_graph()
+
+        sys = Systemm()
+        sys.add_pathway(myPath)
+        sys.add_pathway(myPath2)
+        sys.add_projection(sender=myMech3, projection=MappingProjection(sender=myMech3,
+                                                                        receiver=myMech4),receiver=myMech4 )
+        # assign input to origin mechs
+        # myMech4 ignores its input from the outside world because it is no longer considered an origin!
+        stimulus = {myMech1: [[1]], myMech4: [[1]]}
+        sys._analyze_graph()
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 64 == output[0][0]
 
