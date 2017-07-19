@@ -1355,7 +1355,7 @@ class TestCallBeforeAfterTimescale:
 class TestSystemm:
     def test_run_2_mechanisms_default_input_1(self):
         sys = Systemm()
-        A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
         B = TransferMechanism(function=Linear(slope=5.0))
         sys.add_mechanism(A)
         sys.add_mechanism(B)
@@ -1369,7 +1369,7 @@ class TestSystemm:
 
     def test_run_2_mechanisms_input_5(self):
         sys = Systemm()
-        A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
         B = TransferMechanism(function=Linear(slope=5.0))
         sys.add_mechanism(A)
         sys.add_mechanism(B)
