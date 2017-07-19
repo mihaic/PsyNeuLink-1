@@ -273,6 +273,7 @@ Class Reference
 """
 
 import logging
+import uuid
 
 from toposort import toposort
 
@@ -383,7 +384,12 @@ class Scheduler(object):
         else:
             raise SchedulerError('Must instantiate a Scheduler with either a System (kwarg system) or a graph dependency dict (kwarg graph)')
 
-        self._init_counts()
+        self.default_execution_id = uuid.uuid4()
+
+        self.times = {}
+        self.counts_total = {}
+        self.counts_useable = {}
+        self._init_counts(execution_id=self.default_execution_id)
 
     # the consideration queue is the ordered list of sets of nodes in the graph, by the
     # order in which they should be checked to ensure that all parents have a chance to run before their children
@@ -406,42 +412,114 @@ class Scheduler(object):
 
         self.consideration_queue = list(toposort(dependencies))
 
-    def _init_counts(self):
+    def _init_counts(self, execution_id=None, base_execution_id=None):
+        '''
+            Attributes
+            ----------
+
+                execution_id : uuid.uuid4
+                    the execution_id to initialize counts for
+                    default : self.default_execution_id
+
+                base_execution_id : uuid.uuid4
+                    if specified, the counts for execution_id will be copied from the counts of base_execution_id
+                    default : None
+        '''
+        # all counts are divided by execution_id, which provides a context for the scheduler's execution, so that
+        # it can be reused in multiple contexts
+
         # self.times[p][q] stores the number of TimeScale q ticks that have happened in the current TimeScale p
-        self.times = {ts: {ts: 0 for ts in TimeScale} for ts in TimeScale}
+        if execution_id not in self.times:
+            self.times[execution_id] = {}
+
+        if base_execution_id is not None:
+            if base_execution_id not in self.times:
+                raise SchedulerError('UUID {0} not in {1}.times'.format(base_execution_id, self))
+
+            self.times[execution_id] = {
+                tsk: {tsv: self.times[base_execution_id][tsk][tsv] for tsv in TimeScale} for tsk in TimeScale
+            }
+        else:
+            self.times[execution_id] = {
+                ts: {ts: 0 for ts in TimeScale} for ts in TimeScale
+            }
+
         # stores total the number of occurrences of a node through the time scale
         # i.e. the number of times node has ran/been queued to run in a trial
-        self.counts_total = {ts: None for ts in TimeScale}
+        if execution_id not in self.counts_total:
+            self.counts_total[execution_id] = {}
+
+        if base_execution_id is not None:
+            if base_execution_id not in self.counts_total:
+                raise SchedulerError('UUID {0} not in {1}.counts_total'.format(base_execution_id, self))
+
+            self.counts_total[execution_id] = {
+                ts: {n: self.counts_total[base_execution_id][ts][n] for n in self.nodes} for ts in TimeScale
+            }
+        else:
+            self.counts_total[execution_id] = {
+                ts: {n: 0 for n in self.nodes} for ts in TimeScale
+            }
+
         # counts_useable is a dictionary intended to store the number of available "instances" of a certain node that
         # are available to expend in order to satisfy conditions such as "run B every two times A runs"
         # specifically, counts_useable[a][b] = n indicates that there are n uses of a that are available for b to expend
         # so, in the previous example B would check to see if counts_useable[A][B] >= 2, in which case B can run
         # then, counts_useable[a][b] would be reset to 0, even if it was greater than 2
-        self.counts_useable = {node: {n: 0 for n in self.nodes} for node in self.nodes}
+        if execution_id not in self.counts_useable:
+            self.counts_useable[execution_id] = {}
 
-        for ts in TimeScale:
-            self.counts_total[ts] = {n: 0 for n in self.nodes}
+        if base_execution_id is not None:
+            if base_execution_id not in self.counts_useable:
+                raise SchedulerError('UUID {0} not in {1}.counts_useable'.format(base_execution_id, self))
 
-    def _reset_counts_total(self, time_scale):
+            self.counts_useable[execution_id] = {
+                node: {n: self.counts_useable[base_execution_id][node][n] for n in self.nodes} for node in self.nodes
+            }
+        else:
+            self.counts_useable[execution_id] = {
+                node: {n: 0 for n in self.nodes} for node in self.nodes
+            }
+
+    def _reset_counts_total(self, time_scale, execution_id=None):
+        if execution_id is None:
+            execution_id = self.default_execution_id
+
         for ts in TimeScale:
             # only reset the values underneath the current scope
             # this works because the enum is set so that higher granularities of time have lower values
             if ts.value <= time_scale.value:
-                for c in self.counts_total[ts]:
+                for c in self.counts_total[execution_id][ts]:
                     logger.debug('resetting counts_total[{0}][{1}] to 0'.format(ts, c))
-                    self.counts_total[ts][c] = 0
+                    self.counts_total[execution_id][ts][c] = 0
 
-    def _increment_time(self, time_scale):
+    def _reset_counts_useable(self, execution_id=None):
+        if execution_id is None:
+            execution_id = self.default_execution_id
+
+        self.counts_useable = {
+            execution_id: {
+                node: {n: 0 for n in self.nodes} for node in self.nodes
+            }
+        }
+
+    def _increment_time(self, time_scale, execution_id=None):
+        if execution_id is None:
+            execution_id = self.default_execution_id
+
         for ts in TimeScale:
-            self.times[ts][time_scale] += 1
+            self.times[execution_id][ts][time_scale] += 1
 
-    def _reset_time(self, time_scale):
+    def _reset_time(self, time_scale, execution_id=None):
+        if execution_id is None:
+            execution_id = self.default_execution_id
+
         for ts_scope in TimeScale:
             # reset all the times for the time scale scope up to time_scale
             # this works because the enum is set so that higher granularities of time have lower values
             if ts_scope.value <= time_scale.value:
                 for ts_count in TimeScale:
-                    self.times[ts_scope][ts_count] = 0
+                    self.times[execution_id][ts_scope][ts_count] = 0
 
     def update_termination_conditions(self, termination_conds):
         if termination_conds is not None:
@@ -492,7 +570,7 @@ class Scheduler(object):
     # Run methods
     ################################################################################
 
-    def run(self, termination_conds=None):
+    def run(self, termination_conds=None, execution_id=None, base_execution_id=None):
         '''
         run is a python generator, that when iterated over provides the next `TIME_STEP` of
         executions at each iteration
@@ -503,13 +581,13 @@ class Scheduler(object):
         self._validate_run_state()
         self.update_termination_conditions(termination_conds)
 
-        self.counts_useable = {node: {n: 0 for n in self.nodes} for node in self.nodes}
-        self._reset_counts_total(TimeScale.TRIAL)
-        self._reset_time(TimeScale.TRIAL)
+        self._reset_counts_useable(execution_id)
+        self._reset_counts_total(TimeScale.TRIAL, execution_id)
+        self._reset_time(TimeScale.TRIAL, execution_id)
 
         while not self.termination_conds[TimeScale.TRIAL].is_satisfied() and not self.termination_conds[TimeScale.RUN].is_satisfied():
-            self._reset_counts_total(TimeScale.PASS)
-            self._reset_time(TimeScale.PASS)
+            self._reset_counts_total(TimeScale.PASS, execution_id)
+            self._reset_time(TimeScale.PASS, execution_id)
 
             execution_list_has_changed = False
             cur_index_consideration_queue = 0
@@ -527,7 +605,7 @@ class Scheduler(object):
                     iter(cur_consideration_set)
                 except TypeError as e:
                     raise SchedulerError('cur_consideration_set is not iterable, did you ensure that this Scheduler was instantiated with an actual toposort output for param toposort_ordering? err: {0}'.format(e))
-                logger.debug('trial, num passes in trial {0}, consideration_queue {1}'.format(self.times[TimeScale.TRIAL][TimeScale.PASS], ' '.join([str(x) for x in cur_consideration_set])))
+                logger.debug('trial, num passes in trial {0}, consideration_queue {1}'.format(self.times[execution_id][TimeScale.TRIAL][TimeScale.PASS], ' '.join([str(x) for x in cur_consideration_set])))
 
                 # do-while, on cur_consideration_set_has_changed
                 # we check whether each node in the current consideration set is allowed to run,
@@ -571,7 +649,7 @@ class Scheduler(object):
                     self.execution_list.append(cur_time_step_exec)
                     yield self.execution_list[-1]
 
-                    self._increment_time(TimeScale.TIME_STEP)
+                    self._increment_time(TimeScale.TIME_STEP, execution_id)
 
                 cur_index_consideration_queue += 1
 
@@ -580,13 +658,13 @@ class Scheduler(object):
                 self.execution_list.append(set())
                 yield self.execution_list[-1]
 
-                self._increment_time(TimeScale.TIME_STEP)
+                self._increment_time(TimeScale.TIME_STEP, execution_id)
 
             # can execute the execution_list here
             logger.info(self.execution_list)
             logger.debug('Execution list: [{0}]'.format(' '.join([str(x) for x in self.execution_list])))
-            self._increment_time(TimeScale.PASS)
+            self._increment_time(TimeScale.PASS, execution_id)
 
-        self._increment_time(TimeScale.TRIAL)
+        self._increment_time(TimeScale.TRIAL, execution_id)
 
         return self.execution_list

@@ -1,5 +1,6 @@
 import logging
 import pytest
+import uuid
 
 from PsyNeuLink.Components.Functions.Function import Linear
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
@@ -37,6 +38,30 @@ class TestScheduler:
             A, A, B, A, A, B, A, A, B, C,
         ]
         assert output == pytest.helpers.setify_expected_output(expected_output)
+
+    def test_create_multiple_contexts(self):
+        comp = Composition()
+        A = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='A')
+        comp.add_mechanism(A)
+
+        comp.scheduler_processing._increment_time(TimeScale.TRIAL)
+
+        eid2 = uuid.uuid4()
+        eid3 = uuid.uuid4()
+        comp.scheduler_processing._init_counts(execution_id=eid2)
+
+        for ts in comp.scheduler_processing.times[eid2]:
+            assert comp.scheduler_processing.times[eid2][ts][TimeScale.TRIAL] == 0
+
+        comp.scheduler_processing._increment_time(TimeScale.TRIAL)
+
+        for ts in comp.scheduler_processing.times[eid2]:
+            assert comp.scheduler_processing.times[eid2][ts][TimeScale.TRIAL] == 0
+
+        comp.scheduler_processing._init_counts(execution_id=eid3, base_execution_id=comp.scheduler_processing.default_execution_id)
+
+        for ts in comp.scheduler_processing.times[eid3]:
+            assert comp.scheduler_processing.times[eid3][ts][TimeScale.TRIAL] == 2
 
 
 class TestLinear:
