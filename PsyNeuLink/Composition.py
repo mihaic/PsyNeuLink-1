@@ -54,7 +54,7 @@ from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP, PULSE
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
-
+from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, FULL_CONNECTIVITY_MATRIX
 
 logger = logging.getLogger(__name__)
 
@@ -451,6 +451,35 @@ class Composition(object):
             self.needs_update_graph_processing = True
             self.needs_update_scheduler_processing = True
             self.needs_update_scheduler_learning = True
+
+    def add_pathway(self, path):
+        '''
+            Adds an existing Pathway to the current Composition
+
+            Arguments
+            ---------
+
+            path: the Pathway (Composition) to be added
+
+        '''
+
+        # identify mechanisms and projections
+        mechanisms, projections = [], []
+        for c in path.graph.vertices:
+            if isinstance(c.component, Mechanism):
+                mechanisms.append(c.component)
+            elif isinstance(c.component, Projection):
+                projections.append(c.component)
+
+        # add all mechanisms first
+        for m in mechanisms:
+            self.add_mechanism(m)
+
+        # then projections
+        for p in projections:
+            self.add_projection(p.sender.owner, p, p.receiver.owner)
+
+        self._analyze_graph()
 
     def _validate_projection(self, sender, projection, receiver):
 
@@ -1003,7 +1032,7 @@ class Composition(object):
         # return the output of the LAST mechanism executed in the composition
         return result
 
-class System(Composition):
+class Systemm(Composition):
     '''
 
             Arguments
@@ -1017,8 +1046,7 @@ class System(Composition):
     '''
 
     def __init__(self):
-        super(System, self).__init__()
-
+        super(Systemm, self).__init__()
 
 class Pathway(Composition):
     '''
@@ -1079,3 +1107,23 @@ class Pathway(Composition):
             else:
                 raise CompositionError("{} is not a projection or mechanism. A linear processing pathway must be made "
                                        "up of projections and mechanisms.".format(pathway[c]))
+
+    def execute(
+        self,
+        inputs,
+        scheduler_processing=None,
+        scheduler_learning=None,
+        execution_id=None,
+        call_before_time_step=None,
+        call_before_pass=None,
+        call_after_time_step=None,
+        call_after_pass=None,
+	    clamp_input = SOFT_CLAMP
+        ):
+
+        if isinstance(inputs, list):
+            inputs = {self.get_mechanisms_by_role(MechanismRole.ORIGIN).pop(): inputs}
+
+        output = super(Pathway, self).execute(inputs)
+        return output
+

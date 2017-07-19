@@ -15,9 +15,10 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.RecurrentTransferMech
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Scheduling.Condition import EveryNCalls, AfterCall, AfterNCalls, EveryNPasses, Any
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
-from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, System, Pathway
+from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, Systemm, Pathway
 from PsyNeuLink.Scheduling.TimeScale import TimeScale, CurrentTime, CentralClock
 from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
+from PsyNeuLink.Components.System import system
 
 logger = logging.getLogger(__name__)
 
@@ -1079,7 +1080,7 @@ class TestClampInput:
         #                                25 + 25 = 50  ==> 50 * 5 = 250
         # 5 * 1 = 5 ----> 5 x 5 = 25 --
 
-        comp = Composition
+        comp = Composition()
         A = RecurrentTransferMechanism(name="A", function=Linear(slope=1.0))
         B = TransferMechanism(name="B", function=Linear(slope=1.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
@@ -1351,9 +1352,9 @@ class TestCallBeforeAfterTimescale:
         assert trial_array == [0, 1, 2, 3]
         assert pass_array == [0, 1, 2, 3]
 
-class TestSystem:
+class TestSystemm:
     def test_run_2_mechanisms_default_input_1(self):
-        sys = System()
+        sys = Systemm()
         A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
         B = TransferMechanism(function=Linear(slope=5.0))
         sys.add_mechanism(A)
@@ -1367,7 +1368,7 @@ class TestSystem:
         assert 25 == output[0][0]
 
     def test_run_2_mechanisms_input_5(self):
-        sys = System()
+        sys = Systemm()
         A = IntegratorMechanism(default_input_value=1.0, function=Linear(slope=5.0))
         B = TransferMechanism(function=Linear(slope=5.0))
         sys.add_mechanism(A)
@@ -1669,3 +1670,111 @@ class TestSystem:
     #     expected_Output_Layer_output = [np.array([0.97988347, 0.97988347, 0.97988347])]
     #
     #     np.testing.assert_allclose(expected_Output_Layer_output, Output_Layer.output_values)
+
+class TestNestedCompositions:
+    def test_one_pathway_inside_one_system(self):
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]]}
+
+        # execute path (just for comparison)
+        print("EXECUTING PATH: ")
+        myPath.execute(inputs=stimulus)
+
+        # create a Systemm | blank slate for composition
+        sys = Systemm()
+
+        # add a Pathway [myPath] to the Systemm [sys]
+        sys.add_pathway(myPath)
+
+        # execute the Systemm
+        output = sys.execute(
+            inputs= stimulus,
+        )
+        assert 8 == output[0][0]
+
+    def test_one_pathway_inside_one_system_old_syntax(self):
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        # Create a system using the old factory method syntax
+        sys = system(processes = [myPath])
+
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 8 == output[0][0]
+
+
+    def test_multiple_paths_inside_one_system(self):
+
+        # mech1 ---> mech2 --
+        #                   --> mech3
+        # mech4 ---> mech5 --
+
+        # 1x2=2 ---> 2x2=4 --
+        #                   --> (4+4)x2=16
+        # 1x2=2 ---> 2x2=4 --
+
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        myPath2 = Pathway()
+        myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myPath.add_linear_processing_pathway([myMech4, myMech5, myMech3])
+        myPath._analyze_graph()
+
+        sys = Systemm()
+        sys.add_pathway(myPath)
+        sys.add_pathway(myPath2)
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]], myMech4: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 16 == output[0][0]
+

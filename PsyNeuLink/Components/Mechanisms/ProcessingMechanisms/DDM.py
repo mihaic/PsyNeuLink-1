@@ -845,8 +845,8 @@ class DDM(ProcessingMechanism_Base):
         """
 
         # PLACEHOLDER for a time_step_size parameter when time_step_mode/Scheduling is implemented:
-        time_step_size = 1.0
-
+        # time_step_size = 1.0
+        #
         if variable is None or np.isnan(variable):
             # IMPLEMENT: MULTIPROCESS DDM:  ??NEED TO DEAL WITH PARTIAL NANS
             variable = self.variableInstanceDefault

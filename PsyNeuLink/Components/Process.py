@@ -352,6 +352,7 @@ from PsyNeuLink.Globals.Registry import register_category
 from PsyNeuLink.Globals.Utilities import append_type_to_name, convert_to_np_array, iscompatible, parameter_spec
 from PsyNeuLink.Scheduling.TimeScale import CentralClock, TimeScale
 
+from PsyNeuLink.Composition import Pathway
 # *****************************************    PROCESS CLASS    ********************************************************
 
 # ProcessRegistry ------------------------------------------------------------------------------------------------------
@@ -504,29 +505,43 @@ def process(process_spec=None,
     #     return ProcessRegistry[process_spec].processSubclass(params=params, context=context)
     #
     # Called with a string that is not in the Registry, so return default type with the name specified by the string
+
+
     if isinstance(process_spec, str):
-        return Process_Base(name=process_spec, params=params, context=context)
+        p = Pathway()
+        p.add_linear_processing_pathway([pathway])
+        p._analyze_graph()
+        return p
 
     # Called with Process specification dict (with type and params as entries within it), so:
     #    - return a Process instantiated using args passed in process_spec
     elif isinstance(process_spec, dict):
-        return Process_Base(context=context, **process_spec)
+        p = Pathway()
+        p.add_linear_processing_pathway([pathway])
+        p._analyze_graph()
+        return p
 
     # Called without a specification, so return Process with default Mechanism
     elif process_spec is None:
-        return Process_Base(default_variable=default_variable,
-                            size=size,
-                            pathway=pathway,
-                            initial_values=initial_values,
-                            clamp_input=clamp_input,
-                            default_projection_matrix=default_projection_matrix,
-                            learning=learning,
-                            learning_rate=learning_rate,
-                            target=target,
-                            params=params,
-                            name=name,
-                            prefs=prefs,
-                            context=context)
+
+        p = Pathway()
+        p.add_linear_processing_pathway(pathway)
+        p._analyze_graph()
+
+        return p
+        # return Process_Base(default_input_value=default_input_value,
+        #                     size=size,
+        #                     pathway=pathway,
+        #                     initial_values=initial_values,
+        #                     clamp_input=clamp_input,
+        #                     default_projection_matrix=default_projection_matrix,
+        #                     learning=learning,
+        #                     learning_rate=learning_rate,
+        #                     target=target,
+        #                     params=params,
+        #                     name=name,
+        #                     prefs=prefs,
+        #                     context=context)
 
     # Can't be anything else, so return empty
     else:
