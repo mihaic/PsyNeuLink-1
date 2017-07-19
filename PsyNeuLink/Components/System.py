@@ -290,7 +290,7 @@ from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Registry import register_category
 from PsyNeuLink.Globals.Utilities import ContentAddressableList, append_type_to_name, convert_to_np_array, iscompatible, parameter_spec
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
-from PsyNeuLink.Scheduling.TimeScale import TimeScale
+from PsyNeuLink.Scheduling.TimeScale import TimeScale, CentralClock
 from PsyNeuLink.Composition import Systemm
 
 logger = logging.getLogger(__name__)
