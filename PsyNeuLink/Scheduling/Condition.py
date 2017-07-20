@@ -622,9 +622,9 @@ class All(Condition):
             if cond.owner is None:
                 cond.owner = value
 
-    def satis(self, *conds):
+    def satis(self, *conds, **kwargs):
         for cond in conds:
-            if not cond.is_satisfied():
+            if not cond.is_satisfied(**kwargs):
                 return False
         return True
 
@@ -669,9 +669,9 @@ class Any(Condition):
             if cond.owner is None:
                 cond.owner = value
 
-    def satis(self, *conds):
+    def satis(self, *conds, **kwargs):
         for cond in conds:
-            if cond.is_satisfied():
+            if cond.is_satisfied(**kwargs):
                 return True
         return False
 
@@ -689,15 +689,20 @@ class Not(Condition):
 
     """
     def __init__(self, condition):
-        super().__init__(lambda c: not c.is_satisfied(), condition)
+        self.condition = condition
+
+        def inner_func(*args, **kwargs):
+            # args_to_pass, kwargs_to_pass = prune_unused_args(condition.func, args, kwargs)
+            return not condition.is_satisfied(*args, **kwargs)
+        super().__init__(inner_func)
 
     @Condition.scheduler.setter
     def scheduler(self, value):
-        self.args[0].scheduler = value
+        self.condition.scheduler = value
 
     @Condition.owner.setter
     def owner(self, value):
-        self.args[0].owner = value
+        self.condition.owner = value
 
 
 class NWhen(Condition):
@@ -715,7 +720,7 @@ class NWhen(Condition):
 
     """
     def __init__(self, condition, n=1):
-        self.satisfactions = 0
+        self.satisfactions = {}
 
         super().__init__(self.satis, condition, n)
 
@@ -727,10 +732,14 @@ class NWhen(Condition):
     def owner(self, value):
         self.args[0].owner = value
 
-    def satis(self, condition, n):
-        if self.satisfactions < n:
-            if condition.is_satisfied():
-                self.satisfactions += 1
+    def satis(self, condition, n, *args, execution_id=None, **kwargs):
+        if execution_id not in self.satisfactions:
+            self.satisfactions[execution_id] = 0
+
+        if self.satisfactions[execution_id] < n:
+            args_to_pass, kwargs_to_pass = prune_unused_args(condition.is_satisfied, args, kwargs)
+            if condition.is_satisfied(*args_to_pass, execution_id=execution_id, **kwargs_to_pass):
+                self.satisfactions[execution_id] += 1
                 return True
         return False
 
@@ -761,11 +770,18 @@ class BeforePass(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
-        def func(n, time_scale):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            return self.scheduler.times[time_scale][TimeScale.PASS] < n
+        def func(n, time_scale, scheduler=None, execution_id=None):
+            try:
+                return scheduler.times[execution_id][time_scale][TimeScale.PASS] < n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, n, time_scale)
 
 
@@ -790,15 +806,19 @@ class AtPass(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
-        def func(n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
+        def func(n, scheduler=None, execution_id=None):
             try:
-                return self.scheduler.times[time_scale][TimeScale.PASS] == n
+                return scheduler.times[execution_id][time_scale][TimeScale.PASS] == n
             except KeyError as e:
-                raise ConditionError('{0}: {1}, is time_scale set correctly? Currently: {2}'.
-                                     format(type(self).__name__, e, time_scale))
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times; (is time_scale set correctly? Currently : {4}: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                        time_scale
+                    )
+                )
         super().__init__(func, n)
 
 
@@ -822,11 +842,18 @@ class AfterPass(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
-        def func(n, time_scale):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            return self.scheduler.times[time_scale][TimeScale.PASS] > n
+        def func(n, time_scale, scheduler=None, execution_id=None):
+            try:
+                return scheduler.times[execution_id][time_scale][TimeScale.PASS] > n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, n, time_scale)
 
 
@@ -846,11 +873,18 @@ class AfterNPasses(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
-        def func(n, time_scale):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            return self.scheduler.times[time_scale][TimeScale.PASS] >= n
+        def func(n, time_scale, scheduler=None, execution_id=None):
+            try:
+                return scheduler.times[execution_id][time_scale][TimeScale.PASS] >= n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, n, time_scale)
 
 
@@ -872,11 +906,19 @@ class EveryNPasses(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
-        def func(n, time_scale):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            return self.scheduler.times[time_scale][TimeScale.PASS] % n == 0
+        def func(n, time_scale, scheduler=None, execution_id=None):
+            try:
+                return scheduler.times[execution_id][time_scale][TimeScale.PASS] % n == 0
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
+
         super().__init__(func, n, time_scale)
 
 
@@ -900,12 +942,9 @@ class BeforeTrial(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.RUN):
-        def func(n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
+        def func(n, scheduler=None, execution_id=None):
             try:
-                return self.scheduler.times[time_scale][TimeScale.TRIAL] < n
+                return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] < n
             except KeyError as e:
                 raise ConditionError('{0}: {1}, is time_scale set correctly? Currently: {2}'.
                                      format(type(self).__name__, e, time_scale))
@@ -932,15 +971,19 @@ class AtTrial(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.RUN):
-        def func(n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
+        def func(n, scheduler=None, execution_id=None):
             try:
-                return self.scheduler.times[time_scale][TimeScale.TRIAL] == n
+                return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] == n
             except KeyError as e:
-                raise ConditionError('{0}: {1}, is time_scale set correctly? Currently: {2}'.
-                                     format(type(self).__name__, e, time_scale))
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times; (is time_scale set correctly? Currently : {4}: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                        time_scale
+                    )
+                )
         super().__init__(func, n)
 
 
@@ -965,15 +1008,19 @@ class AfterTrial(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.RUN):
-        def func(n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
+        def func(n, scheduler=None, execution_id=None):
             try:
-                return self.scheduler.times[time_scale][TimeScale.TRIAL] > n
+                return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] > n
             except KeyError as e:
-                raise ConditionError('{0}: {1}, is time_scale set correctly? Currently: {2}'.
-                                     format(type(self).__name__, e, time_scale))
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times; (is time_scale set correctly? Currently : {4}: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                        time_scale
+                    )
+                )
         super().__init__(func, n)
 
 
@@ -992,11 +1039,18 @@ class AfterNTrials(Condition):
 
     """
     def __init__(self, n, time_scale=TimeScale.RUN):
-        def func(n, time_scale):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            return self.scheduler.times[time_scale][TimeScale.TRIAL] >= n
+        def func(n, time_scale, scheduler=None, execution_id=None):
+            try:
+                return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] >= n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, n, time_scale)
 
 ######################################################################
@@ -1024,13 +1078,20 @@ class BeforeNCalls(Condition):
 
     """
     def __init__(self, dependency, n, time_scale=TimeScale.TRIAL):
-        def func(dependency, n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            num_calls = self.scheduler.counts_total[time_scale][dependency]
-            logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
-            return num_calls < n
+        def func(dependency, n, scheduler=None, execution_id=None):
+            try:
+                num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
+                logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
+                return num_calls < n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, dependency, n)
 
 # NOTE:
@@ -1059,13 +1120,20 @@ class AtNCalls(Condition):
 
     """
     def __init__(self, dependency, n, time_scale=TimeScale.TRIAL):
-        def func(dependency, n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            num_calls = self.scheduler.counts_total[time_scale][dependency]
-            logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
-            return num_calls == n
+        def func(dependency, n, scheduler=None, execution_id=None):
+            try:
+                num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
+                logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
+                return num_calls == n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, dependency, n)
 
 
@@ -1088,13 +1156,20 @@ class AfterCall(Condition):
 
     """
     def __init__(self, dependency, n, time_scale=TimeScale.TRIAL):
-        def func(dependency, n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            num_calls = self.scheduler.counts_total[time_scale][dependency]
-            logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
-            return num_calls > n
+        def func(dependency, n, scheduler=None, execution_id=None):
+            try:
+                num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
+                logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
+                return num_calls > n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, dependency, n)
 
 
@@ -1117,13 +1192,20 @@ class AfterNCalls(Condition):
 
     """
     def __init__(self, dependency, n, time_scale=TimeScale.TRIAL):
-        def func(dependency, n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            num_calls = self.scheduler.counts_total[time_scale][dependency]
-            logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
-            return num_calls >= n
+        def func(dependency, n, scheduler=None, execution_id=None):
+            try:
+                num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
+                logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
+                return num_calls >= n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, dependency, n)
 
 
@@ -1150,17 +1232,24 @@ class AfterNCallsCombined(Condition):
     def __init__(self, *dependencies, n=None, time_scale=TimeScale.TRIAL):
         logger.debug('{0} args: deps {1}, n {2}, ts {3}'.format(type(self).__name__, dependencies, n, time_scale))
 
-        def func(*dependencies, n=None):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
+        def func(*dependencies, n=None, scheduler=None, execution_id=None):
             if n is None:
                 raise ConditionError('{0}: required keyword argument n is None'.format(type(self).__name__))
             count_sum = 0
             for d in dependencies:
-                count_sum += self.scheduler.counts_total[time_scale][d]
-                logger.debug('{0} has reached {1} num_calls in {2}'.
-                             format(d, self.scheduler.counts_total[time_scale][d], time_scale.name))
+                try:
+                    count_sum += scheduler.counts_total[execution_id][time_scale][d]
+                    logger.debug('{0} has reached {1} num_calls in {2}'.
+                                 format(d, scheduler.counts_total[execution_id][time_scale][d], time_scale.name))
+                except KeyError as e:
+                    raise ConditionError(
+                        '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                            type(self).__name__,
+                            scheduler,
+                            execution_id,
+                            e,
+                        )
+                    )
             return count_sum >= n
         super().__init__(func, *dependencies, n=n)
 
@@ -1201,13 +1290,18 @@ class EveryNCalls(Condition):
 
     """
     def __init__(self, dependency, n):
-        def func(dependency, n):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
-            num_calls = self.scheduler.counts_useable[dependency][self.owner]
-            logger.debug('{0} has reached {1} num_calls'.format(dependency, num_calls))
-            return num_calls >= n
+        def func(dependency, n, scheduler=None, execution_id=None):
+            try:
+                num_calls = scheduler.counts_useable[execution_id][dependency][self.owner] % n == 0
+                logger.debug('{0} has reached {1} num_calls'.format(dependency, num_calls))
+                return num_calls >= n
+            except KeyError as e:
+                raise ConditionError(
+                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.counts_useable'.format(
+                        type(self).__name__
+                    )
+                )
+
         super().__init__(func, dependency, n)
 
 
@@ -1230,15 +1324,15 @@ class JustRan(Condition):
 
     """
     def __init__(self, dependency):
-        def func(dependency):
+        def func(dependency, scheduler=None, execution_id=None):
             if self.scheduler is None:
                 raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
                                      format(type(self).__name__))
             logger.debug('checking if {0} in previous execution step set'.format(dependency))
             try:
-                return dependency in self.scheduler.execution_list[-1]
+                return dependency in scheduler.execution_list[execution_id][-1]
             except TypeError:
-                return dependency == self.scheduler.execution_list[-1]
+                return dependency == scheduler.execution_list[execution_id][-1]
         super().__init__(func, dependency)
 
 
@@ -1259,14 +1353,11 @@ class AllHaveRun(Condition):
 
     """
     def __init__(self, *dependencies, time_scale=TimeScale.TRIAL):
-        def func(*dependencies):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
+        def func(*dependencies, scheduler=None, execution_id=None):
             if len(dependencies) == 0:
-                dependencies = self.scheduler.nodes
+                dependencies = scheduler.nodes
             for d in dependencies:
-                if self.scheduler.counts_total[time_scale][d] < 1:
+                if scheduler.counts_total[execution_id][time_scale][d] < 1:
                     return False
             return True
         super().__init__(func, *dependencies)

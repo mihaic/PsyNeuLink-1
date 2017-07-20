@@ -356,8 +356,10 @@ class Scheduler(object):
         :param condition_set: (ConditionSet) - a :keyword:`ConditionSet` to be scheduled
         '''
         self.condition_set = condition_set if condition_set is not None else ConditionSet(scheduler=self)
+
+        self.default_execution_id = uuid.uuid4()
         # stores the in order list of self.run's yielded outputs
-        self.execution_list = []
+        self.execution_list = {self.default_execution_id: []}
         self.consideration_queue = []
         self.termination_conds = {
             TimeScale.RUN: Never(),
@@ -383,8 +385,6 @@ class Scheduler(object):
                         self.nodes.append(node)
         else:
             raise SchedulerError('Must instantiate a Scheduler with either a System (kwarg system) or a graph dependency dict (kwarg graph)')
-
-        self.default_execution_id = uuid.uuid4()
 
         self.times = {}
         self.counts_total = {}
@@ -480,6 +480,12 @@ class Scheduler(object):
             self.counts_useable[execution_id] = {
                 node: {n: 0 for n in self.nodes} for node in self.nodes
             }
+
+        if execution_id not in self.execution_list:
+            if base_execution_id is not None:
+                self.execution_list[execution_id] = list(self.execution_list[base_execution_id])
+            else:
+                self.execution_list[execution_id] = []
 
     def _reset_counts_total(self, time_scale, execution_id=None):
         if execution_id is None:
@@ -581,11 +587,19 @@ class Scheduler(object):
         self._validate_run_state()
         self.update_termination_conditions(termination_conds)
 
+        if execution_id is None:
+            execution_id = self.default_execution_id
+
+        self._init_counts(execution_id=execution_id)
+
         self._reset_counts_useable(execution_id)
         self._reset_counts_total(TimeScale.TRIAL, execution_id)
         self._reset_time(TimeScale.TRIAL, execution_id)
 
-        while not self.termination_conds[TimeScale.TRIAL].is_satisfied() and not self.termination_conds[TimeScale.RUN].is_satisfied():
+        while (
+            not self.termination_conds[TimeScale.TRIAL].is_satisfied(scheduler=self, execution_id=execution_id)
+            and not self.termination_conds[TimeScale.RUN].is_satisfied(scheduler=self, execution_id=execution_id)
+        ):
             self._reset_counts_total(TimeScale.PASS, execution_id)
             self._reset_time(TimeScale.PASS, execution_id)
 
@@ -594,8 +608,8 @@ class Scheduler(object):
 
             while (
                 cur_index_consideration_queue < len(self.consideration_queue)
-                and not self.termination_conds[TimeScale.TRIAL].is_satisfied()
-                and not self.termination_conds[TimeScale.RUN].is_satisfied()
+                and not self.termination_conds[TimeScale.TRIAL].is_satisfied(scheduler=self, execution_id=execution_id)
+                and not self.termination_conds[TimeScale.RUN].is_satisfied(scheduler=self, execution_id=execution_id)
             ):
                 # all nodes to be added during this time step
                 cur_time_step_exec = set()
@@ -614,15 +628,15 @@ class Scheduler(object):
                     cur_consideration_set_has_changed = False
                     for current_node in cur_consideration_set:
                         logger.debug('cur time_step exec: {0}'.format(cur_time_step_exec))
-                        for n in self.counts_useable:
+                        for n in self.counts_useable[execution_id]:
                             logger.debug('Counts of {0} useable by'.format(n))
-                            for n2 in self.counts_useable[n]:
-                                logger.debug('\t{0}: {1}'.format(n2, self.counts_useable[n][n2]))
+                            for n2 in self.counts_useable[execution_id][n]:
+                                logger.debug('\t{0}: {1}'.format(n2, self.counts_useable[execution_id][n][n2]))
 
                         # only add each node once during a single time step, this also serves
                         # to prevent infinitely cascading adds
                         if current_node not in cur_time_step_exec:
-                            if self.condition_set.conditions[current_node].is_satisfied():
+                            if self.condition_set.conditions[current_node].is_satisfied(scheduler=self, execution_id=execution_id):
                                 logger.debug('adding {0} to execution list'.format(current_node))
                                 logger.debug('cur time_step exec pre add: {0}'.format(cur_time_step_exec))
                                 cur_time_step_exec.add(current_node)
@@ -631,23 +645,23 @@ class Scheduler(object):
                                 cur_consideration_set_has_changed = True
 
                                 for ts in TimeScale:
-                                    self.counts_total[ts][current_node] += 1
+                                    self.counts_total[execution_id][ts][current_node] += 1
                                 # current_node's node is added to the execution queue, so we now need to
                                 # reset all of the counts useable by current_node's node to 0
-                                for n in self.counts_useable:
-                                    self.counts_useable[n][current_node] = 0
+                                for n in self.counts_useable[execution_id]:
+                                    self.counts_useable[execution_id][n][current_node] = 0
                                 # and increment all of the counts of current_node's node useable by other
                                 # nodes by 1
-                                for n in self.counts_useable:
-                                    self.counts_useable[current_node][n] += 1
+                                for n in self.counts_useable[execution_id]:
+                                    self.counts_useable[execution_id][current_node][n] += 1
                     # do-while condition
                     if not cur_consideration_set_has_changed:
                         break
 
                 # add a new time step at each step in a pass, if the time step would not be empty
                 if len(cur_time_step_exec) >= 1:
-                    self.execution_list.append(cur_time_step_exec)
-                    yield self.execution_list[-1]
+                    self.execution_list[execution_id].append(cur_time_step_exec)
+                    yield self.execution_list[execution_id][-1]
 
                     self._increment_time(TimeScale.TIME_STEP, execution_id)
 
@@ -655,16 +669,16 @@ class Scheduler(object):
 
             # if an entire pass occurs with nothing running, add an empty time step
             if not execution_list_has_changed:
-                self.execution_list.append(set())
-                yield self.execution_list[-1]
+                self.execution_list[execution_id].append(set())
+                yield self.execution_list[execution_id][-1]
 
                 self._increment_time(TimeScale.TIME_STEP, execution_id)
 
             # can execute the execution_list here
-            logger.info(self.execution_list)
-            logger.debug('Execution list: [{0}]'.format(' '.join([str(x) for x in self.execution_list])))
+            logger.info(self.execution_list[execution_id])
+            logger.debug('Execution list: [{0}]'.format(' '.join([str(x) for x in self.execution_list[execution_id]])))
             self._increment_time(TimeScale.PASS, execution_id)
 
         self._increment_time(TimeScale.TRIAL, execution_id)
 
-        return self.execution_list
+        return self.execution_list[execution_id]
