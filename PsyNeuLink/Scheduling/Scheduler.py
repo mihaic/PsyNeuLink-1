@@ -432,34 +432,34 @@ class Scheduler(object):
         if execution_id not in self.times:
             self.times[execution_id] = {}
 
-        if base_execution_id is not None:
-            if base_execution_id not in self.times:
-                raise SchedulerError('UUID {0} not in {1}.times'.format(base_execution_id, self))
+            if base_execution_id is not None:
+                if base_execution_id not in self.times:
+                    raise SchedulerError('UUID {0} not in {1}.times'.format(base_execution_id, self))
 
-            self.times[execution_id] = {
-                tsk: {tsv: self.times[base_execution_id][tsk][tsv] for tsv in TimeScale} for tsk in TimeScale
-            }
-        else:
-            self.times[execution_id] = {
-                ts: {ts: 0 for ts in TimeScale} for ts in TimeScale
-            }
+                self.times[execution_id] = {
+                    tsk: {tsv: self.times[base_execution_id][tsk][tsv] for tsv in TimeScale} for tsk in TimeScale
+                }
+            else:
+                self.times[execution_id] = {
+                    ts: {ts: 0 for ts in TimeScale} for ts in TimeScale
+                }
 
         # stores total the number of occurrences of a node through the time scale
         # i.e. the number of times node has ran/been queued to run in a trial
         if execution_id not in self.counts_total:
             self.counts_total[execution_id] = {}
 
-        if base_execution_id is not None:
-            if base_execution_id not in self.counts_total:
-                raise SchedulerError('UUID {0} not in {1}.counts_total'.format(base_execution_id, self))
+            if base_execution_id is not None:
+                if base_execution_id not in self.counts_total:
+                    raise SchedulerError('UUID {0} not in {1}.counts_total'.format(base_execution_id, self))
 
-            self.counts_total[execution_id] = {
-                ts: {n: self.counts_total[base_execution_id][ts][n] for n in self.nodes} for ts in TimeScale
-            }
-        else:
-            self.counts_total[execution_id] = {
-                ts: {n: 0 for n in self.nodes} for ts in TimeScale
-            }
+                self.counts_total[execution_id] = {
+                    ts: {n: self.counts_total[base_execution_id][ts][n] for n in self.nodes} for ts in TimeScale
+                }
+            else:
+                self.counts_total[execution_id] = {
+                    ts: {n: 0 for n in self.nodes} for ts in TimeScale
+                }
 
         # counts_useable is a dictionary intended to store the number of available "instances" of a certain node that
         # are available to expend in order to satisfy conditions such as "run B every two times A runs"
@@ -469,17 +469,17 @@ class Scheduler(object):
         if execution_id not in self.counts_useable:
             self.counts_useable[execution_id] = {}
 
-        if base_execution_id is not None:
-            if base_execution_id not in self.counts_useable:
-                raise SchedulerError('UUID {0} not in {1}.counts_useable'.format(base_execution_id, self))
+            if base_execution_id is not None:
+                if base_execution_id not in self.counts_useable:
+                    raise SchedulerError('UUID {0} not in {1}.counts_useable'.format(base_execution_id, self))
 
-            self.counts_useable[execution_id] = {
-                node: {n: self.counts_useable[base_execution_id][node][n] for n in self.nodes} for node in self.nodes
-            }
-        else:
-            self.counts_useable[execution_id] = {
-                node: {n: 0 for n in self.nodes} for node in self.nodes
-            }
+                self.counts_useable[execution_id] = {
+                    node: {n: self.counts_useable[base_execution_id][node][n] for n in self.nodes} for node in self.nodes
+                }
+            else:
+                self.counts_useable[execution_id] = {
+                    node: {n: 0 for n in self.nodes} for node in self.nodes
+                }
 
         if execution_id not in self.execution_list:
             if base_execution_id is not None:
@@ -589,8 +589,6 @@ class Scheduler(object):
 
         if execution_id is None:
             execution_id = self.default_execution_id
-
-        self._init_counts(execution_id=execution_id)
 
         self._reset_counts_useable(execution_id)
         self._reset_counts_total(TimeScale.TRIAL, execution_id)
