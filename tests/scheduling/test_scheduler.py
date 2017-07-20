@@ -253,7 +253,7 @@ class TestLinear:
                 scheduler_processing=sched,
                 termination_processing=termination_conds
         )
-        output = sched.execution_list
+        output = sched.execution_list[comp._execution_id]
 
         expected_output = [
             A, A, A, A, A, B, C, B, C, B, C,

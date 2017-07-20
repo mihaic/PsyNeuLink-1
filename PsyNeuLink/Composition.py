@@ -840,7 +840,7 @@ class Composition(object):
         if call_before_pass:
             call_before_pass()
 
-        for next_execution_set in execution_scheduler.run():
+        for next_execution_set in execution_scheduler.run(execution_id=execution_id):
             if call_after_pass:
                 if next_pass_after == execution_scheduler.times[execution_id][TimeScale.TRIAL][TimeScale.PASS]:
                     logger.debug('next_pass_after {0}\tscheduler pass {1}'.format(next_pass_after, execution_scheduler.times[execution_id][TimeScale.TRIAL][TimeScale.PASS]))
