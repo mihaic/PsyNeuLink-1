@@ -71,6 +71,7 @@ class TestCondition:
         assert cond.is_satisfied(True)
         assert cond.is_satisfied(False, c=True)
         assert not cond.is_satisfied(False, c=False)
+        assert not cond.is_satisfied(False, c=False, extra_arg=True)
 
     class TestGeneric:
         def test_WhileNot_AtPass(self):

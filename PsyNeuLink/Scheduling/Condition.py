@@ -317,6 +317,7 @@ Class Reference
 
 """
 
+import inspect
 import logging
 
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
@@ -477,7 +478,7 @@ class Condition(object):
         ---------
         args : *args
             specifies additional formal arguments to pass to `func` when the Condition is evaluated.
-            these are added to the **args** specified at instantiation of this Condition
+            these are appended to the **args** specified at instantiation of this Condition
 
         kwargs : **kwargs
             specifies additional keyword arguments to pass to `func` when the Condition is evaluated.
@@ -489,20 +490,45 @@ class Condition(object):
             False - if the Condition is not satisfied
         '''
         logger.debug('Condition ({0}) using scheduler {1}'.format(type(self).__name__, self.scheduler))
-        all_args = self.args + args
-        all_kwargs = self.kwargs.copy()
-        all_kwargs.update(kwargs)
+        args_to_pass = self.args + args
+        kwargs_to_pass = self.kwargs.copy()
+        kwargs_to_pass.update(kwargs)
 
-        has_args = len(all_args) > 0
-        has_kwargs = len(all_kwargs) > 0
+        # use the func signature to filter out arguments that aren't compatible
+        sig = inspect.signature(self.func)
 
-        if has_args and has_kwargs:
-            return self.func(*all_args, **all_kwargs)
-        if has_args:
-            return self.func(*all_args)
-        if has_kwargs:
-            return self.func(**all_kwargs)
-        return self.func()
+        has_args_param = False
+        has_kwargs_param = False
+        count_positional = 0
+        func_kwargs_names = set()
+
+        for name, param in sig.parameters.items():
+            if param.kind is inspect.Parameter.VAR_POSITIONAL:
+                has_args_param = True
+            elif param.kind is inspect.Parameter.VAR_KEYWORD:
+                has_kwargs_param = True
+            elif param.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD or param.kind is inspect.Parameter.KEYWORD_ONLY:
+                if param.default is inspect.Parameter.empty:
+                    count_positional += 1
+                else:
+                    func_kwargs_names.add(name)
+
+        if not has_args_param:
+            num_extra_args = len(args_to_pass) - count_positional
+            if num_extra_args > 0:
+                logger.info('{1} extra arguments specified to Condition {0}, will be ignored (values: {2})'.format(self, num_extra_args, args_to_pass[-num_extra_args:]))
+            args_to_pass = args_to_pass[:count_positional+1]
+
+        if not has_kwargs_param:
+            filtered = set()
+            for kw in kwargs_to_pass:
+                if kw not in func_kwargs_names:
+                    filtered.add(kw)
+            logger.info('{1} extra keyword arguments specified to Condition {0}, will be ignored (values: {2})'.format(self, len(filtered), filtered))
+            for kw in filtered:
+                del kwargs_to_pass[kw]
+
+        return self.func(*args_to_pass, **kwargs_to_pass)
 
 #########################################################################################################
 # Included Conditions
