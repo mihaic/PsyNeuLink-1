@@ -103,6 +103,62 @@ class TestScheduler:
         # pprint.pprint(output)
         assert output == pytest.helpers.setify_expected_output(expected_output)
 
+    def test_one_composition_two_contexts(self):
+        comp = Composition()
+        A = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='A')
+        comp.add_mechanism(A)
+
+        sched = Scheduler(composition=comp)
+
+        sched.add_condition(A, BeforeNCalls(A, 5, time_scale=TimeScale.LIFE))
+
+        termination_conds = {}
+        termination_conds[TimeScale.RUN] = AfterNTrials(6)
+        termination_conds[TimeScale.TRIAL] = AfterNPasses(1)
+        eid = uuid.uuid4()
+        comp.run(
+            inputs={A: range(6)},
+            scheduler_processing=sched,
+            termination_processing=termination_conds,
+            execution_id=eid,
+        )
+        output = sched.execution_list[eid]
+
+        expected_output = [
+            A, A, A, A, A, set()
+        ]
+        # pprint.pprint(output)
+        assert output == pytest.helpers.setify_expected_output(expected_output)
+
+        comp.run(
+            inputs={A: range(6)},
+            scheduler_processing=sched,
+            termination_processing=termination_conds,
+            execution_id=eid,
+        )
+        output = sched.execution_list[eid]
+
+        expected_output = [
+            A, A, A, A, A, set(), set(), set(), set(), set(), set(), set()
+        ]
+        # pprint.pprint(output)
+        assert output == pytest.helpers.setify_expected_output(expected_output)
+
+        eid2 = uuid.uuid4()
+        comp.run(
+            inputs={A: range(6)},
+            scheduler_processing=sched,
+            termination_processing=termination_conds,
+            execution_id=eid2,
+        )
+        output = sched.execution_list[eid2]
+
+        expected_output = [
+            A, A, A, A, A, set()
+        ]
+        # pprint.pprint(output)
+        assert output == pytest.helpers.setify_expected_output(expected_output)
+
 
 class TestLinear:
 

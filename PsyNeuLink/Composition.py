@@ -978,8 +978,8 @@ class Composition(object):
 
         input_indices = range(len_inputs)
 
-        scheduler_processing._reset_counts_total(TimeScale.RUN)
-        scheduler_processing._reset_time(TimeScale.RUN)
+        scheduler_processing._reset_counts_total(TimeScale.RUN, execution_id)
+        scheduler_processing._reset_time(TimeScale.RUN, execution_id)
 
         # TBI: Handle learning graph
 
