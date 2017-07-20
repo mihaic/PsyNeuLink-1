@@ -1124,6 +1124,8 @@ class Pathway(Composition):
         if isinstance(inputs, list):
             inputs = {self.get_mechanisms_by_role(MechanismRole.ORIGIN).pop(): inputs}
 
-        output = super(Pathway, self).execute(inputs)
+        output = super(Pathway, self).execute(inputs, scheduler_processing, scheduler_learning, execution_id,
+                                              call_after_time_step, call_before_pass, call_after_time_step,
+                                              call_after_pass, clamp_input)
         return output
 
