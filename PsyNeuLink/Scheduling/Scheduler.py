@@ -503,10 +503,8 @@ class Scheduler(object):
         if execution_id is None:
             execution_id = self.default_execution_id
 
-        self.counts_useable = {
-            execution_id: {
-                node: {n: 0 for n in self.nodes} for node in self.nodes
-            }
+        self.counts_useable[execution_id] = {
+            node: {n: 0 for n in self.nodes} for node in self.nodes
         }
 
     def _increment_time(self, time_scale, execution_id=None):
