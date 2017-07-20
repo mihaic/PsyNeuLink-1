@@ -1292,7 +1292,7 @@ class EveryNCalls(Condition):
     def __init__(self, dependency, n):
         def func(dependency, n, scheduler=None, execution_id=None):
             try:
-                num_calls = scheduler.counts_useable[execution_id][dependency][self.owner] % n == 0
+                num_calls = scheduler.counts_useable[execution_id][dependency][self.owner]
                 logger.debug('{0} has reached {1} num_calls'.format(dependency, num_calls))
                 return num_calls >= n
             except KeyError as e:
