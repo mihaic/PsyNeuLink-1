@@ -319,6 +319,7 @@ class Composition(object):
         self._graph_processing = None
         self.mechanisms = []
         self.input_mechanisms = {}
+        self.execution_ids = []
 
         self._scheduler_processing = None
         self._scheduler_learning = None
@@ -746,7 +747,7 @@ class Composition(object):
             else:
                 self.input_mechanisms[mech]._output_states[0].value = np.array(mech.variable)
 
-    def _assign_execution_ids(self, execution_id):
+    def _assign_execution_ids(self, execution_id=None):
         '''
             assigns the same uuid to each mechanism in the composition's processing graph as well as all input
             mechanisms for this composition. The uuid is either specified in the user's call to run(), or generated
@@ -754,12 +755,21 @@ class Composition(object):
         '''
 
         # Traverse processing graph and assign one uuid to all of its mechanisms
-        self._execution_id = execution_id or self._get_unique_id()
+        if execution_id is None:
+            execution_id = self._get_unique_id()
+
+        if execution_id not in self.execution_ids:
+            self.execution_ids.append(execution_id)
+
         for v in self._graph_processing.vertices:
-            v.component._execution_id = self._execution_id
+            v.component._execution_id = execution_id
+
         # Assign the uuid to all input mechanisms
         for k in self.input_mechanisms.keys():
-            self.input_mechanisms[k]._execution_id = self._execution_id
+            self.input_mechanisms[k]._execution_id = execution_id
+
+        self._execution_id = execution_id
+        return execution_id
 
     def execute(
         self,
@@ -820,7 +830,7 @@ class Composition(object):
 
         self._create_input_mechanisms()
         self._assign_values_to_input_mechanisms(inputs)
-        self._assign_execution_ids(execution_id)
+        execution_id = self._assign_execution_ids(execution_id)
         next_pass_before = 1
         next_pass_after = 1
         # run scheduler to receive sets of mechanisms that may be executed at this time step in any order
@@ -832,15 +842,15 @@ class Composition(object):
 
         for next_execution_set in execution_scheduler.run():
             if call_after_pass:
-                if next_pass_after == execution_scheduler.times[TimeScale.TRIAL][TimeScale.PASS]:
-                    logger.debug('next_pass_after {0}\tscheduler pass {1}'.format(next_pass_after, execution_scheduler.times[TimeScale.TRIAL][TimeScale.PASS]))
+                if next_pass_after == execution_scheduler.times[execution_id][TimeScale.TRIAL][TimeScale.PASS]:
+                    logger.debug('next_pass_after {0}\tscheduler pass {1}'.format(next_pass_after, execution_scheduler.times[execution_id][TimeScale.TRIAL][TimeScale.PASS]))
                     call_after_pass()
                     next_pass_after += 1
 
             if call_before_pass:
-                if next_pass_before == execution_scheduler.times[TimeScale.TRIAL][TimeScale.PASS]:
+                if next_pass_before == execution_scheduler.times[execution_id][TimeScale.TRIAL][TimeScale.PASS]:
                     call_before_pass()
-                    logger.debug('next_pass_before {0}\tscheduler pass {1}'.format(next_pass_before, execution_scheduler.times[TimeScale.TRIAL][TimeScale.PASS]))
+                    logger.debug('next_pass_before {0}\tscheduler pass {1}'.format(next_pass_before, execution_scheduler.times[execution_id][TimeScale.TRIAL][TimeScale.PASS]))
                     next_pass_before += 1
 
             if call_before_time_step:
@@ -937,6 +947,10 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
+        execution_id = self._assign_execution_ids(execution_id)
+
+        scheduler_processing._init_counts(execution_id=execution_id)
+        scheduler_learning._init_counts(execution_id=execution_id)
         scheduler_processing.update_termination_conditions(termination_processing)
         scheduler_learning.update_termination_conditions(termination_learning)
 
@@ -975,7 +989,7 @@ class Composition(object):
         for input_index in input_indices:
             if call_before_trial:
                 call_before_trial()
-            if scheduler_processing.termination_conds[TimeScale.RUN].is_satisfied():
+            if scheduler_processing.termination_conds[TimeScale.RUN].is_satisfied(scheduler=scheduler_processing, execution_id=execution_id):
                 break
 
             execution_inputs = {}
@@ -1001,7 +1015,7 @@ class Composition(object):
             if call_after_trial:
                 call_after_trial()
 
-        scheduler_processing._increment_time(TimeScale.RUN)
+        scheduler_processing._increment_time(TimeScale.RUN, execution_id=execution_id)
 
         # return the output of the LAST mechanism executed in the composition
         return result
