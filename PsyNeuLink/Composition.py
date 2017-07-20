@@ -835,6 +835,7 @@ class Composition(object):
         next_pass_after = 1
         # run scheduler to receive sets of mechanisms that may be executed at this time step in any order
         execution_scheduler = scheduler_processing
+        execution_scheduler._init_counts(execution_id=execution_id)
         num = None
 
         if call_before_pass:
