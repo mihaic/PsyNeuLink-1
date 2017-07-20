@@ -5,7 +5,7 @@ from PsyNeuLink.Components.Functions.Function import Linear
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Composition import Composition
-from PsyNeuLink.Scheduling.Condition import AfterCall, AfterNCalls, AfterNCallsCombined, AfterNPasses, AfterNTrials, AfterPass, AfterTrial, All, AllHaveRun, Always, Any, AtPass, AtTrial, BeforeNCalls, BeforePass, BeforeTrial, Condition, EveryNCalls, EveryNPasses, NWhen, Not, WhenFinished, WhenFinishedAll, WhenFinishedAny, WhileNot
+from PsyNeuLink.Scheduling.Condition import AfterCall, AfterNCalls, AfterNCallsCombined, AfterNPasses, AfterNTrials, AfterPass, AfterTrial, All, AllHaveRun, Always, Any, AtPass, AtTrial, BeforeNCalls, BeforePass, BeforeTrial, Condition, EveryNCalls, EveryNPasses, NWhen, Not, WhenFinished, WhenFinishedAll, WhenFinishedAny, While, WhileNot
 from PsyNeuLink.Scheduling.Condition import ConditionError, ConditionSet
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
@@ -80,7 +80,7 @@ class TestCondition:
             comp.add_mechanism(A)
 
             sched = Scheduler(composition=comp)
-            sched.add_condition(A, WhileNot(lambda sched: sched.times[TimeScale.RUN][TimeScale.PASS] == 0, sched))
+            sched.add_condition(A, WhileNot(lambda scheduler, execution_id: scheduler.times[execution_id][TimeScale.RUN][TimeScale.PASS] == 0))
 
             termination_conds = {}
             termination_conds[TimeScale.RUN] = AfterNTrials(1)
@@ -96,7 +96,7 @@ class TestCondition:
             comp.add_mechanism(A)
 
             sched = Scheduler(composition=comp)
-            sched.add_condition(A, WhileNot(lambda sched: sched.times[TimeScale.RUN][TimeScale.PASS] == 2, sched))
+            sched.add_condition(A, WhileNot(lambda scheduler, execution_id: scheduler.times[execution_id][TimeScale.RUN][TimeScale.PASS] == 2))
 
             termination_conds = {}
             termination_conds[TimeScale.RUN] = AfterNTrials(1)
@@ -104,6 +104,34 @@ class TestCondition:
             output = list(sched.run(termination_conds=termination_conds))
 
             expected_output = [A, A, set(), A, A]
+            assert output == pytest.helpers.setify_expected_output(expected_output)
+
+        def test_WhileNot_is_finished(self):
+            comp = Composition()
+            A = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='A')
+            comp.add_mechanism(A)
+
+            sched = Scheduler(composition=comp)
+            sched.add_condition(A, WhileNot(lambda: A.is_finished))
+
+            A.is_finished = False
+            output = list(sched.run())
+
+            expected_output = [A]
+            assert output == pytest.helpers.setify_expected_output(expected_output)
+
+        def test_While_not_is_finished(self):
+            comp = Composition()
+            A = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='A')
+            comp.add_mechanism(A)
+
+            sched = Scheduler(composition=comp)
+            sched.add_condition(A, While(lambda: not A.is_finished))
+
+            A.is_finished = False
+            output = list(sched.run())
+
+            expected_output = [A]
             assert output == pytest.helpers.setify_expected_output(expected_output)
 
     class TestRelative:
