@@ -6,7 +6,7 @@ from PsyNeuLink.Components.Functions.Function import Linear
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Composition import Composition
-from PsyNeuLink.Scheduling.Condition import AfterNCalls, AfterNTrials, AfterPass, All, Always, Any, AtPass, BeforePass, ConditionSet, EveryNCalls, EveryNPasses, JustRan, WhenFinished
+from PsyNeuLink.Scheduling.Condition import AfterNCalls, AfterNPasses, AfterNTrials, AfterPass, All, Always, Any, AtPass, BeforeNCalls, BeforePass, ConditionSet, EveryNCalls, EveryNPasses, JustRan, WhenFinished
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
@@ -62,6 +62,46 @@ class TestScheduler:
 
         for ts in comp.scheduler_processing.times[eid3]:
             assert comp.scheduler_processing.times[eid3][ts][TimeScale.TRIAL] == 2
+
+    def test_two_compositions_one_scheduler(self):
+        comp1 = Composition()
+        comp2 = Composition()
+        A = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='A')
+        comp1.add_mechanism(A)
+        comp2.add_mechanism(A)
+
+        sched = Scheduler(composition=comp1)
+
+        sched.add_condition(A, BeforeNCalls(A, 5, time_scale=TimeScale.LIFE))
+
+        termination_conds = {}
+        termination_conds[TimeScale.RUN] = AfterNTrials(6)
+        termination_conds[TimeScale.TRIAL] = AfterNPasses(1)
+        comp1.run(
+            inputs={A: range(6)},
+            scheduler_processing=sched,
+            termination_processing=termination_conds
+        )
+        output = sched.execution_list[comp1._execution_id]
+
+        expected_output = [
+            A, A, A, A, A, set()
+        ]
+        # pprint.pprint(output)
+        assert output == pytest.helpers.setify_expected_output(expected_output)
+
+        comp2.run(
+            inputs={A: range(6)},
+            scheduler_processing=sched,
+            termination_processing=termination_conds
+        )
+        output = sched.execution_list[comp2._execution_id]
+
+        expected_output = [
+            A, A, A, A, A, set()
+        ]
+        # pprint.pprint(output)
+        assert output == pytest.helpers.setify_expected_output(expected_output)
 
 
 class TestLinear:
