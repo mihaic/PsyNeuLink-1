@@ -5,7 +5,7 @@ from PsyNeuLink.Components.Functions.Function import Linear
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Composition import Composition
-from PsyNeuLink.Scheduling.Condition import AfterCall, AfterNCalls, AfterNCallsCombined, AfterNPasses, AfterNTrials, AfterPass, AfterTrial, All, AllHaveRun, Always, Any, AtPass, AtTrial, BeforeNCalls, BeforePass, BeforeTrial, EveryNCalls, EveryNPasses, NWhen, Not, WhenFinished, WhenFinishedAll, WhenFinishedAny, WhileNot
+from PsyNeuLink.Scheduling.Condition import AfterCall, AfterNCalls, AfterNCallsCombined, AfterNPasses, AfterNTrials, AfterPass, AfterTrial, All, AllHaveRun, Always, Any, AtPass, AtTrial, BeforeNCalls, BeforePass, BeforeTrial, Condition, EveryNCalls, EveryNPasses, NWhen, Not, WhenFinished, WhenFinishedAll, WhenFinishedAny, WhileNot
 from PsyNeuLink.Scheduling.Condition import ConditionError, ConditionSet
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
@@ -34,6 +34,44 @@ class TestCondition:
     def test_invalid_input_WhenFinishedAll_2(self):
         with pytest.raises(ConditionError):
             WhenFinished({None}).is_satisfied()
+
+    def test_additional_args(self):
+        class OneSatisfied(Condition):
+            def __init__(self, a):
+                def func(a, b):
+                    return a or b
+                super().__init__(func, a)
+
+        cond = OneSatisfied(True)
+        assert cond.is_satisfied(True)
+        assert cond.is_satisfied(False)
+
+        cond = OneSatisfied(False)
+        assert cond.is_satisfied(True)
+        assert not cond.is_satisfied(False)
+
+    def test_additional_kwargs(self):
+        class OneSatisfied(Condition):
+            def __init__(self, a, c=True):
+                def func(a, b, c=True):
+                    return a or b or c
+                super().__init__(func, a, c=True)
+
+        cond = OneSatisfied(True)
+        assert cond.is_satisfied(True)
+        assert cond.is_satisfied(False, c=True)
+        assert cond.is_satisfied(False, c=False)
+
+        cond = OneSatisfied(True, c=False)
+        assert cond.is_satisfied(True)
+        assert cond.is_satisfied(False, c=True)
+        assert cond.is_satisfied(False, c=False)
+
+        cond = OneSatisfied(False)
+        assert cond.is_satisfied(True)
+        assert cond.is_satisfied(False, c=True)
+        assert not cond.is_satisfied(False, c=False)
+        assert not cond.is_satisfied(False, c=False, extra_arg=True)
 
     class TestGeneric:
         def test_WhileNot_AtPass(self):
