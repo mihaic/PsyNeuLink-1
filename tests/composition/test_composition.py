@@ -1064,26 +1064,26 @@ class TestCallBeforeAfterTimescale:
         trial_array = []
         pass_array = []
 
-        def cb_timestep(scheduler, arr):
+        def cb_timestep(composition, scheduler, arr):
             def record_timestep():
 
-                arr.append(scheduler.times[TimeScale.TIME_STEP][TimeScale.TIME_STEP])
+                arr.append(scheduler.times[composition._execution_id][TimeScale.TIME_STEP][TimeScale.TIME_STEP])
 
             return record_timestep
 
-        def cb_pass(scheduler, arr):
+        def cb_pass(composition, scheduler, arr):
 
             def record_pass():
 
-                arr.append(scheduler.times[TimeScale.RUN][TimeScale.PASS])
+                arr.append(scheduler.times[composition._execution_id][TimeScale.RUN][TimeScale.PASS])
 
             return record_pass
 
-        def cb_trial(scheduler, arr):
+        def cb_trial(composition, scheduler, arr):
 
             def record_trial():
 
-                arr.append(scheduler.times[TimeScale.LIFE][TimeScale.TRIAL])
+                arr.append(scheduler.times[composition._execution_id][TimeScale.LIFE][TimeScale.TRIAL])
 
             return record_trial
 
@@ -1101,9 +1101,9 @@ class TestCallBeforeAfterTimescale:
         comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched,
-            call_before_time_step=cb_timestep(sched, time_step_array),
-            call_before_trial=cb_trial(sched, trial_array),
-            call_before_pass=cb_pass(sched, pass_array)
+            call_before_time_step=cb_timestep(comp, sched, time_step_array),
+            call_before_trial=cb_trial(comp, sched, trial_array),
+            call_before_pass=cb_pass(comp, sched, pass_array)
         )
 
         assert time_step_array == [0, 1, 0, 1, 0, 1, 0, 1]
