@@ -290,7 +290,8 @@ from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Registry import register_category
 from PsyNeuLink.Globals.Utilities import ContentAddressableList, append_type_to_name, convert_to_np_array, iscompatible, parameter_spec
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
-from PsyNeuLink.Scheduling.TimeScale import CentralClock, TimeScale
+from PsyNeuLink.Scheduling.TimeScale import TimeScale, CentralClock
+from PsyNeuLink.Composition import Systemm
 
 logger = logging.getLogger(__name__)
 
@@ -476,22 +477,12 @@ def system(default_variable=None,
     if not processes:
         processes = [process()]
 
-    return System_Base(default_variable=default_variable,
-                       size=size,
-                       processes=processes,
-                       controller=controller,
-                       scheduler=scheduler,
-                       initial_values=initial_values,
-                       enable_controller=enable_controller,
-                       monitor_for_control=monitor_for_control,
-                       control_signals=control_signals,
-                       # learning=learning,
-                       learning_rate=learning_rate,
-                       targets=targets,
-                       params=params,
-                       name=name,
-                       prefs=prefs,
-                       context=context)
+
+    s = Systemm()
+    for p in processes:
+        s.add_pathway(p)
+
+    return s
 
 
 class System_Base(System):
