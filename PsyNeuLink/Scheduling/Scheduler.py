@@ -355,7 +355,7 @@ class Scheduler(object):
         :param composition: (Composition) - the Composition this scheduler is scheduling for
         :param condition_set: (ConditionSet) - a :keyword:`ConditionSet` to be scheduled
         '''
-        self.condition_set = condition_set if condition_set is not None else ConditionSet(scheduler=self)
+        self.condition_set = condition_set if condition_set is not None else ConditionSet()
 
         self.default_execution_id = uuid.uuid4()
         # stores the in order list of self.run's yielded outputs
@@ -529,9 +529,6 @@ class Scheduler(object):
         if termination_conds is not None:
             logger.info('Specified termination_conds {0} overriding {1}'.format(termination_conds, self.termination_conds))
             self.termination_conds.update(termination_conds)
-
-        for ts in self.termination_conds:
-            self.termination_conds[ts].scheduler = self
 
     ################################################################################
     # Wrapper methods

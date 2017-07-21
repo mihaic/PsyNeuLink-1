@@ -339,10 +339,6 @@ class ConditionSet(object):
     Arguments
     ---------
 
-    scheduler : Scheduler
-        specifies the `Scheduler` used to evaluate and maintain a record of the information required to
-        evaluate the `Conditions <Condition>`
-
     conditions : dict{`Component`: `Condition`}
         specifies an iterable collection of `Components <Component>` and the `Conditions <Condition>` associated
         with each.
@@ -350,34 +346,17 @@ class ConditionSet(object):
     Attributes
     ----------
 
-    scheduler : Scheduler
-        specifies the `Scheduler` used to evaluate and maintain a record of the information required to
-        evaluate the `Conditions <Condition>`
-
     conditions : dict{`Component`: `Condition`}
         the key of each entry is a `Component`, and its value is the `Condition <Condition>` associated
         with that Component.  Conditions can be added to the
         ConditionSet using the ConditionSet's `add_condition` method.
 
     """
-    def __init__(self, scheduler=None, conditions=None):
+    def __init__(self, conditions=None):
         self.conditions = conditions if conditions is not None else {}
-        self.scheduler = scheduler
 
     def __contains__(self, item):
         return item in self.conditions
-
-    @property
-    def scheduler(self):
-        return self._scheduler
-
-    @scheduler.setter
-    def scheduler(self, value):
-        logger.debug('ConditionSet ({0}) setting scheduler to {1}'.format(type(self).__name__, value))
-        self._scheduler = value
-
-        for owner, cond in self.conditions.items():
-            cond.scheduler = value
 
     def add_condition(self, owner, condition):
         """Add a `Condition` to the ConditionSet. If **owner** already has a Condition, it is overwritten
@@ -394,10 +373,7 @@ class ConditionSet(object):
 
 
         """
-        logger.debug('add_condition: Setting scheduler of {0}, (owner {2}) to self.scheduler ({1})'.
-                     format(condition, self.scheduler, owner))
         condition.owner = owner
-        condition.scheduler = self.scheduler
         self.conditions[owner] = condition
 
     def add_condition_set(self, condition_set):
@@ -436,10 +412,6 @@ class Condition(object):
     Attributes
     ----------
 
-    scheduler : Scheduler
-        the `Scheduler` with which the Condition is associated;  the Scheduler's state is used to evaluate whether
-        the Condition`s specifications are satisfied.
-
     owner (Component):
         the `Component` with which the Condition is associated, and the execution of which it determines.
 
@@ -449,17 +421,7 @@ class Condition(object):
         self.args = args
         self.kwargs = kwargs
 
-        self._scheduler = None
         self._owner = None
-
-    @property
-    def scheduler(self):
-        return self._scheduler
-
-    @scheduler.setter
-    def scheduler(self, value):
-        logger.debug('Condition ({0}) setting scheduler to {1}'.format(type(self).__name__, value))
-        self._scheduler = value
 
     @property
     def owner(self):
@@ -489,7 +451,6 @@ class Condition(object):
             True - if the Condition is satisfied
             False - if the Condition is not satisfied
         '''
-        logger.debug('Condition ({0}) using scheduler {1}'.format(type(self).__name__, self.scheduler))
         args_to_pass = self.args + args
         kwargs_to_pass = self.kwargs.copy()
         kwargs_to_pass.update(kwargs)
@@ -608,13 +569,6 @@ class All(Condition):
     def __init__(self, *args):
         super().__init__(self.satis, *args)
 
-    @Condition.scheduler.setter
-    def scheduler(self, value):
-        for cond in self.args:
-            logger.debug('schedule setter: Setting scheduler of {0} to ({1})'.format(cond, value))
-            if cond.scheduler is None:
-                cond.scheduler = value
-
     @Condition.owner.setter
     def owner(self, value):
         for cond in self.args:
@@ -654,14 +608,6 @@ class Any(Condition):
     def __init__(self, *args):
         super().__init__(self.satis, *args)
 
-    @Condition.scheduler.setter
-    def scheduler(self, value):
-        logger.debug('Any setter args: {0}'.format(self.args))
-        for cond in self.args:
-            logger.debug('schedule setter: Setting scheduler of {0} to ({1})'.format(cond, value))
-            if cond.scheduler is None:
-                cond.scheduler = value
-
     @Condition.owner.setter
     def owner(self, value):
         for cond in self.args:
@@ -696,10 +642,6 @@ class Not(Condition):
             return not condition.is_satisfied(*args, **kwargs)
         super().__init__(inner_func)
 
-    @Condition.scheduler.setter
-    def scheduler(self, value):
-        self.condition.scheduler = value
-
     @Condition.owner.setter
     def owner(self, value):
         self.condition.owner = value
@@ -724,10 +666,6 @@ class NWhen(Condition):
         self.condition = condition
 
         super().__init__(self.satis, condition, n)
-
-    @Condition.scheduler.setter
-    def scheduler(self, value):
-        self.condition.scheduler = value
 
     @Condition.owner.setter
     def owner(self, value):
@@ -1326,9 +1264,6 @@ class JustRan(Condition):
     """
     def __init__(self, dependency):
         def func(dependency, scheduler=None, execution_id=None):
-            if self.scheduler is None:
-                raise ConditionError('{0}: self.scheduler is None - scheduler must be assigned'.
-                                     format(type(self).__name__))
             logger.debug('checking if {0} in previous execution step set'.format(dependency))
             try:
                 return dependency in scheduler.execution_list[execution_id][-1]

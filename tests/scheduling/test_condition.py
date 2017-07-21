@@ -6,7 +6,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism imp
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Composition import Composition
 from PsyNeuLink.Scheduling.Condition import AfterCall, AfterNCalls, AfterNCallsCombined, AfterNPasses, AfterNTrials, AfterPass, AfterTrial, All, AllHaveRun, Always, Any, AtPass, AtTrial, BeforeNCalls, BeforePass, BeforeTrial, Condition, EveryNCalls, EveryNPasses, NWhen, Not, WhenFinished, WhenFinishedAll, WhenFinishedAny, While, WhileNot
-from PsyNeuLink.Scheduling.Condition import ConditionError, ConditionSet
+from PsyNeuLink.Scheduling.Condition import ConditionError
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
@@ -802,30 +802,3 @@ class TestCondition:
             A, A, B, A, A, B, C
         ]
         assert output == pytest.helpers.setify_expected_output(expected_output)
-
-
-class TestConditionSet:
-
-    def test_change_scheduler(self):
-        comp = Composition()
-        A = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='A')
-        B = TransferMechanism(function=Linear(slope=5.0, intercept=2.0), name='B')
-        for m in [A, B]:
-            comp.add_mechanism(m)
-
-        s1 = Scheduler(composition=comp)
-        s2 = Scheduler(composition=comp)
-
-        cs = ConditionSet(s1)
-        cs.add_condition(A, Always())
-        cs.add_condition(B, Always())
-
-        assert cs.scheduler is s1
-        for owner, cond in cs.conditions.items():
-            assert cond.scheduler is s1
-
-        cs.scheduler = s2
-
-        assert cs.scheduler is s2
-        for owner, cond in cs.conditions.items():
-            assert cond.scheduler is s2
