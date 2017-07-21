@@ -50,11 +50,10 @@ from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceMechanism \
     import CompositionInterfaceMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
-from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
 from PsyNeuLink.Components.Projections.Projection import Projection
+from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
-from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, FULL_CONNECTIVITY_MATRIX
 
 logger = logging.getLogger(__name__)
 
@@ -777,9 +776,8 @@ class Composition(object):
         call_after_time_step=None,
         call_after_pass=None,
         execution_id=None,
-	    clamp_input = SOFT_CLAMP
-        ):
-
+        clamp_input=SOFT_CLAMP,
+    ):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
             to receive and execute sets of mechanisms that are eligible to run until termination conditions are met.
@@ -914,7 +912,7 @@ class Composition(object):
         call_after_pass=None,
         call_before_trial=None,
         call_after_trial=None,
-	clamp_input = SOFT_CLAMP
+        clamp_input=SOFT_CLAMP
     ):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
@@ -1035,8 +1033,8 @@ class Composition(object):
                 call_after_time_step,
                 call_after_pass,
                 execution_id,
-		        clamp_input
-                )
+                clamp_input
+            )
 
             if num is not None:
                 result = num
@@ -1048,6 +1046,7 @@ class Composition(object):
 
         # return the output of the LAST mechanism executed in the composition
         return result
+
 
 class Systemm(Composition):
     '''
@@ -1064,6 +1063,7 @@ class Systemm(Composition):
 
     def __init__(self):
         super(Systemm, self).__init__()
+
 
 class Pathway(Composition):
     '''
@@ -1135,14 +1135,21 @@ class Pathway(Composition):
         call_before_pass=None,
         call_after_time_step=None,
         call_after_pass=None,
-	    clamp_input = SOFT_CLAMP
-        ):
+        clamp_input=SOFT_CLAMP,
+    ):
 
         if isinstance(inputs, list):
             inputs = {self.get_mechanisms_by_role(MechanismRole.ORIGIN).pop(): inputs}
 
-        output = super(Pathway, self).execute(inputs, scheduler_processing, scheduler_learning, execution_id,
-                                              call_after_time_step, call_before_pass, call_after_time_step,
-                                              call_after_pass, clamp_input)
+        output = super(Pathway, self).execute(
+            inputs,
+            scheduler_processing,
+            scheduler_learning,
+            execution_id,
+            call_after_time_step,
+            call_before_pass,
+            call_after_time_step,
+            call_after_pass,
+            clamp_input,
+        )
         return output
-
