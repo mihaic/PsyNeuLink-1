@@ -676,9 +676,11 @@ class BeforePass(Condition):
         def func(n, time_scale, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.PASS] < n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -712,14 +714,15 @@ class AtPass(Condition):
         def func(n, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.PASS] == n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times; (is time_scale set correctly? Currently : {4}: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
                         e,
-                        time_scale
                     )
                 )
         super().__init__(func, n)
@@ -748,9 +751,11 @@ class AfterPass(Condition):
         def func(n, time_scale, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.PASS] > n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -779,9 +784,11 @@ class AfterNPasses(Condition):
         def func(n, time_scale, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.PASS] >= n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -812,16 +819,17 @@ class EveryNPasses(Condition):
         def func(n, time_scale, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.PASS] % n == 0
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
                         e,
                     )
                 )
-
         super().__init__(func, n, time_scale)
 
 
@@ -848,9 +856,17 @@ class BeforeTrial(Condition):
         def func(n, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] < n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
-                raise ConditionError('{0}: {1}, is time_scale set correctly? Currently: {2}'.
-                                     format(type(self).__name__, e, time_scale))
+                raise ConditionError(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
+                    )
+                )
         super().__init__(func, n)
 
 
@@ -877,14 +893,15 @@ class AtTrial(Condition):
         def func(n, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] == n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times; (is time_scale set correctly? Currently : {4}: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
                         e,
-                        time_scale
                     )
                 )
         super().__init__(func, n)
@@ -914,14 +931,15 @@ class AfterTrial(Condition):
         def func(n, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] > n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times; (is time_scale set correctly? Currently : {4}: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
                         e,
-                        time_scale
                     )
                 )
         super().__init__(func, n)
@@ -945,9 +963,11 @@ class AfterNTrials(Condition):
         def func(n, time_scale, scheduler=None, execution_id=None):
             try:
                 return scheduler.times[execution_id][time_scale][TimeScale.TRIAL] >= n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.times (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -986,9 +1006,11 @@ class BeforeNCalls(Condition):
                 num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
                 logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
                 return num_calls < n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.counts_total (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -1028,9 +1050,11 @@ class AtNCalls(Condition):
                 num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
                 logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
                 return num_calls == n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.counts_total (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -1064,9 +1088,11 @@ class AfterCall(Condition):
                 num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
                 logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
                 return num_calls > n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.counts_total (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -1100,9 +1126,11 @@ class AfterNCalls(Condition):
                 num_calls = scheduler.counts_total[execution_id][time_scale][dependency]
                 logger.debug('{0} has reached {1} num_calls in {2}'.format(dependency, num_calls, time_scale.name))
                 return num_calls >= n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.counts_total (scheduler: {2}): {3}'.format(
                         type(self).__name__,
                         scheduler,
                         execution_id,
@@ -1144,9 +1172,11 @@ class AfterNCallsCombined(Condition):
                     count_sum += scheduler.counts_total[execution_id][time_scale][d]
                     logger.debug('{0} has reached {1} num_calls in {2}'.
                                  format(d, scheduler.counts_total[execution_id][time_scale][d], time_scale.name))
+                except AttributeError as e:
+                    raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
                 except KeyError as e:
                     raise ConditionError(
-                        '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.times: {3}'.format(
+                        '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.counts_total (scheduler: {2}): {3}'.format(
                             type(self).__name__,
                             scheduler,
                             execution_id,
@@ -1184,13 +1214,17 @@ class EveryNCalls(Condition):
                 num_calls = scheduler.counts_useable[execution_id][dependency][self.owner]
                 logger.debug('{0} has reached {1} num_calls'.format(dependency, num_calls))
                 return num_calls >= n
+            except AttributeError as e:
+                raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
             except KeyError as e:
                 raise ConditionError(
-                    '{0}: scheduler ({1}) and execution_id ({2}) must both be specified, and execution_id must be in scheduler.counts_useable'.format(
-                        type(self).__name__
+                    '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.counts_useable (scheduler: {2}): {3}'.format(
+                        type(self).__name__,
+                        scheduler,
+                        execution_id,
+                        e,
                     )
                 )
-
         super().__init__(func, dependency, n)
 
 
@@ -1243,8 +1277,20 @@ class AllHaveRun(Condition):
             if len(dependencies) == 0:
                 dependencies = scheduler.nodes
             for d in dependencies:
-                if scheduler.counts_total[execution_id][time_scale][d] < 1:
-                    return False
+                try:
+                    if scheduler.counts_total[execution_id][time_scale][d] < 1:
+                        return False
+                except AttributeError as e:
+                    raise ConditionError('{0}: scheduler must be supplied to is_satisfied: {1}'.format(type(self).__name__, e))
+                except KeyError as e:
+                    raise ConditionError(
+                        '{0}: execution_id ({1}) must both be specified, and execution_id must be in scheduler.counts_total (scheduler: {2}): {3}'.format(
+                            type(self).__name__,
+                            scheduler,
+                            execution_id,
+                            e,
+                        )
+                    )
             return True
         super().__init__(func, *dependencies)
 
