@@ -1416,9 +1416,9 @@ class WhenFinishedAny(Condition):
 
     """
     def __init__(self, *dependencies):
-        def func(*dependencies):
+        def func(*dependencies, scheduler=None):
             if len(dependencies) == 0:
-                dependencies = self.scheduler.nodes
+                dependencies = scheduler.nodes
             for d in dependencies:
                 try:
                     if d.is_finished:
@@ -1453,9 +1453,9 @@ class WhenFinishedAll(Condition):
 
     """
     def __init__(self, *dependencies):
-        def func(*dependencies):
+        def func(*dependencies, scheduler=None):
             if len(dependencies) == 0:
-                dependencies = self.scheduler.nodes
+                dependencies = scheduler.nodes
             for d in dependencies:
                 try:
                     if not d.is_finished:
