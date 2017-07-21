@@ -865,8 +865,10 @@ class Composition(object):
             for mechanism in next_execution_set:
 
                 if mechanism in origin_mechanisms:
-                    if scheduler_processing.times[TimeScale.TRIAL][TimeScale.TIME_STEP] == 0 and \
-                            hasattr(mechanism, "recurrent_projection"):
+                    if (
+                        scheduler_processing.times[execution_id][TimeScale.TRIAL][TimeScale.TIME_STEP] == 0
+                        and hasattr(mechanism, "recurrent_projection")
+                    ):
                         mechanism.recurrent_projection.sender.value = [0.0]
                     if clamp_input:
                         if mechanism in hard_clamp_inputs:
