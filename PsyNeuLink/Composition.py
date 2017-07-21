@@ -885,17 +885,17 @@ class Composition(object):
                     print()
                     print()
 
-                if call_after_time_step:
-                    call_after_time_step()
-
                 if mechanism in origin_mechanisms:
                     if clamp_input:
                         if mechanism in pulse_clamp_inputs:
                             # clamp = None --> "turn off" input mechanism
                             self.input_mechanisms[mechanism]._output_states[0].value = 0
 
-            if call_after_pass:
-                call_after_pass()
+            if call_after_time_step:
+                call_after_time_step()
+
+        if call_after_pass:
+            call_after_pass()
 
         return num
 
