@@ -45,42 +45,23 @@ Pre-specified Conditions
 `Pre-specified Conditions <Condition_Pre-Specified_List>` can be instantiated and added to a `Scheduler` at any time,
 and take effect immediately for the execution of that Scheduler. Most pre-specified Conditions have one or more
 arguments that must be specified to achieve the desired behavior. Many Conditions are also associated with an
-`owner <Condition.owner>` attribute (a `Component` to which the Condition belongs), and a
-`scheduler <Condition.scheduler>` attribute (that maintains data used to test for satisfaction of the Condition).
+`owner <Condition.owner>` attribute (a `Component` to which the Condition belongs). `Scheduler`\ s maintain the data
+used to test for satisfaction of Condition, independent in different `execution_id` contexts. The Scheduler is generally
+responsible for ensuring that Conditions have access to the necessary data.
 When pre-specified Conditions are instantiated within a call to the `add` method of a `Scheduler` or `ConditionSet`,
-the Condition's `owner <Condition.owner>` and `scheduler <Condition.scheduler>` attributes are determined through
+the Condition's `owner <Condition.owner>` is determined through
 context and assigned automatically, as in the following example::
 
     my_scheduler.add_condition(A, EveryNPasses(1))
     my_scheduler.add_condition(B, EveryNCalls(A, 2))
     my_scheduler.add_condition(C, EveryNCalls(B, 2))
 
-Here, `EveryNCalls(A, 2)` for example, is assigned the `owner` `B`, and the scheduler `my_scheduler`.
+Here, `EveryNCalls(A, 2)` for example, is assigned the `owner` `B`.
 
 .. _Condition_Custom:
 
 Custom Conditions
 ~~~~~~~~~~~~~~~~~
-
-COMMENT:
-    K: Thinking about it I kind of like making basic wrappers While and Until, where While is exactly the same as
-        base Condition, but perhaps more friendly sounding? It evals to the output of the function exactly
-        Until would just be the inversion of the function. Thoughts?
-    JDC: THIS SOUNDS GOOD.
-    JDC: PS - MIGHT WANT TO ADD "When", WHICH IS WHAT I THINK WE WANT FOR THE converge EXAMPLE;
-                        my_scheduler.add_condition(A, Until(converge, B, epsilon))
-                    CAUSES A TO EXECUTE UNTIL THE CONDITION ON B BECOMES TRUE, WHICH IS INDEED THE INVERSE OF WHILE,
-                    (WHICH WOULD EXECUTE UNTIL B BECOMES FALSE);, BUT NOT WHAT WE WANT FOR CONVERGE
-                    COULD USE WHILE:
-                        my_scheduler.add_condition(A, While(converge, B, epsilon)))
-                    WHICH WOULD WAIT UNTIL B CONVERGED, BUT SEEMS IT WOULD THEN CONTINUE TO EXECUTE AS LONG AS
-                    B REMAINED "CONVERGED";
-                        my_scheduler.add_condition(A, When(converge, B, epsilon)))
-                    SUGGESTS (AT LEAST TO ME) THAT IT WILL HAPPEN WHEN B CONVERGES -- I.E., A WILL EXECUTE THEN
-                    BUT NOT AGAIN;  MAYBE THAT CAUSES OTHER PROBLEMS (E.G., HOW WOULD THE SCHEDULER KNOW IF
-                    B HAS RESET;  IS THIS SIMILAR TO THE ISSUE OF "EVERY" THAT REQUIRES "usable countes"?)
-                    SEEMS LIKE WE SHOULD DISCUSS (AT LEAST SO I CAN UNDERSTAND BETTER)
-COMMENT
 
 Custom Conditions can be created by calling the constructor for the base class (`Condition()`) or one of the
 `generic classes <Conditions_Generic>`,  and assigning a function to the **func** argument and any arguments it
@@ -139,23 +120,6 @@ List of Pre-specified Conditions
     Condition operates;  the default value is `TRIAL` for all Conditions except those with "Trial" in their name,
     for which it is `RUN`.
 
-COMMENT:
-    JDC: ADDED THESE PROVISIONAL ON IMPLEMENTING THE SUGGESTION ABOVE
-    K: the condition will have to keep an internal counter, which increments every time it is satisfied, and
-        fails to satisfy after N satisfactions
-        Additionally, there are two ways it must be implemented, NWhen(Condition, int) would work, but to use
-        the func/args/kwargs right within the NWhen construction you would need to specify n as a keyword arg
-        NWhen(func, args, n=None, kwargs), due to python arguments. This would differ from every other condition
-        where n can be specified without the explicit n=
-COMMENT
-
-COMMENT:
-    K: I don't think we need to comment on how Always causes execution in its description,
-    because it's mentioned right above
-    JDC: I SEE WHAT YOU MEAN, BUT I'M INCLINED TOWARD CONSISTENCY AND COMPLENESS, EVEN AT THE EXPENSE OF OCCASIONAL
-         REDUNDANCY;  IT WILL ALSO BE A BIT MORE SEPARATE IF WE INCLUDE THE "GENERIC" CATEGORY I'VE ADDED ABOVE
-    K: I think mainly I just prefer to avoid referencing execution in individual conditions, instead using "satisfied"
-COMMENT
 
 .. _Conditions_Generic:
 
@@ -1208,24 +1172,10 @@ class EveryNCalls(Condition):
         - the Component specified in **component** has executed at least n times since the last time the
           Condition's owner executed.
 
-        COMMENT:
-            JDC: IS THE FOLLOWING TRUE OF ALL OF THE ABOVE AS WELL??
-            K: No, EveryNCalls is tricky in how it needs to be implemented, because it's in a sense
-                tracking the relative frequency of calls between two objects. So the idea is that the scheduler
-                tracks how many executions of a component are "useable" by other components for EveryNCalls conditions.
-                So, suppose you had something like add_condition(B, All(AfterNCalls(A, 10), EveryNCalls(A, 2))). You
-                would want the AAB pattern to start happening after A has run 10 times. Useable counts allows B to see
-                whether A has run enough times for it to run, and then B spends its "useable executions" of A. Then,
-                A must run two more times for B to run again. If you didn't reset the counts of A useable by B
-                to 0 (question below) when B runs, then in the
-                above case B would continue to run every pass for the next 4 passes, because it would see an additional
-                8 executions of A it could spend to execute.
-            JDC: IS THIS A FORM OF MODULO?  IF SO, WOULD IT BE EASIER TO EXPLAIN IN THAT FORM?
-        COMMENT
-
     Notes:
 
-        - Scheduler's count of each other Component that is "useable" by the Component is reset to 0.
+        - scheduler's count of each other Component that is "useable" by the Component is reset to 0 when the
+          Component runs
 
     """
     def __init__(self, dependency, n):
@@ -1343,7 +1293,7 @@ class WhenFinishedAny(Condition):
 
         - This is a convenience class; WhenFinishedAny(A, B, C) is equivalent to
           Any(WhenFinished(A), WhenFinished(B), WhenFinished(C)).
-          If no components are specified, the condition will default to checking all of its scheduler's Components.
+          If no components are specified, the condition will default to checking all of scheduler's Components.
 
         - This is a dynamic Condition: Each Component is responsible for assigning its `is_finished` attribute on it
           own, which can occur independently of the execution of other Components.  Therefore the satisfaction of
@@ -1380,7 +1330,7 @@ class WhenFinishedAll(Condition):
 
         - This is a convenience class; WhenFinishedAny(A, B, C) is equivalent to
           All(WhenFinished(A), WhenFinished(B), WhenFinished(C)).
-          If no components are specified, the condition will default to checking all of its scheduler's Components.
+          If no components are specified, the condition will default to checking all of scheduler's Components.
 
         - This is a dynamic Condition: Each Component is responsible for assigning its `is_finished` attribute on it
           own, which can occur independently of the execution of other Components.  Therefore the satisfaction of
