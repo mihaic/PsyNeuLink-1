@@ -721,16 +721,17 @@ class NWhen(Condition):
     """
     def __init__(self, condition, n=1):
         self.satisfactions = {}
+        self.condition = condition
 
         super().__init__(self.satis, condition, n)
 
     @Condition.scheduler.setter
     def scheduler(self, value):
-        self.args[0].scheduler = value
+        self.condition.scheduler = value
 
     @Condition.owner.setter
     def owner(self, value):
-        self.args[0].owner = value
+        self.condition.owner = value
 
     def satis(self, condition, n, *args, execution_id=None, **kwargs):
         if execution_id not in self.satisfactions:
