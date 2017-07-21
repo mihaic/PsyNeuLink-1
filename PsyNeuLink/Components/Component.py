@@ -667,19 +667,13 @@ class Component(object):
     prev_context = None
 
     class Params:
-        def __init__(self):
-            self.execution_status = 'execution_status'
-            self.variable = 'variable'
-            self.value = 'value'
+        execution_status = 'execution_status'
+        variable = 'variable'
+        value = 'value'
 
-        def __contains__(self, item):
-            return hasattr(self, item)
-
-        @property
-        def values(self):
-            return [x for x in self.__dict__ if x[:2]+x[-2:] != '____' and not callable(getattr(self, x))]
-
-    params_volatile = Params()
+        @classmethod
+        def values(cls):
+            return [x for x in dir(cls) if x[:2]+x[-2:] != '____' and not callable(getattr(cls, x))]
 
     def __init__(self,
                  default_variable,
@@ -1891,7 +1885,7 @@ class Component(object):
             if self not in composition.params_by_execution_id[execution_id]:
                 composition.params_by_execution_id[execution_id][self] = {}
 
-            for param in self.params_volatile.values:
+            for param in self.Params.values():
                 composition.params_by_execution_id[execution_id][self][param] = getattr(self, param)
 
         if len(comps) > 1 and len(ids) > 1:
@@ -1906,7 +1900,7 @@ class Component(object):
                     update_single(c, i)
 
     def get_param_value(self, param, composition=None, execution_id=None):
-        if param not in self.Params.values:
+        if param not in self.Params.values():
             raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
 
         if composition is None:
