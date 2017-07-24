@@ -699,7 +699,7 @@ class Composition(object):
                         raise ValueError("The value provided for input state {!s} of the mechanism \"{}\" has length {!s} \
                             where the input state takes values of length {!s}".format(i, mech.name, val_length, state_length))
 
-    def _create_input_mechanisms(self):
+    def _create_input_mechanisms(self, inputs):
         '''
             builds a dictionary of { Mechanism : InputMechanism } pairs where each origin mechanism has a corresponding
             InputMechanism
@@ -712,7 +712,10 @@ class Composition(object):
 
             # If mech IS AN ORIGIN mechanism but it doesn't have an input mechanism, ADD input mechanism
             if mech not in has_input_mechanism:
-                new_input_mech = CompositionInterfaceMechanism()
+                if mech in inputs.keys():
+                    new_input_mech = CompositionInterfaceMechanism(default_input_value=inputs[mech])
+                else:
+                    new_input_mech = CompositionInterfaceMechanism()
                 self.input_mechanisms[mech] = new_input_mech
                 MappingProjection(sender=new_input_mech, receiver=mech)
 
@@ -826,7 +829,7 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
-        self._create_input_mechanisms()
+        self._create_input_mechanisms(inputs)
         self._assign_values_to_input_mechanisms(inputs)
         execution_id = self._assign_execution_ids(execution_id)
         next_pass_before = 1
