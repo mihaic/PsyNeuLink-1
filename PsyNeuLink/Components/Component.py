@@ -667,12 +667,26 @@ class Component(object):
     prev_context = None
 
     class Params:
+        '''
+            An object storing the names stateful parameters/values associated with `Components <Component>`
+            used in conjunction with `get_param_value` and `set_param_value`
+
+            Attributes
+            ----------
+
+                execution_status
+                variable
+                value
+        '''
         execution_status = 'execution_status'
         variable = 'variable'
         value = 'value'
 
         @classmethod
         def values(cls):
+            '''
+                Return a list of the valid `Params` associated with this object
+            '''
             return [x for x in dir(cls) if x[:2]+x[-2:] != '____' and not callable(getattr(cls, x))]
 
     def __init__(self,
@@ -1900,16 +1914,78 @@ class Component(object):
                     update_single(c, i)
 
     def get_param_value(self, param, composition=None, execution_id=None):
+        '''
+            Gets the value of a stateful `Param <Params>` in the context of **composition** and **execution_id**
+
+            Arguments
+            ---------
+
+                param : `Params`.str
+                    the Param to get
+
+                composition : `Composition`
+                    the Composition in which **param**'s value is stored
+
+                execution_id : UUID
+                    the execution context associated with **composition** for which **param**'s value is stored
+        '''
         if param not in self.Params.values():
             raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
 
         if composition is None:
+            if len(self.compositions) == 0:
+                return self.paramInstanceDefaults[param]
             composition = next(iter(self.compositions))
 
         if execution_id is None:
             execution_id = composition._execution_id
 
-        return composition.params_by_execution_id[execution_id][self][param]
+        try:
+            if param not in composition.params_by_execution_id[execution_id][self]:
+                self.set_param_value(param, self.paramInstanceDefaults[param], composition=composition, execution_id=execution_id)
+
+            return composition.params_by_execution_id[execution_id][self][param]
+        except KeyError as e:
+            raise ComponentError('Key not found in {0}.params_by_execution_id: {1}'.format(composition, e))
+
+    def set_param_value(self, param, value, composition=None, execution_id=None):
+        '''
+            Sets the value of a stateful `Param <Params>` to **value** in the context of **composition** and **execution_id**
+
+            Arguments
+            ---------
+
+                param : `Params`.str
+                    the Param to set
+
+                value
+                    the value to set
+
+                composition : `Composition`
+                    the Composition in which **param**'s value is stored
+
+                execution_id : UUID
+                    the execution context associated with **composition** for which **param**'s value is stored
+        '''
+        if param not in self.Params.values():
+            raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
+
+        if composition is None:
+            if len(self.compositions) == 0:
+                raise ComponentError('Unable to set param - no composition specified and self.compositions is empty')
+            composition = next(iter(self.compositions))
+
+        if execution_id is None:
+            execution_id = composition._execution_id
+
+        # create dictionaries as necessary if not existent
+        if execution_id not in composition.params_by_execution_id:
+            composition.params_by_execution_id[execution_id] = {}
+
+        if self not in composition.params_by_execution_id[execution_id]:
+            composition.params_by_execution_id[execution_id][self] = {}
+
+        composition.params_by_execution_id[execution_id][self][param] = value
 
     def _validate_variable(self, variable, context=None):
         """Validate variable and assign validated values to self.variable
@@ -2555,7 +2631,9 @@ class Component(object):
     def _update_value(self, context=None):
         """Evaluate execute method
         """
-        self.value = self.execute(context=context)
+        value = self.execute(context=context)
+        # self.set_param_value(self.Params.value, value)
+        self.value = value
 
     # @property
     # def variable(self):

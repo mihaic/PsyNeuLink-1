@@ -1459,13 +1459,17 @@ class Mechanism_Base(Mechanism):
         from PsyNeuLink.Components.Projections.Projection import _add_projection_from
         _add_projection_from(sender=self, state=state, projection_spec=projection, receiver=receiver, context=context)
 
-    def execute(self,
-                input=None,
-                runtime_params=None,
-                clock=CentralClock,
-                time_scale=TimeScale.TRIAL,
-                ignore_execution_id = False,
-                context=None):
+    def execute(
+        self,
+        input=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        ignore_execution_id=False,
+        composition=None,
+        execution_id=None,
+        context=None,
+    ):
         """Carry out a single execution of the Mechanism.
 
 
@@ -1525,6 +1529,10 @@ class Mechanism_Base(Mechanism):
         self.ignore_execution_id = ignore_execution_id
         context = context or NO_CONTEXT
 
+
+        # gather necessary values from composition params dict
+        # variable = self.get_param_value(self.Params.variable, composition=composition, execution_id=execution_id)
+
         # IMPLEMENTATION NOTE: Re-write by calling execute methods according to their order in functionDict:
         #         for func in self.functionDict:
         #             self.functionsDict[func]()
@@ -1536,11 +1544,13 @@ class Mechanism_Base(Mechanism):
                 pass
             # Only call subclass' _execute method and then return (do not complete the rest of this method)
             elif self.initMethod is INIT__EXECUTE__METHOD_ONLY:
-                return_value =  self._execute(variable=self.variable,
-                                                 runtime_params=runtime_params,
-                                                 clock=clock,
-                                                 time_scale=time_scale,
-                                                 context=context)
+                return_value = self._execute(
+                    variable=self.variable,
+                    runtime_params=runtime_params,
+                    clock=clock,
+                    time_scale=time_scale,
+                    context=context,
+                )
 
                 # # # MODIFIED 3/3/17 OLD:
                 # # return np.atleast_2d(return_value)
@@ -1571,10 +1581,12 @@ class Mechanism_Base(Mechanism):
 
             # Call only subclass' function during initialization (not its full _execute method nor rest of this method)
             elif self.initMethod is INIT_FUNCTION_METHOD_ONLY:
-                return_value = self.function(variable=self.variable,
-                                             params=runtime_params,
-                                             time_scale=time_scale,
-                                             context=context)
+                return_value = self.function(
+                    variable=self.variable,  # self.get_param_value(self.Params.variable, composition=composition, execution_id=execution_id),
+                    params=runtime_params,
+                    time_scale=time_scale,
+                    context=context,
+                )
                 return np.atleast_2d(return_value)
 
 
@@ -1606,9 +1618,12 @@ class Mechanism_Base(Mechanism):
 
         # FIX: ??MAKE CONDITIONAL ON self.prefs.paramValidationPref??
         #region VALIDATE INPUT STATE(S) AND RUNTIME PARAMS
-        self._check_args(variable=self.variable,
-                        params=runtime_params,
-                        target_set=runtime_params)
+        self._check_args(
+            # variable=self.get_param_value(self.Params.variable, composition=composition, execution_id=execution_id),
+            variable=self.variable,
+            params=runtime_params,
+            target_set=runtime_params
+        )
         #endregion
 
         #region UPDATE INPUT STATE(S)

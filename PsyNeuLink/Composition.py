@@ -764,7 +764,7 @@ class Composition(object):
         for v in self._graph_processing.vertices:
             v.component._execution_id = execution_id
 
-            if v.component not in self.params_by_execution_id:
+            if v.component not in self.params_by_execution_id[execution_id]:
                 self.params_by_execution_id[execution_id][v.component] = {}
 
         # Assign the uuid to all input mechanisms
@@ -899,7 +899,11 @@ class Composition(object):
                             self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
-                    num = mechanism.execute(context=EXECUTING + "composition")
+                    num = mechanism.execute(
+                        context=EXECUTING + "composition",
+                        composition=self,
+                        execution_id=execution_id,
+                    )
                     print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
                     print("result = ", num)
                     print()
