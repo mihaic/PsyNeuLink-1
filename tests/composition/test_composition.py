@@ -19,7 +19,7 @@ from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole,
 from PsyNeuLink.Scheduling.TimeScale import TimeScale, CurrentTime, CentralClock
 from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
 from PsyNeuLink.Components.System import system
-
+from PsyNeuLink.Components.Process import process
 logger = logging.getLogger(__name__)
 
 # All tests are set to run. If you need to skip certain tests,
@@ -1670,6 +1670,160 @@ class TestSystemm:
     #     expected_Output_Layer_output = [np.array([0.97988347, 0.97988347, 0.97988347])]
     #
     #     np.testing.assert_allclose(expected_Output_Layer_output, Output_Layer.output_values)
+class TestOldSyntax:
+
+    def test_one_pathway_inside_one_system_old_syntax(self):
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        # Create a system using the old factory method syntax
+        sys = system(processes = [myPath])
+
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 8 == output[0][0]
+
+    def test_one_process_old_syntax(self):
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # create a Pathway | blank slate for composition
+        myPath = process(pathway = [myMech1, myMech2, myMech3])
+
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = myPath.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 8 == output[0][0]
+
+    def test_one_process_inside_one_system_old_syntax(self):
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+
+        # create a Pathway | blank slate for composition
+        myPath = process(pathway=[myMech1, myMech2, myMech3])
+
+        # Create a system using the old factory method syntax
+        sys = system(processes = [myPath])
+
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 8 == output[0][0]
+
+    def test_two_processes_in_series_in_system_old_syntax(self):
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
+        # create a Pathway | blank slate for composition
+        myPath = process(pathway=[myMech1, myMech2, myMech3])
+
+        # create a Pathway | blank slate for composition
+        myPath2 = Pathway()
+
+        # create mechanisms to add to myPath2
+        myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 8 x 2 = 16
+        myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 16 x 2 = 32
+        myMech6 = TransferMechanism(function=Linear(slope=2.0))  # 32 x 2 = 64
+
+        # add mechanisms to myPath2 with default MappingProjections between them
+        myPath2.add_linear_processing_pathway([myMech4, myMech5, myMech6])
+
+        # analyze graph (assign roles)
+        myPath2._analyze_graph()
+
+
+        # Create a system using the old factory method syntax
+        sys = system(processes = [myPath, myPath2])
+
+        # connect the two pathways in series
+        sys.add_projection(sender = myMech3,
+                           projection = MappingProjection(sender=myMech3, receiver=myMech4),
+                           receiver  = myMech4)
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 64 == output[0][0]
+
+    def test_two_processes_converge_in_system_old_syntax(self):
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        # create a Pathway | blank slate for composition
+        myPath2 = Pathway()
+
+        # create mechanisms to add to myPath2
+        myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+
+        # add mechanisms to myPath2 with default MappingProjections between them
+        myPath2.add_linear_processing_pathway([myMech4, myMech5, myMech3])
+
+        # analyze graph (assign roles)
+        myPath2._analyze_graph()
+
+        # Create a system using the old factory method syntax
+        sys = system(processes = [myPath, myPath2])
+
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]],
+                    myMech4: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 16 == output[0][0]
 
 class TestNestedCompositions:
     def test_one_pathway_inside_one_system(self):
@@ -1705,35 +1859,6 @@ class TestNestedCompositions:
             inputs= stimulus,
         )
         assert 8 == output[0][0]
-
-    def test_one_pathway_inside_one_system_old_syntax(self):
-        # create a Pathway | blank slate for composition
-        myPath = Pathway()
-
-        # create mechanisms to add to myPath
-        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
-        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
-        myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
-
-        # add mechanisms to myPath with default MappingProjections between them
-        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
-
-        # analyze graph (assign roles)
-        myPath._analyze_graph()
-
-        # Create a system using the old factory method syntax
-        sys = system(processes = [myPath])
-
-        # assign input to origin mech
-        stimulus = {myMech1: [[1]]}
-
-        # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
-            # scheduler_processing=schedule
-        )
-        assert 8 == output[0][0]
-
 
     def test_two_paths_converge_one_system(self):
 
