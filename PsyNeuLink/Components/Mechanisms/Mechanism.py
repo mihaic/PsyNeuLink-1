@@ -1668,14 +1668,20 @@ class Mechanism_Base(Mechanism):
         # IMPLEMENTATION NOTE:  THIS IS HERE BECAUSE IF return_value IS A LIST, AND THE LENGTH OF ALL OF ITS
         #                       ELEMENTS ALONG ALL DIMENSIONS ARE EQUAL (E.G., A 2X2 MATRIX PAIRED WITH AN
         #                       ARRAY OF LENGTH 2), np.array (AS WELL AS np.atleast_2d) GENERATES A ValueError
-        if (isinstance(self.value, list) and
-            (all(isinstance(item, np.ndarray) for item in self.value) and
-                all(
-                        all(item.shape[i]==self.value[0].shape[0]
-                            for i in range(len(item.shape)))
-                        for item in self.value))):
-                # return self.value
-                pass
+        if (
+            isinstance(self.value, list)
+            and(
+                all(isinstance(item, np.ndarray) for item in self.value)
+                and all(
+                        all(
+                            item.shape[i] == self.value[0].shape[0] for i in range(len(item.shape))
+                        )
+                        for item in self.value
+                )
+            )
+        ):
+            # return self.value
+            pass
         else:
             converted_to_2d = np.atleast_2d(self.value)
             # If return_value is a list of heterogenous elements, return as is

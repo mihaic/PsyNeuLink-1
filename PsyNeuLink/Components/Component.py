@@ -367,9 +367,10 @@ class ResetMode(Enum):
 
 
 class ExecutionStatus(Enum):
-    INITIALIZING = 1
-    EXECUTING = 2
-    VALIDATING = 3
+    UNSET = 1
+    INITIALIZING = 2
+    EXECUTING = 3
+    VALIDATING = 4
 
 # Transitional type:
 #    for implementing params as attributes that are accessible via current paramsDicts
@@ -647,25 +648,6 @@ class Component(object):
     # Determines whether variableClassDefault can be changed (to match an variable in __init__ method)
     variableClassDefault_locked = False
 
-
-    # Names and types of params required to be implemented in all subclass paramClassDefaults:
-    # Notes:
-    # *  entry values here do NOT implement the param; they are simply used as type specs for checking (in __init__)
-    # * kwComponentCategory (below) is used as placemarker for Component.Function class; replaced in __init__ below
-    #              (can't reference own class directly class block)
-    requiredParamClassDefaultTypes = {}
-
-    paramClassDefaults = {}
-
-    # IMPLEMENTATION NOTE: This is needed so that the State class can be used with ContentAddressableList,
-    #                      which requires that the attribute used for addressing is on the class;
-    #                      it is also declared as a property, so that any assignments are validated to be strings,
-    #                      insuring that assignment by one instance will not affect the value of others.
-    name = None
-
-    # IMPLEMENTATION NOTE: Primarily used to track and prevent recursive calls to assign_params from setters.
-    prev_context = None
-
     class Params:
         '''
             An object storing the names stateful parameters/values associated with `Components <Component>`
@@ -688,6 +670,29 @@ class Component(object):
                 Return a list of the valid `Params` associated with this object
             '''
             return [x for x in dir(cls) if x[:2]+x[-2:] != '____' and not callable(getattr(cls, x))]
+
+    # Names and types of params required to be implemented in all subclass paramClassDefaults:
+    # Notes:
+    # *  entry values here do NOT implement the param; they are simply used as type specs for checking (in __init__)
+    # * kwComponentCategory (below) is used as placemarker for Component.Function class; replaced in __init__ below
+    #              (can't reference own class directly class block)
+    requiredParamClassDefaultTypes = {}
+
+    paramClassDefaults = {}
+    default_class_param_values = {
+        Params.variable: [0],
+        Params.value: 0,
+        Params.execution_status: ExecutionStatus.UNSET,
+    }
+
+    # IMPLEMENTATION NOTE: This is needed so that the State class can be used with ContentAddressableList,
+    #                      which requires that the attribute used for addressing is on the class;
+    #                      it is also declared as a property, so that any assignments are validated to be strings,
+    #                      insuring that assignment by one instance will not affect the value of others.
+    name = None
+
+    # IMPLEMENTATION NOTE: Primarily used to track and prevent recursive calls to assign_params from setters.
+    prev_context = None
 
     def __init__(self,
                  default_variable,
@@ -725,6 +730,7 @@ class Component(object):
         # These ensure that subclass values are preserved, while allowing them to be referred to below
         self.variableInstanceDefault = None
         self.paramInstanceDefaults = {}
+        self.default_instance_param_values = dict(Component.default_class_param_values)
 
         self._auto_dependent = False
         self._role = None
@@ -1934,7 +1940,7 @@ class Component(object):
 
         if composition is None:
             if len(self.compositions) == 0:
-                return self.paramInstanceDefaults[param]
+                return self.default_instance_param_values[param]
             composition = next(iter(self.compositions))
 
         if execution_id is None:
@@ -1942,7 +1948,7 @@ class Component(object):
 
         try:
             if param not in composition.params_by_execution_id[execution_id][self]:
-                self.set_param_value(param, self.paramInstanceDefaults[param], composition=composition, execution_id=execution_id)
+                self.set_param_value(param, self.default_instance_param_values[param], composition=composition, execution_id=execution_id)
 
             return composition.params_by_execution_id[execution_id][self][param]
         except KeyError as e:
