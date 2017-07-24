@@ -70,21 +70,14 @@ OTHER
 
 """
 
-import warnings
-
 import inspect
 import logging
 import numbers
 import numpy as np
-import typecheck as tc
+import warnings
 
-from enum import EnumMeta
-from enum import IntEnum
-
-from PsyNeuLink.Globals.Defaults import *
-from PsyNeuLink.Globals.Keywords import *
-
-from PsyNeuLink.Scheduling.TimeScale import *
+from PsyNeuLink.Globals.Keywords import DISTANCE_METRICS, MATRIX_KEYWORD_VALUES, NAME, VALUE
+from enum import Enum, EnumMeta, IntEnum
 
 logger = logging.getLogger(__name__)
 # THE FOLLOWING CAUSES ALL WARNINGS TO GENERATE AN EXCEPTION:
@@ -646,7 +639,7 @@ def append_type_to_name(object, type=None):
 #endregion
 
 
-from collections import OrderedDict, UserDict
+from collections import UserDict
 class ReadOnlyOrderedDict(UserDict):
     def __init__(self, dict=None, name=None, **kwargs):
         self.name = name or self.__class__.__name__
