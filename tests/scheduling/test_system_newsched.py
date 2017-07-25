@@ -1,4 +1,5 @@
 import numpy
+import pytest
 
 from PsyNeuLink.Components.Functions.Function import BogaczEtAl, Linear, Logistic, SimpleIntegrator
 from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanisms.EVCMechanism import EVCMechanism
@@ -14,6 +15,7 @@ from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
 
+@pytest.mark.skip(reason='Meant as a bridge to test the scheduler with the old System. That changed so now these are defunct')
 class TestInit:
 
     def test_create_scheduler_from_system_StroopDemo(self):
@@ -94,6 +96,7 @@ class TestInit:
         assert sched.consideration_queue == expected_consideration_queue
 
 
+@pytest.mark.skip(reason='Meant as a bridge to test the scheduler with the old System. That changed so now these are defunct')
 class TestLinear:
 
     def test_one_run_twice(self):
@@ -226,6 +229,7 @@ class TestLinear:
             numpy.testing.assert_allclose(expected_output[i], terminal_mech.output_values[i])
 
 
+@pytest.mark.skip(reason='Meant as a bridge to test the scheduler with the old System. That changed so now these are defunct')
 class TestBranching:
 
     def test_three_ABAC(self):
