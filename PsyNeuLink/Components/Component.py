@@ -1897,7 +1897,7 @@ class Component(object):
             comps = [composition]
 
         if execution_id is None:
-            ids = [c._execution_id for c in self.compositions]
+            ids = [c._execution_id for c in comps]
         else:
             ids = [execution_id]
 
