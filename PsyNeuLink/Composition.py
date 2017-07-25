@@ -420,7 +420,8 @@ class Composition(object):
             self.mechanisms.append(mech)
             self.mechanisms_to_roles[mech] = set()
 
-            mech.compositions.add(self)
+            if self is not mech.default_composition:
+                mech.compositions.add(self)
             mech.update_volatile_params(composition=self)
 
             self.needs_update_graph = True
@@ -449,12 +450,13 @@ class Composition(object):
             projection.name = '{0} to {1}'.format(sender, receiver)
             self.graph.add_component(projection)
 
-            # Add connections between mechanisms and the projection
-            self.graph.connect_components(sender, projection)
-            self.graph.connect_components(projection, receiver)
-            self._validate_projection(sender, projection, receiver)
+            if self is not projection.default_composition:
+                # Add connections between mechanisms and the projection
+                self.graph.connect_components(sender, projection)
+                self.graph.connect_components(projection, receiver)
+                self._validate_projection(sender, projection, receiver)
+                projection.compositions.add(self)
 
-            projection.compositions.add(self)
             projection.update_volatile_params(composition=self)
 
             self.needs_update_graph = True

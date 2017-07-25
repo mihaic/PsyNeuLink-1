@@ -945,6 +945,7 @@ class Mechanism_Base(Mechanism):
         * registers Mechanism with MechanismRegistry
 
         """
+        from PsyNeuLink.Composition import Composition
 
         # Forbid direct call to base class constructor
         if context is None or (not isinstance(context, type(self)) and not VALIDATE in context):
@@ -986,6 +987,8 @@ class Mechanism_Base(Mechanism):
 
         self._execution_id = None
         self.is_finished = False
+
+        self.default_composition = Composition()
 
         # Register with MechanismRegistry or create one
         if not context is VALIDATE:
@@ -1061,6 +1064,8 @@ class Mechanism_Base(Mechanism):
         self.phaseSpec = None
         self.processes = {}
         self.systems = {}
+
+        self.default_composition.add_mechanism(self)
 
 
     def _validate_variable(self, variable, context=None):

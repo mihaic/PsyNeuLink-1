@@ -447,6 +447,7 @@ class Projection_Base(Projection):
         :param context: (str)
         :return: None
         """
+        from PsyNeuLink.Composition import Composition
 
         if not isinstance(context, Projection_Base):
             raise ProjectionError("Direct call to abstract class Projection() is not allowed; "
@@ -470,6 +471,8 @@ class Projection_Base(Projection):
                           base_class=State_Base,
                           registry=self._stateRegistry,
                           context=context)
+
+        self.default_composition = Composition()
 
 # FIX: 6/23/16 NEEDS ATTENTION *******************************************************A
 #      NOTE: SENDER IS NOT YET KNOWN FOR DEFAULT control_signal
@@ -521,6 +524,8 @@ class Projection_Base(Projection):
                                               name=self.name,
                                               prefs=prefs,
                                               context=context.__class__.__name__)
+
+        self.default_composition.add_projection(None, self, None)
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate PROJECTION_SENDER and/or sender arg (current self.sender), and assign one of them as self.sender
