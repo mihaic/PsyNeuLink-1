@@ -1670,8 +1670,10 @@ class TestSystemm:
     #     expected_Output_Layer_output = [np.array([0.97988347, 0.97988347, 0.97988347])]
     #
     #     np.testing.assert_allclose(expected_Output_Layer_output, Output_Layer.output_values)
+
 class TestOldSyntax:
 
+    # new syntax pathway, old syntax system
     def test_one_pathway_inside_one_system_old_syntax(self):
         # create a Pathway | blank slate for composition
         myPath = Pathway()
@@ -1700,6 +1702,7 @@ class TestOldSyntax:
         )
         assert 8 == output[0][0]
 
+    # old syntax pathway (process)
     def test_one_process_old_syntax(self):
 
         # create mechanisms to add to myPath
@@ -1720,6 +1723,7 @@ class TestOldSyntax:
         )
         assert 8 == output[0][0]
 
+    # old syntax pathway (process), old syntax system
     def test_one_process_inside_one_system_old_syntax(self):
         # create mechanisms to add to myPath
         myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
@@ -1742,6 +1746,7 @@ class TestOldSyntax:
         )
         assert 8 == output[0][0]
 
+    # old syntax pathway (process), old syntax system; 2 processes in series
     def test_two_processes_in_series_in_system_old_syntax(self):
 
         # create mechanisms to add to myPath
@@ -1782,6 +1787,49 @@ class TestOldSyntax:
             # scheduler_processing=schedule
         )
         assert 64 == output[0][0]
+
+    # old syntax pathway (process), old syntax system; 2 processes converge
+    def test_two_processes_converge_in_system_old_syntax(self):
+        # create a Pathway | blank slate for composition
+        myPath = Pathway()
+
+        # create mechanisms to add to myPath
+        myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech2 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+        myMech3 = TransferMechanism(function=Linear(slope=2.0))
+
+        # add mechanisms to myPath with default MappingProjections between them
+        myPath.add_linear_processing_pathway([myMech1, myMech2, myMech3])
+
+        # analyze graph (assign roles)
+        myPath._analyze_graph()
+
+        # create a Pathway | blank slate for composition
+        myPath2 = Pathway()
+
+        # create mechanisms to add to myPath2
+        myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
+        myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
+
+        # add mechanisms to myPath2 with default MappingProjections between them
+        myPath2.add_linear_processing_pathway([myMech4, myMech5, myMech3])
+
+        # analyze graph (assign roles)
+        myPath2._analyze_graph()
+
+        # Create a system using the old factory method syntax
+        sys = system(processes = [myPath, myPath2])
+
+        # assign input to origin mech
+        stimulus = {myMech1: [[1]],
+                    myMech4: [[1]]}
+
+        # schedule = Scheduler(composition=sys)
+        output = sys.execute(
+            inputs= stimulus,
+            # scheduler_processing=schedule
+        )
+        assert 16 == output[0][0]
 
     def test_two_processes_converge_in_system_old_syntax(self):
         # create a Pathway | blank slate for composition
