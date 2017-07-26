@@ -1894,15 +1894,15 @@ class Component(object):
 
         composition : Composition
             the Composition (or iterable of Compositions) to update
-            default : self.compositions
+            default : self.default_composition
 
         execution_id : UUID
             the execution id (or iterable of execution ids) corresponding to an execution instance of
             **composition** to update
-            default : [c._execution_id for c in self.compositions]
+            default : self.default_composition._execution_id
         '''
         if composition is None:
-            comps = self.compositions
+            comps = [self.default_composition]
         else:
             comps = [composition]
 
@@ -1949,9 +1949,7 @@ class Component(object):
             raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
 
         if composition is None:
-            if len(self.compositions) == 0:
-                return self.default_instance_param_values[param]
-            composition = next(iter(self.compositions))
+            composition = self.default_composition
 
         if execution_id is None:
             execution_id = composition._execution_id
@@ -1987,9 +1985,7 @@ class Component(object):
             raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
 
         if composition is None:
-            if len(self.compositions) == 0:
-                raise ComponentError('Unable to set param - no composition specified and self.compositions is empty')
-            composition = next(iter(self.compositions))
+            composition = self.default_composition
 
         if execution_id is None:
             execution_id = composition._execution_id

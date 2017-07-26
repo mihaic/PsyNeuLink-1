@@ -544,6 +544,7 @@ class Projection_Base(Projection):
                                               context=context.__class__.__name__)
 
         self.default_composition.add_projection(None, self, None)
+        self.update_volatile_params()
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate PROJECTION_SENDER and/or sender arg (current self.sender), and assign one of them as self.sender

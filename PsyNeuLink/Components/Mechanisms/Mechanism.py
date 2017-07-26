@@ -1033,7 +1033,6 @@ class Mechanism_Base(Mechanism):
                                              prefs=prefs,
                                              name=name,
                                              context=context)
-
         # FUNCTIONS:
 
 # IMPLEMENTATION NOTE:  REPLACE THIS WITH ABC (ABSTRACT CLASS)
@@ -1066,7 +1065,7 @@ class Mechanism_Base(Mechanism):
         self.systems = {}
 
         self.default_composition.add_mechanism(self)
-
+        self.update_volatile_params()
 
     def _validate_variable(self, variable, context=None):
         """Convert variableClassDefault and self.variable to 2D np.array: one 1D value for each InputState
