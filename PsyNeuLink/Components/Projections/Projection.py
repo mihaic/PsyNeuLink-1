@@ -483,6 +483,7 @@ class Projection_Base(Projection):
                 # remove local imports
                 del self.init_args['ParameterState']
                 del self.init_args['State_Base']
+                del self.init_args['Composition']
 
                 return
         except AttributeError:
