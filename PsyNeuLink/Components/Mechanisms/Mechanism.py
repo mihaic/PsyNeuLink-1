@@ -576,7 +576,7 @@ def mechanism(mech_spec=None, params=None, context=None):
 
     COMMENT:
         context : str
-            if it is the keyword VALIDATE, returns :keyword:`True` if specification would return a valid
+            if it is the keyword VALIDATE, returns `True` if specification would return a valid
             subclass object; otherwise returns :keyword:`False`.
     COMMENT
 

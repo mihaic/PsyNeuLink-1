@@ -174,14 +174,14 @@ Learning modifies Projections between Mechanisms in a Process's `pathway`, so th
 specified is executed.  Learning can be specified for a particular Projection in a Process, or for the entire Process.
 It is specified for a particular Projection by including a `learning specification <LearningSignal_Specification>`
 in the specification for the Projection.  It is specified for the entire Process by assigning either a
-`LearningProjection` or `LearningSignal` specification, or the keyword *ENABLED* to the **learning** argument of the
-Process' constructor.  Specifying learning for a Process will implement it for all eligible Projections in the
-Process (i.e., all `MappingProjections <MappingProjection>`, excluding Projections from the Process' InputState to
-its `ORIGIN` Mechanism, and projections from the `TERMINAL` Mechanism to the Process' OutputState). When learning is
-specified for the Process, all Projections in the Process will be trained so that input to the Process (i.e., its
-`ORIGIN` Mechanism) will generate the specified target value as its output (i.e., the output of the `TERMINAL`
-Mechanism). In either case, all Mechanisms that receive Projections for which learning has been specified must be
-`compatible with learning <LearningProjection>`).
+`LearningProjection <LearningProjection_Creation>` or `LearningSignal <LearningSignal_Specification>` specification,
+or the keyword *ENABLED* to the **learning** argument of the Process' constructor.  Specifying learning for a Process
+implements it for all eligible Projections in the Process (i.e., all `MappingProjections <MappingProjection>`,
+excluding Projections from the Process' InputState to its `ORIGIN` Mechanism, and projections from the `TERMINAL`
+Mechanism to the Process' OutputState). When learning is specified for the Process, all Projections in the Process
+are trained so that input to the Process (i.e., its `ORIGIN` Mechanism) will generate the specified target value
+as its output (i.e., the output of the `TERMINAL` Mechanism). In either case, all Mechanisms that receive Projections
+for which learning has been specified must be `compatible with learning <LearningProjection>`).
 
 When learning is specified, the following Components are automatically created for each Projection involved (
 see figure below):
@@ -329,12 +329,13 @@ import inspect
 import numbers
 import re
 import warnings
+
 from collections import UserList, namedtuple
 
 import numpy as np
 import typecheck as tc
 
-from PsyNeuLink.Components.Component import Component, ExecutionStatus, function_type
+from PsyNeuLink.Components.Component import Component, ExecutionStatus, InitStatus, function_type
 from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningMechanism \
     import LearningMechanism
 from PsyNeuLink.Components.Mechanisms.Mechanism import MechanismList, Mechanism_Base
@@ -342,10 +343,10 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.O
 from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection, _is_learning_spec
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import _add_projection_to, _is_projection_spec
-from PsyNeuLink.Components.ShellClasses import Mechanism, Process, Projection, State, System
+from PsyNeuLink.Components.ShellClasses import Mechanism, Process, Projection, System
 from PsyNeuLink.Components.States.ParameterState import ParameterState
 from PsyNeuLink.Components.States.State import _instantiate_state, _instantiate_state_list
-from PsyNeuLink.Globals.Keywords import AUTO_ASSIGN_MATRIX, COMPONENT_INIT, DEFERRED_INITIALIZATION, ENABLED, EXECUTING, FUNCTION, FUNCTION_PARAMS, HARD_CLAMP, INITIALIZING, INITIAL_VALUES, INTERNAL, LEARNING, LEARNING_PROJECTION, MAPPING_PROJECTION, MATRIX, NAME, ORIGIN, PARAMETER_STATE, PATHWAY, PROCESS, PROCESS_INIT, SENDER, SEPARATOR_BAR, SINGLETON, SOFT_CLAMP, TARGET, TERMINAL, TIME_SCALE, kwProcessComponentCategory, kwReceiverArg, kwSeparator
+from PsyNeuLink.Globals.Keywords import AUTO_ASSIGN_MATRIX, COMPONENT_INIT, ENABLED, EXECUTING, FUNCTION, FUNCTION_PARAMS, HARD_CLAMP, INITIALIZING, INITIAL_VALUES, INTERNAL, LEARNING, LEARNING_PROJECTION, MAPPING_PROJECTION, MATRIX, NAME, ORIGIN, PARAMETER_STATE, PATHWAY, PROCESS, PROCESS_INIT, SENDER, SEPARATOR_BAR, SINGLETON, SOFT_CLAMP, TARGET, TERMINAL, TIME_SCALE, kwProcessComponentCategory, kwReceiverArg, kwSeparator
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Registry import register_category
@@ -1450,17 +1451,17 @@ class Process_Base(Process):
 
                         # If initialization of MappingProjection has been deferred,
                         #    check sender and receiver, assign them if they have not been assigned, and initialize it
-                        if item.value is DEFERRED_INITIALIZATION:
+                        if item.init_status is InitStatus.DEFERRED_INITIALIZATION:
                             # Check sender arg
                             try:
                                 sender_arg = item.init_args[SENDER]
                             except AttributeError:
                                 raise ProcessError("PROGRAM ERROR: Value of {} is {} but it does not have init_args".
-                                                   format(item, DEFERRED_INITIALIZATION))
+                                                   format(item, InitStatus.DEFERRED_INITIALIZATION))
                             except KeyError:
                                 raise ProcessError("PROGRAM ERROR: Value of {} is {} "
                                                    "but init_args does not have entry for {}".
-                                                   format(item.init_args[NAME], DEFERRED_INITIALIZATION, SENDER))
+                                                   format(item.init_args[NAME], InitStatus.DEFERRED_INITIALIZATION, SENDER))
                             else:
                                 # If sender is not specified for the Projection,
                                 #    assign mechanism that precedes in pathway
@@ -1477,11 +1478,11 @@ class Process_Base(Process):
                                 receiver_arg = item.init_args[kwReceiverArg]
                             except AttributeError:
                                 raise ProcessError("PROGRAM ERROR: Value of {} is {} but it does not have init_args".
-                                                   format(item, DEFERRED_INITIALIZATION))
+                                                   format(item, InitStatus.DEFERRED_INITIALIZATION))
                             except KeyError:
                                 raise ProcessError("PROGRAM ERROR: Value of {} is {} "
                                                    "but init_args does not have entry for {}".
-                                                   format(item.init_args[NAME], DEFERRED_INITIALIZATION, kwReceiverArg))
+                                                   format(item.init_args[NAME], InitStatus.DEFERRED_INITIALIZATION, kwReceiverArg))
                             else:
                                 # If receiver is not specified for the Projection,
                                 #    assign mechanism that follows it in the pathway
@@ -1887,7 +1888,7 @@ class Process_Base(Process):
                                     self._learning_mechs.append(learning_mechanism)
 
             # Not all Projection subclasses instantiate ParameterStates
-            except AttributeError as e:
+            except TypeError as e:
                 if 'parameterStates' in e.args[0]:
                     pass
                 else:
@@ -2278,7 +2279,7 @@ class Process_Base(Process):
         learning : bool :  default None
             enables or disables learning during execution.
             If it is not specified, current state is left intact.
-            If :keyword:`True`, learning is forced on; if :keyword:`False`, learning is forced off.
+            If `True`, learning is forced on; if :keyword:`False`, learning is forced off.
 
         call_before_trial : Function : default None
             called before each trial in the sequence is executed.

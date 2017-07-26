@@ -237,10 +237,10 @@ import inspect
 import typecheck as tc
 import warnings
 
-from PsyNeuLink.Components.Component import Component
+from PsyNeuLink.Components.Component import Component, InitStatus
 from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.ShellClasses import Process, Projection, State
-from PsyNeuLink.Globals.Keywords import CONTROL, CONTROL_PROJECTION, DEFERRED_INITIALIZATION, GATING, GATING_PROJECTION, INPUT_STATE, LEARNING, LEARNING_PROJECTION, MAPPING_PROJECTION, MATRIX_KEYWORD_SET, MECHANISM, OUTPUT_STATE, PARAMETER_STATE_PARAMS, PROJECTION, PROJECTION_SENDER, PROJECTION_TYPE, kwAddInputState, kwAddOutputState, kwProjectionComponentCategory
+from PsyNeuLink.Globals.Keywords import CONTROL, CONTROL_PROJECTION, GATING, GATING_PROJECTION, INPUT_STATE, LEARNING, LEARNING_PROJECTION, MAPPING_PROJECTION, MATRIX_KEYWORD_SET, MECHANISM, OUTPUT_STATE, PARAMETER_STATE_PARAMS, PROJECTION, PROJECTION_SENDER, PROJECTION_TYPE, kwAddInputState, kwAddOutputState, kwProjectionComponentCategory
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Registry import register_category
 from PsyNeuLink.Globals.Utilities import ContentAddressableList, iscompatible, type_match
@@ -448,6 +448,8 @@ class Projection_Base(Projection):
         :return: None
         """
         from PsyNeuLink.Composition import Composition
+        from PsyNeuLink.Components.States.ParameterState import ParameterState
+        from PsyNeuLink.Components.States.State import State_Base
 
         if not isinstance(context, Projection_Base):
             raise ProjectionError("Direct call to abstract class Projection() is not allowed; "
@@ -463,16 +465,31 @@ class Projection_Base(Projection):
 
         # # MODIFIED 9/11/16 NEW:
         # Create projection's _stateRegistry and ParameterState entry
-        from PsyNeuLink.Components.States.State import State_Base
         self._stateRegistry = {}
-        # ParameterState
-        from PsyNeuLink.Components.States.ParameterState import ParameterState
+
         register_category(entry=ParameterState,
                           base_class=State_Base,
                           registry=self._stateRegistry,
                           context=context)
 
         self.default_composition = Composition()
+
+        try:
+            if self.init_status is InitStatus.DEFERRED_INITIALIZATION:
+                self.init_args = locals().copy()
+                self.init_args['context'] = self
+                self.init_args['name'] = name
+
+                # remove local imports
+                del self.init_args['ParameterState']
+                del self.init_args['State_Base']
+
+                return
+        except AttributeError:
+            # if this Projection does not have an init_status attribute, we can guarantee that it's not in
+            # deferred init state. It's tricky to ensure this attribute always exists due to the nature
+            # of deferred init
+            pass
 
 # FIX: 6/23/16 NEEDS ATTENTION *******************************************************A
 #      NOTE: SENDER IS NOT YET KNOWN FOR DEFAULT control_signal
@@ -781,7 +798,7 @@ class Projection_Base(Projection):
 def _is_projection_spec(spec, include_matrix_keywords=True):
     """Evaluate whether spec is a valid Projection specification
 
-    Return :keyword:`true` if spec is any of the following:
+    Return `True` if spec is any of the following:
     + Projection class (or keyword string constant for one):
     + Projection object:
     + 2-item tuple of which the second is a projection_spec (checked recursively with thi method):
@@ -870,7 +887,7 @@ def _validate_receiver(sender_mech:Mechanism,
     """
     spec_type = " in the {} arg ".format(spec_type) or ""
 
-    if projection.value is DEFERRED_INITIALIZATION:
+    if projection.init_status is InitStatus.DEFERRED_INITIALIZATION:
         # receiver = projection.init_args['receiver'].owner
         state = projection.init_args['receiver']
         receiver = state.owner
