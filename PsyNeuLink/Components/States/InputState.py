@@ -31,9 +31,9 @@ Creating an InputState
 
 An InputState can be created by calling its constructor, but in general this is not necessary as a Mechanism can
 usually automatically create the InputState(s) it needs when it is created.  For example, if the Mechanism is
-being created within the `pathway <Process.pathway` of a `Process`, its InputState will be created and  assigned as
-the `receiver <MappingProjection.receiver>` of a `MappingProjection` from the  preceding `Mechanism` in the
-`pathway <Process.pathway>`.
+being created within the `pathway <Process_Base.pathway` of a `Process`, its InputState will be created and  assigned
+as the `receiver <MappingProjection.receiver>` of a `MappingProjection` from the  preceding `Mechanism` in the
+`pathway <Process_Base.pathway>`.
 
 An InputState must be owned by a `Mechanism`.  When InputState is specified in the constructor for a `Mechanism`
 (see `below <InputState_Specification>`), it is automatically assigned to that Mechanism as its owner. If the
@@ -255,9 +255,8 @@ import numpy as np
 import typecheck as tc
 
 from PsyNeuLink.Components.Functions.Function import Linear, LinearCombination
-from PsyNeuLink.Components.ShellClasses import Mechanism
 from PsyNeuLink.Components.States.State import StateError, State_Base, _instantiate_state_list, state_type_keywords
-from PsyNeuLink.Globals.Keywords import DEFERRED_INITIALIZATION, EXPONENT, FUNCTION, INPUT_STATE, INPUT_STATE_PARAMS, MAPPING_PROJECTION, PROJECTION_TYPE, SUM, WEIGHT, VARIABLE
+from PsyNeuLink.Globals.Keywords import EXPONENT, FUNCTION, INPUT_STATE, INPUT_STATE_PARAMS, MAPPING_PROJECTION, PROJECTION_TYPE, SUM, VARIABLE, WEIGHT
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Utilities import append_type_to_name, iscompatible
@@ -475,7 +474,7 @@ class InputState(State_Base):
             self.init_args['projections'] = projections
 
             # Flag for deferred initialization
-            self.value = DEFERRED_INITIALIZATION
+            self.init_status = InitStatus.DEFERRED_INITIALIZATION
             return
 
         self.reference_value = reference_value
