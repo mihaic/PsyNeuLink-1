@@ -123,6 +123,7 @@ Class Reference
 import numpy as np
 import typecheck as tc
 
+from PsyNeuLink.Components.Component import InitStatus
 from PsyNeuLink.Components.Functions.Function import ModulationParam, _is_modulation_param
 from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.AdaptiveMechanism import AdaptiveMechanism_Base
 from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism_Base, MonitoredOutputStatesOption
@@ -134,7 +135,7 @@ from PsyNeuLink.Components.States.OutputState import OutputState
 from PsyNeuLink.Components.States.ParameterState import ParameterState
 from PsyNeuLink.Components.States.State import _parse_state_spec
 from PsyNeuLink.Globals.Defaults import defaultControlAllocation
-from PsyNeuLink.Globals.Keywords import CONTROLLED_PARAM, CONTROL_PROJECTION, CONTROL_PROJECTIONS, CONTROL_SIGNAL, CONTROL_SIGNALS, CONTROL_SIGNAL_SPECS, DEFERRED_INITIALIZATION, INIT__EXECUTE__METHOD_ONLY, MAKE_DEFAULT_CONTROLLER, MECHANISM, MONITOR_FOR_CONTROL, NAME, OWNER, PARAMETER_STATE, PARAMS, PROJECTIONS, RECEIVER, REFERENCE_VALUE, SENDER, SYSTEM
+from PsyNeuLink.Globals.Keywords import CONTROLLED_PARAM, CONTROL_PROJECTION, CONTROL_PROJECTIONS, CONTROL_SIGNAL, CONTROL_SIGNALS, CONTROL_SIGNAL_SPECS, INIT__EXECUTE__METHOD_ONLY, MAKE_DEFAULT_CONTROLLER, MECHANISM, MONITOR_FOR_CONTROL, NAME, OWNER, PARAMETER_STATE, PARAMS, PROJECTIONS, RECEIVER, REFERENCE_VALUE, SENDER, SYSTEM
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Utilities import ContentAddressableList
@@ -622,7 +623,7 @@ class ControlMechanism_Base(AdaptiveMechanism_Base):
                             raise ControlMechanismError("PROGRAM ERROR: Multiple ControlProjections are not "
                                                         "currently supported in specification of a ControlSignal")
                         # Get receiver mech
-                        if control_projection.value is DEFERRED_INITIALIZATION:
+                        if control_projection.init_status is InitStatus.DEFERRED_INITIALIZATION:
                             parameter_state = control_projection.init_args[RECEIVER]
                             # ControlProjection was created in response to specification of ControlSignal
                             #     (in a 2-item tuple where the parameter was specified),
@@ -666,7 +667,7 @@ class ControlMechanism_Base(AdaptiveMechanism_Base):
         # Specification is a ControlSignal (either passed in directly, or parsed from tuple above)
         if isinstance(control_signal_spec, ControlSignal):
             # Deferred Initialization, so assign owner, name, and initialize
-            if control_signal_spec.value is DEFERRED_INITIALIZATION:
+            if control_signal_spec.init_status is InitStatus.DEFERRED_INITIALIZATION:
                 control_signal_spec.init_args[OWNER] = self
                 control_signal_spec.init_args[NAME] = control_signal_spec.init_args[NAME] or default_name
                 # control_signal_spec.init_args[REFERENCE_VALUE] = output_state_constraint_value
@@ -723,7 +724,7 @@ class ControlMechanism_Base(AdaptiveMechanism_Base):
                 raise ControlMechanismError("PROGRAM ERROR: Attempt to assign {}, "
                                                   "that is not a ControlProjection, to ControlSignal of {}".
                                                   format(control_projection, self.name))
-            if control_projection.value is DEFERRED_INITIALIZATION:
+            if control_projection.init_status is InitStatus.DEFERRED_INITIALIZATION:
                 control_projection.init_args['sender']=control_signal
                 if control_projection.init_args['name'] is None:
                     # FIX 5/23/17: CLEAN UP NAME STUFF BELOW:
@@ -804,7 +805,7 @@ class ControlMechanism_Base(AdaptiveMechanism_Base):
             for parameter_state in mech._parameter_states:
                 for projection in parameter_state.mod_afferents:
                     # If Projection was deferred for init, instantiate its ControlSignal and then initialize it
-                    if projection.value is DEFERRED_INITIALIZATION:
+                    if projection.init_status is InitStatus.DEFERRED_INITIALIZATION:
                         control_signal_specs = projection.control_signal_params or {}
                         control_signal_specs.update({CONTROL_SIGNAL_SPECS: [projection]})
                         self._instantiate_control_signal(control_signal_specs, context=context)

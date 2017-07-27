@@ -75,6 +75,7 @@ It can be specified in any of the following formats:
     given `sender <MappingProjection.sender>` makes to the `receiver <MappingProjection.receiver>`.
 
   .. _Matrix_Keywords:
+
   * **Matrix keyword**.  This is used to specify a type of matrix without having to specify its individual values.
     Any of the `matrix keywords <Keywords.MatrixKeywords>` can be used.
 
@@ -85,6 +86,7 @@ It can be specified in any of the following formats:
     specified offset.
 
   .. _MappingProjection_Tuple_Specification:
+
   * **Tuple**.  This is used to specify a Projection to the `ParameterState <ParameterState>` for the matrix
     along with the `matrix <MappingProjection.matrix>`  itself. The tuple must have two items:
     the first can be any of the specifications described above;  the second must be a
@@ -152,12 +154,12 @@ import typecheck as tc
 
 import numpy as np
 
-from PsyNeuLink.Components.Component import parameter_keywords
+from PsyNeuLink.Components.Component import InitStatus, parameter_keywords
 from PsyNeuLink.Components.Functions.Function import AccumulatorIntegrator, LinearMatrix, get_matrix
 from PsyNeuLink.Components.Projections.PathwayProjections.PathwayProjection import PathwayProjection_Base
 from PsyNeuLink.Components.Projections.Projection import ProjectionError, Projection_Base, projection_keywords
 from PsyNeuLink.Components.ShellClasses import Projection
-from PsyNeuLink.Globals.Keywords import AUTO_ASSIGN_MATRIX, CHANGED, CONTROL_PROJECTION, DEFAULT_MATRIX, DEFERRED_INITIALIZATION, FULL_CONNECTIVITY_MATRIX, FUNCTION, FUNCTION_PARAMS, HOLLOW_MATRIX, IDENTITY_MATRIX, LEARNING_PROJECTION, MAPPING_PROJECTION, MATRIX, OUTPUT_STATE, PROJECTION_SENDER, PROJECTION_SENDER_VALUE
+from PsyNeuLink.Globals.Keywords import AUTO_ASSIGN_MATRIX, CHANGED, CONTROL_PROJECTION, DEFAULT_MATRIX, FULL_CONNECTIVITY_MATRIX, FUNCTION, FUNCTION_PARAMS, HOLLOW_MATRIX, IDENTITY_MATRIX, LEARNING_PROJECTION, MAPPING_PROJECTION, MATRIX, OUTPUT_STATE, PROJECTION_SENDER, PROJECTION_SENDER_VALUE
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceEntry, PreferenceLevel
 from PsyNeuLink.Scheduling.TimeScale import CentralClock
@@ -276,6 +278,9 @@ class MappingProjection(PathwayProjection_Base):
         identifies whether the MappingProjection's `MATRIX` `ParameterState <ParameterState>` has been assigned a
         `LearningProjection`.
 
+    value : ndarray
+        Output of MappingProjection, transmitted to `variable <InputState.variable>` of `receiver`.
+
     name : str : default MappingProjection-<index>
         the name of the MappingProjection.
         Specified in the **name** argument of the constructor for the Projection;
@@ -335,16 +340,7 @@ class MappingProjection(PathwayProjection_Base):
 
         # If sender or receiver has not been assigned, defer init to State.instantiate_projection_to_state()
         if sender is None or receiver is None:
-            # Store args for deferred initialization
-            self.init_args = locals().copy()
-            self.init_args['context'] = self
-            self.init_args['name'] = name
-            # Delete these as they have been moved to params dict (and will not be recognized by Projection.__init__)
-            del self.init_args['matrix']
-
-            # Flag for deferred initialization
-            self.value = DEFERRED_INITIALIZATION
-            return
+            self.init_status = InitStatus.DEFERRED_INITIALIZATION
 
         # Validate sender (as variable) and params, and assign to variable and paramsInstanceDefaults
         super(MappingProjection, self).__init__(sender=sender,
