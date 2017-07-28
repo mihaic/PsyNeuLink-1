@@ -51,6 +51,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceM
     import CompositionInterfaceMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import Projection
+from PsyNeuLink.Components.States.OutputState import OutputState
 from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
@@ -317,6 +318,7 @@ class Composition(object):
         self.graph = Graph()  # Graph of the Composition
         self._graph_processing = None
         self.mechanisms = []
+        self.composition_interface_mechanism = CompositionInterfaceMechanism()
         self.input_mechanisms = {}
         self.execution_ids = []
 
@@ -699,6 +701,49 @@ class Composition(object):
                         raise ValueError("The value provided for input state {!s} of the mechanism \"{}\" has length {!s} \
                             where the input state takes values of length {!s}".format(i, mech.name, val_length, state_length))
 
+    def _create_composition_interface_output_states(self):
+        '''
+            builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
+            corresponding OutputState on the CompositionInterfaceMechanism
+        '''
+
+        origin_input_states = set()
+        for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
+            for input_state in mech.input_states:
+                origin_input_states.add(input_state)
+
+        has_interface_output_state = self.composition_interface_output_states.keys()
+
+        # consider all of the expected inputs that have only origin input states OR only interface output states
+        for input_state in origin_input_states.difference(has_interface_output_state):
+            if input_state not in has_interface_output_state:
+                # create an output state owned by the composition interface mechanism
+                interface_output_state = OutputState(owner=self.composition_interface_mechanism)
+                # add the output state to the composition interface mechanism
+                self.composition_interface_mechanism.add_states(interface_output_state)
+                # add the output state to the registry of this composition's interface output states
+                self.composition_interface_output_states[input_state] = interface_output_state
+                # create a mapping projection connecting this output state to the correct input state
+                MappingProjection(sender=interface_output_state, receiver=input_state)
+            else:
+                del self.composition_interface_output_states[input_state]
+
+    def _assign_values_to_interface_output_states(self, inputs):
+        self.composition_interface_output_states
+        # loop over all origin mechanisms
+        for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
+            # for each one that has inputs
+            if mech in inputs.keys():
+                # loop over all input states and assign the inputs to their corresponding interface output states
+                for i in range(len(inputs[mech])):
+                    self.composition_interface_output_states[mech.input_states[i]].variable = inputs[mech][i]
+                    self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
+            # for each that does not have inputs
+            else:
+                # loop over all input states set their corresponding interface output states to zero
+                for i in range(len(inputs[mech])):
+                    self.composition_interface_output_states[mech.input_states[i]].variable = 0
+                    self.composition_interface_output_states[mech.input_states[i]].value = 0
     def _create_input_mechanisms(self, inputs):
         '''
             builds a dictionary of { Mechanism : InputMechanism } pairs where each origin mechanism has a corresponding
