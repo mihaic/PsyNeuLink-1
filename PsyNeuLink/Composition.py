@@ -317,6 +317,7 @@ class Composition(object):
         # core attributes
         self.graph = Graph()  # Graph of the Composition
         self._graph_processing = None
+        self.composition_interface_output_states = {}
         self.mechanisms = []
         self.composition_interface_mechanism = CompositionInterfaceMechanism()
         self.input_mechanisms = {}
@@ -582,6 +583,7 @@ class Composition(object):
                         elif child not in visited:
                             next_visit_stack.append(child)
 
+        self._create_composition_interface_output_states()
         self.needs_update_graph = False
 
     def _update_processing_graph(self):
@@ -874,8 +876,9 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
-        self._create_input_mechanisms(inputs)
-        self._assign_values_to_input_mechanisms(inputs)
+        # self._create_input_mechanisms(inputs)
+        # self._assign_values_to_input_mechanisms(inputs)
+        self._assign_values_to_interface_output_states(inputs)
         execution_id = self._assign_execution_ids(execution_id)
         next_pass_before = 1
         next_pass_after = 1
