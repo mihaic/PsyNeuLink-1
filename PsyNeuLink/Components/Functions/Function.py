@@ -169,7 +169,7 @@ import typecheck as tc
 
 from numpy import abs, exp, tanh
 
-from PsyNeuLink.Components.Component import Component, ComponentError, function_type, method_type, parameter_keywords
+from PsyNeuLink.Components.Component import Component, ComponentError, ExecutionStatus, function_type, method_type, parameter_keywords
 from PsyNeuLink.Components.ShellClasses import Function
 from PsyNeuLink.Globals.Keywords import ACCUMULATOR_INTEGRATOR_FUNCTION, ADAPTIVE_INTEGRATOR_FUNCTION, ALL, ANGLE, ARGUMENT_THERAPY_FUNCTION, AUTO_ASSIGN_MATRIX, AUTO_DEPENDENT, BACKPROPAGATION_FUNCTION, BETA, BIAS, COMBINATION_FUNCTION_TYPE, CONSTANT_INTEGRATOR_FUNCTION, CORRELATION, CROSS_ENTROPY, DECAY, DIFFERENCE, DISTANCE_FUNCTION, DISTANCE_METRICS, DIST_FUNCTION_TYPE, DIST_MEAN, DIST_SHAPE, DRIFT_DIFFUSION_INTEGRATOR_FUNCTION, ENERGY, ENTROPY, EUCLIDEAN, EXAMPLE_FUNCTION_TYPE, EXECUTING, EXPONENTIAL_DIST_FUNCTION, EXPONENTIAL_FUNCTION, EXPONENTS, FULL_CONNECTIVITY_MATRIX, FUNCTION, FUNCTION_OUTPUT_TYPE, FUNCTION_OUTPUT_TYPE_CONVERSION, FUNCTION_PARAMS, GAIN, GAMMA_DIST_FUNCTION, HIGH, HOLLOW_MATRIX, IDENTITY_MATRIX, INCREMENT, INITIALIZER, INITIALIZING, INPUT_STATES, INTEGRATOR_FUNCTION, INTEGRATOR_FUNCTION_TYPE, INTERCEPT, LEARNING_FUNCTION_TYPE, LINEAR_COMBINATION_FUNCTION, LINEAR_FUNCTION, LINEAR_MATRIX_FUNCTION, LOGISTIC_FUNCTION, LOW, MATRIX, MATRIX_KEYWORD_NAMES, MATRIX_KEYWORD_VALUES, MAX_INDICATOR, MAX_VAL, NOISE, NORMAL_DIST_FUNCTION, OBJECTIVE_FUNCTION_TYPE, OFFSET, OPERATION, ORNSTEIN_UHLENBECK_INTEGRATOR_FUNCTION, OUTPUT_STATES, OUTPUT_TYPE, PARAMETER_STATE_PARAMS, PEARSON, PROB, PRODUCT, RANDOM_CONNECTIVITY_MATRIX, RATE, RECEIVER, REDUCE_FUNCTION, RL_FUNCTION, SCALE, SIMPLE_INTEGRATOR_FUNCTION, SLOPE, SOFTMAX_FUNCTION, STABILITY_FUNCTION, STANDARD_DEVIATION, SUM, TIME_STEP_SIZE, TRANSFER_FUNCTION_TYPE, UNIFORM_DIST_FUNCTION, USER_DEFINED_FUNCTION, USER_DEFINED_FUNCTION_TYPE, WALD_DIST_FUNCTION, WEIGHTS, kwComponentCategory, kwPreferenceSetName
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set, kpReportOutputPref, kpRuntimeParamStickyAssignmentPref
@@ -556,7 +556,6 @@ class Function_Base(Function):
         :param name: (string) - optional, overrides assignment of default (componentName of subclass)
         :return:
         """
-
         self._functionOutputType = None
         # self.name = self.componentName
 
@@ -566,10 +565,6 @@ class Function_Base(Function):
                           name=name,
                           context=context)
         self.owner = owner
-        if self.owner is not None:
-            self.owner_name = ' ' + self.owner.name
-        else:
-            self.owner_name = ''
 
         super().__init__(default_variable=default_variable,
                          param_defaults=params,
@@ -622,6 +617,41 @@ class Function_Base(Function):
                 "{0} can't be set to return a single number since its variable has more than one number".
                 format(self.__class__.__name__))
         self._functionOutputType = value
+
+    @property
+    def owner_name(self):
+        if self.owner is not None:
+            return ' ' + self.owner.name
+        else:
+            return ''
+
+    # Params properties
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+
+    @property
+    def variable(self):
+        return self._variable
+
+    @variable.setter
+    def variable(self, value):
+        self._variable = value
+
+    @property
+    def execution_status(self):
+        return self._execution_status
+
+    @execution_status.setter
+    def execution_status(self, value):
+        if value not in ExecutionStatus:
+            raise FunctionError('Attempt to assign invalid execution status {0} ({1})'.format(value, e))
+        self._execution_status = value
 
 
 # *****************************************   EXAMPLE FUNCTION   *******************************************************

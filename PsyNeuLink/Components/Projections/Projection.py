@@ -472,7 +472,7 @@ class Projection_Base(Projection):
                           registry=self._stateRegistry,
                           context=context)
 
-        self.default_composition = Composition()
+        self._default_composition = Composition()
 
         try:
             if self.init_status is InitStatus.DEFERRED_INITIALIZATION:

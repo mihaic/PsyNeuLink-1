@@ -988,7 +988,7 @@ class Mechanism_Base(Mechanism):
         self._execution_id = None
         self.is_finished = False
 
-        self.default_composition = Composition()
+        self._default_composition = Composition()
 
         # Register with MechanismRegistry or create one
         if not context is VALIDATE:
@@ -2051,27 +2051,6 @@ class Mechanism_Base(Mechanism):
     @value.setter
     def value(self, assignment):
         self._value = assignment
-
-        # # MODIFIED 1/28/17 NEW: [COPIED FROM State]
-        # # Store value in log if specified
-        # # Get logPref
-        # if self.prefs:
-        #     log_pref = self.prefs.logPref
-        #
-        # # Get context
-        # try:
-        #     curr_frame = inspect.currentframe()
-        #     prev_frame = inspect.getouterframes(curr_frame, 2)
-        #     context = inspect.getargvalues(prev_frame[1][0]).locals['context']
-        # except KeyError:
-        #     context = ""
-        #
-        # # If context is consistent with log_pref, record value to log
-        # if (log_pref is LogLevel.ALL_ASSIGNMENTS or
-        #         (log_pref is LogLevel.EXECUTION and EXECUTING in context) or
-        #         (log_pref is LogLevel.VALUE_ASSIGNMENT and (EXECUTING in context and kwAssign in context))):
-        #     self.log.entries[self.name] = LogEntry(CurrentTime(), context, assignment)
-        # # MODIFIED 1/28/17 END
 
     @property
     def default_value(self):

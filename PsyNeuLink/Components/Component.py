@@ -1941,9 +1941,12 @@ class Component(object):
 
                 composition : `Composition`
                     the Composition in which **param**'s value is stored
+                    default : self.default_composition
 
                 execution_id : UUID
                     the execution context associated with **composition** for which **param**'s value is stored
+                    default : composition._execution_id
+
         '''
         if param not in self.Params.values():
             raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
@@ -2813,6 +2816,39 @@ class Component(object):
 
             except AttributeError:
                 owner = None
+
+    @property
+    def default_composition(self):
+        try:
+            return self._default_composition
+        except AttributeError:
+            return self.owner._default_composition
+
+    # Params properties
+    @property
+    def value(self):
+        return self.get_param_value(self.Params.value, composition=self.default_composition)
+
+    @value.setter
+    def value(self, value):
+        self.set_param_value(self.Params.value, value, composition=self.default_composition)
+
+    @property
+    def variable(self):
+        return self.get_param_value(self.Params.variable, composition=self.default_composition)
+
+    @variable.setter
+    def variable(self, value):
+        self.set_param_value(self.Params.variable, value, composition=self.default_composition)
+
+    @property
+    def execution_status(self):
+        return self.get_param_value(self.Params.execution_status, composition=self.default_composition)
+
+    @execution_status.setter
+    def execution_status(self, value):
+        self.set_param_value(self.Params.execution_status, value, composition=self.default_composition)
+
 
 COMPONENT_BASE_CLASS = Component
 
