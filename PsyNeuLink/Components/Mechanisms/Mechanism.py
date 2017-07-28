@@ -1636,9 +1636,8 @@ class Mechanism_Base(Mechanism):
 
         if input is None and (EXECUTING in context or EVC_SIMULATION in context) and (self.input_state.path_afferents != []):
             self._update_input_states(runtime_params=runtime_params, time_scale=time_scale, context=context)
-
-        # Direct call to execute Mechanism with specified input, so assign input to Mechanism's input_states
         else:
+            # Direct call to execute Mechanism with specified input, so assign input to Mechanism's input_states
             if context is NO_CONTEXT:
                 context = EXECUTING + ' ' + append_type_to_name(self)
                 self.execution_status = ExecutionStatus.EXECUTING
@@ -1655,21 +1654,14 @@ class Mechanism_Base(Mechanism):
 
         #region CALL SUBCLASS _execute method AND ASSIGN RESULT TO self.value
 
-        self.value = self._execute(variable=self.variable,
-                                   runtime_params=runtime_params,
-                                   clock=clock,
-                                   time_scale=time_scale,
-                                   context=context)
+        self.value = self._execute(
+            variable=self.variable,
+            runtime_params=runtime_params,
+            clock=clock,
+            time_scale=time_scale,
+            context=context,
+        )
 
-        # # MODIFIED 3/3/17 OLD:
-        # self.value = np.atleast_2d(self.value)
-        # # MODIFIED 3/3/17 NEW:
-        # converted_to_2d = np.atleast_2d(self.value)
-        # # If self.value is a list of heterogenous elements, leave as is;
-        # # Otherwise, use converted value (which is a genuine 2d array)
-        # if converted_to_2d.dtype != object:
-        #     self.value = converted_to_2d
-        # MODIFIED 3/8/17 NEWER:
         # IMPLEMENTATION NOTE:  THIS IS HERE BECAUSE IF return_value IS A LIST, AND THE LENGTH OF ALL OF ITS
         #                       ELEMENTS ALONG ALL DIMENSIONS ARE EQUAL (E.G., A 2X2 MATRIX PAIRED WITH AN
         #                       ARRAY OF LENGTH 2), np.array (AS WELL AS np.atleast_2d) GENERATES A ValueError
