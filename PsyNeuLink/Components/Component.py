@@ -1916,7 +1916,7 @@ class Component(object):
                 composition.params_by_execution_id[execution_id][self] = {}
 
             for param in self.Params.values():
-                composition.params_by_execution_id[execution_id][self][param] = getattr(self, param)
+                composition.params_by_execution_id[execution_id][self][param] = self._full_class_dict[param].fget(self)
 
         if len(comps) > 1 and len(ids) > 1:
             if len(comps) != len(ids):
@@ -2848,6 +2848,18 @@ class Component(object):
     @execution_status.setter
     def execution_status(self, value):
         self.set_param_value(self.Params.execution_status, value, composition=self.default_composition)
+
+    @property
+    def _full_class_dict(self):
+        '''
+        Returns the dictionary that consists of __dict__ combined with all of this class's parent __dict__ s
+        '''
+        full_dict = dict(self.__class__.__dict__)
+
+        for parent in self.__class__.__mro__:
+            full_dict.update(parent.__dict__)
+
+        return full_dict
 
 
 COMPONENT_BASE_CLASS = Component
