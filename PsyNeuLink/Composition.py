@@ -430,7 +430,7 @@ class Composition(object):
 
             if self is not mech.default_composition:
                 mech.compositions.add(self)
-            mech.update_volatile_params(composition=self)
+            # mech.update_volatile_params(composition=self)
 
             self.needs_update_graph = True
             self.needs_update_graph_processing = True
@@ -465,7 +465,7 @@ class Composition(object):
                 self._validate_projection(sender, projection, receiver)
                 projection.compositions.add(self)
 
-            projection.update_volatile_params(composition=self)
+            # projection.update_volatile_params(composition=self)
 
             self.needs_update_graph = True
             self.needs_update_graph_processing = True
@@ -798,6 +798,57 @@ class Composition(object):
         else:
             return []
 
+    def _init_param_values(self, execution_id, base_execution_id=None, overwrite=False):
+        '''
+            Initializes the Params values for each component in this Composition. If **base_execution_id** is specified,
+            values will be copied from **base_execution_id**'s context, otherwise they will be copied from each
+            component's default context. If **overwrite** is True, all values will be copied to **execution_id**'s context,
+            otherwise only values that do not exist will be initialized.
+
+            Arguments
+            ---------
+
+            execution_id : UUID
+                the target context to initialize
+
+            base_execution_id : UUID
+                if specified, the source context to initialize from
+                default : None
+
+            overwrite : bool
+                if `True`, copies all values from the source context, even if they exist in the target, otherwise
+                only copies values that do not exist in the target
+                default : False
+        '''
+        def update_single(component):
+            if base_execution_id is not None:
+                try:
+                    base_vals = self.params_by_execution_id[base_execution_id][component]
+                except KeyError as e:
+                    raise CompositionError('base_execution_id specified but failed to get param values: {0}'.format(e))
+            else:
+                # need complex expression to get the value of property named param
+                base_vals = {param: component._full_class_dict[param].fget(component) for param in component.Params.values()}
+
+            if component not in self.params_by_execution_id[execution_id]:
+                self.params_by_execution_id[execution_id][component] = {}
+
+            for param in component.Params.values():
+                if overwrite or param not in self.params_by_execution_id[execution_id][component]:
+                    try:
+                        self.params_by_execution_id[execution_id][component][param] = base_vals[param]
+                    except KeyError:
+                        raise CompositionError('Param {0} is not in base_vals but is expected'.format(param))
+
+        if execution_id not in self.params_by_execution_id:
+            self.params_by_execution_id[execution_id] = {}
+
+        for mech in self.mechanisms:
+            update_single(mech)
+
+        for proj in self.projections:
+            update_single(proj)
+
     def execute(
         self,
         inputs,
@@ -941,6 +992,7 @@ class Composition(object):
         termination_processing=None,
         termination_learning=None,
         execution_id=None,
+        base_execution_id=None,
         num_trials=None,
         call_before_time_step=None,
         call_after_time_step=None,
@@ -972,6 +1024,9 @@ class Composition(object):
 
             execution_id : UUID
                 execution_id will typically be set to none and assigned randomly at runtime
+
+            base_execution_id : UUID
+                if specified, will initialize the data for **execution_id** with the data currently present for **base_execution_id**
 
             num_trials : int
                 typically, the composition will infer the number of trials from the length of its input specification.
@@ -1010,6 +1065,7 @@ class Composition(object):
             scheduler_learning = self.scheduler_learning
 
         execution_id = self._assign_execution_ids(execution_id)
+        self._init_param_values(execution_id)
 
         scheduler_processing._init_counts(execution_id=execution_id)
         scheduler_learning._init_counts(execution_id=execution_id)
