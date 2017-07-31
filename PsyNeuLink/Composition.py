@@ -708,55 +708,66 @@ class Composition(object):
             builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
             corresponding OutputState on the CompositionInterfaceMechanism
         '''
-
-        origin_input_states = set()
+        # loop over all origin mechanisms
         for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
             for input_state in mech.input_states:
-                origin_input_states.add(input_state)
-
-        has_interface_output_state = self.composition_interface_output_states.keys()
-
-        # consider all of the expected inputs that have only origin input states OR only interface output states
-        for input_state in origin_input_states.difference(has_interface_output_state):
-            if input_state not in has_interface_output_state:
-                # create an output state owned by the composition interface mechanism
                 interface_output_state = OutputState(owner=self.composition_interface_mechanism,
-                                                     name = "[Interface to "
-                                                            + input_state.owner.name + "'s " + input_state.name + "]",
-                                                     variable=input_state.variable)
-                # add the output state to the composition interface mechanism
+                                                     variable=input_state.variable,
+                                                     name="Interface to " + mech.name + " for " + input_state.name)
                 self.composition_interface_mechanism.add_states(interface_output_state)
-                # add the output state to the registry of this composition's interface output states
                 self.composition_interface_output_states[input_state] = interface_output_state
-                # create a mapping projection connecting this output state to the correct input state
-                MappingProjection(sender=interface_output_state, receiver=input_state)
-            else:
-                self.composition_interface_output_states[input_state].efferents = None
-                del self.composition_interface_output_states[input_state]
-
-        self.composition_interface_mechanism.execute()
+                MappingProjection(sender=interface_output_state, receiver=mech)
+        # origin_input_states = set()
+        # for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
+        #     for input_state in mech.input_states:
+        #         origin_input_states.add(input_state)
+        #
+        # has_interface_output_state = self.composition_interface_output_states.keys()
+        #
+        # # consider all of the expected inputs that have only origin input states OR only interface output states
+        # for input_state in origin_input_states.difference(has_interface_output_state):
+        #     if input_state not in has_interface_output_state:
+        #         # create an output state owned by the composition interface mechanism
+        #         interface_output_state = OutputState(owner=self.composition_interface_mechanism,
+        #                                              name = "[Interface to "
+        #                                                     + input_state.owner.name + "'s " + input_state.name + "]",
+        #                                              variable=input_state.variable)
+        #         # add the output state to the composition interface mechanism
+        #         self.composition_interface_mechanism.add_states(interface_output_state)
+        #         # add the output state to the registry of this composition's interface output states
+        #         self.composition_interface_output_states[input_state] = interface_output_state
+        #         # create a mapping projection connecting this output state to the correct input state
+        #         MappingProjection(sender=interface_output_state, receiver=input_state.owner)
+        #     else:
+        #         self.composition_interface_output_states[input_state].efferents = None
+        #         del self.composition_interface_output_states[input_state]
+        #
+        # self.composition_interface_mechanism.execute()
 
 
     def _assign_values_to_interface_output_states(self, inputs):
-        self.composition_interface_output_states
-        # loop over all origin mechanisms
-        input_value = []
-        for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
-            # for each one that has inputs
-            if mech in inputs.keys():
-                # loop over all input states and assign the inputs to their corresponding interface output states
-                for i in range(len(inputs[mech])):
+        for mech in list(inputs.keys()):
+            for i in range(len(inputs[mech])):
+                self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
 
-                    self.composition_interface_output_states[mech.input_states[i]].variable = inputs[mech][i]
-                    self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
-                    input_value.append(inputs[mech][i])
-            # for each that does not have inputs
-            else:
-                # loop over all input states set their corresponding interface output states to zero
-                for i in range(len(inputs[mech])):
-                    self.composition_interface_output_states[mech.input_states[i]].variable = 0
-                    self.composition_interface_output_states[mech.input_states[i]].value = 0
-                    input_value.append(0)
+        # loop over all origin mechanisms
+        # input_value = []
+        # for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
+        #     # for each one that has inputs
+        #     if mech in inputs.keys():
+        #         # loop over all input states and assign the inputs to their corresponding interface output states
+        #         for i in range(len(inputs[mech])):
+        #
+        #             self.composition_interface_output_states[mech.input_states[i]].variable = inputs[mech][i]
+        #             self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
+        #             input_value.append(inputs[mech][i])
+        #     # for each that does not have inputs
+        #     else:
+        #         # loop over all input states set their corresponding interface output states to zero
+        #         for i in range(len(inputs[mech])):
+        #             self.composition_interface_output_states[mech.input_states[i]].variable = 0
+        #             self.composition_interface_output_states[mech.input_states[i]].value = 0
+        #             input_value.append(0)
         # self.composition_interface_mechanism.default_variable = input_value
         #
         # self.composition_interface_mechanism.execute(input= input_value)
@@ -950,9 +961,6 @@ class Composition(object):
                     num = mechanism.execute(context=EXECUTING + "composition")
                     print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
                     print("result = ", num)
-                    for proj in mechanism.input_states[0].path_afferents:
-                        print("PROJ = ", proj)
-                        print("PROJ.sender.value", proj.sender.value)
 
                 if mechanism in origin_mechanisms:
                     if clamp_input:
