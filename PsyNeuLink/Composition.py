@@ -316,7 +316,7 @@ class Composition(object):
         # core attributes
         self.graph = Graph()  # Graph of the Composition
         self._graph_processing = None
-        self.mechanisms = []
+
         self.input_mechanisms = {}
         self.execution_ids = []
 
@@ -348,6 +348,14 @@ class Composition(object):
 
         # TBI: update self.sched whenever something is added to the composition
         self.sched = Scheduler(composition=self)
+
+    @property
+    def mechanisms(self):
+        return [v.component for v in self.graph.vertices if isinstance(v.component, Mechanism)]
+
+    @property
+    def projections(self):
+        return [v.component for v in self.graph.vertices if isinstance(v.component, Projection)]
 
     @property
     def graph_processing(self):
