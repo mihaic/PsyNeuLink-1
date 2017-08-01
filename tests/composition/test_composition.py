@@ -10,16 +10,16 @@ import pytest
 from PsyNeuLink.Components.Functions.Function import Linear, SimpleIntegrator
 from PsyNeuLink.Components.Mechanisms.Mechanism import mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.IntegratorMechanism import IntegratorMechanism
-from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.RecurrentTransferMechanism import RecurrentTransferMechanism
-from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
-from PsyNeuLink.Scheduling.Condition import EveryNCalls, AfterCall, AfterNCalls, EveryNPasses, Any
-from PsyNeuLink.Scheduling.Scheduler import Scheduler
-from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, Systemm, Pathway
-from PsyNeuLink.Scheduling.TimeScale import TimeScale, CurrentTime, CentralClock
-from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
-from PsyNeuLink.Components.System import system
+from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Process import process
+from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
+from PsyNeuLink.Components.System import system
+from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, Pathway, Systemm
+from PsyNeuLink.Globals.Keywords import HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
+from PsyNeuLink.Scheduling.Condition import AfterCall, AfterNCalls, Any, EveryNCalls, EveryNPasses
+from PsyNeuLink.Scheduling.Scheduler import Scheduler
+from PsyNeuLink.Scheduling.TimeScale import CentralClock, CurrentTime, TimeScale
 logger = logging.getLogger(__name__)
 
 # All tests are set to run. If you need to skip certain tests,
@@ -1995,3 +1995,44 @@ class TestNestedCompositions:
             # scheduler_processing=schedule
         )
         assert 16 == output[0][0]
+
+
+class TestParamsDict:
+
+    def test_run_integrator_two_contexts(self):
+        comp1 = Composition()
+        comp2 = Composition()
+        A = IntegratorMechanism(default_variable=1.0)
+        comp1.add_mechanism(A)
+        comp2.add_mechanism(A)
+        inputs_dict = {A: [[5], [5], [5]]}
+        output1 = comp1.run(
+            inputs=inputs_dict,
+        )
+        output2 = comp2.run(
+            inputs=inputs_dict,
+        )
+        assert 4.375 == output1[0][0]
+        assert 4.375 == output2[0][0]
+
+    def test_run_integrator_two_contexts_with_base(self):
+        comp1 = Composition()
+        comp2 = Composition()
+        A = IntegratorMechanism(default_variable=1.0)
+        comp1.add_mechanism(A)
+        comp2.add_mechanism(A)
+        inputs_dict = {A: [[5], [5], [5]]}
+        output1 = comp1.run(
+            inputs=inputs_dict,
+        )
+        output2 = comp2.run(
+            inputs=inputs_dict,
+            base_execution_id=comp1._execution_id,
+        )
+        assert 4.375 == output1[0][0]
+        assert 4.921875 == output2[0][0]
+
+        output1 = comp1.run(
+            inputs=inputs_dict,
+        )
+        assert 4.921875 == output1[0][0]
