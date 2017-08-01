@@ -2078,6 +2078,15 @@ class TestCompositionInterface:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {A: [[[5.]]],
+                        # two trials of one input state each
+                        #        TRIAL 1     TRIAL 2
+                        # A : [ [ [0,0] ] , [ [0, 0] ]  ]
+
+                       # two trials of multiple input states each
+                       #        TRIAL 1     TRIAL 2
+
+                       #       TRIAL1 IS1      IS2      IS3     TRIAL2    IS1      IS2
+                       # A : [ [     [0,0], [0,0,0], [0,0,0,0] ] ,     [ [0, 0],   [0] ]  ]
                        B: [[[5.]]]}
         sched = Scheduler(composition=comp)
         # sched.add_condition(A, EveryNPasses(1))
@@ -2090,4 +2099,42 @@ class TestCompositionInterface:
             inputs=inputs_dict,
             scheduler_processing=sched
             )
+
+        inputs_dict2 = {A: [[[2.]]],
+                       B: [[[2.]]]}
+        # sched.add_condition(A, EveryNPasses(1))
+        # sched.add_condition(B, EveryNCalls(A, 2))
+        # sched.add_condition(C, AfterNCalls(A, 2))
+        # sched.add_condition(D, AfterNCalls(A, 2))
+        # sched.add_condition(E, AfterNCalls(C, 1))
+        # sched.add_condition(E, AfterNCalls(D, 1))
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+            )
+
+        # add a new branch to the composition
+        F = TransferMechanism(name="F", function=Linear(slope=2.0))
+        G = TransferMechanism(name="G", function=Linear(slope=2.0))
+        comp.add_mechanism(F)
+        comp.add_mechanism(G)
+        comp.add_projection(sender=F, projection=MappingProjection(sender=F, receiver=G), receiver=G)
+        comp.add_projection(sender=G, projection=MappingProjection(sender=G, receiver=E), receiver=E)
+
+        # reassign roles
+        comp._analyze_graph()
+
+        # execute the updated composition
+        inputs_dict3 = {A: [[[1.]]],
+                       B: [[[2.]]],
+                       F: [[[3.]]]}
+        sched = Scheduler(composition=comp)
+        output3 = comp.run(
+            inputs=inputs_dict3,
+            scheduler_processing=sched
+            )
+
         assert 250 == output[0][0]
+        assert 100 == output2[0][0]
+        assert 135 == output3[0][0]
+

@@ -708,6 +708,9 @@ class Composition(object):
             builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
             corresponding OutputState on the CompositionInterfaceMechanism
         '''
+        self.composition_interface_mechanism._execution_id = 0
+        self.composition_interface_mechanism = CompositionInterfaceMechanism()
+        self.composition_interface_output_states = {}
         # loop over all origin mechanisms
         for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
             for input_state in mech.input_states:
@@ -906,8 +909,21 @@ class Composition(object):
 
         # self._create_input_mechanisms(inputs)
         # self._assign_values_to_input_mechanisms(inputs)
+        print("BEFORE")
+        for OS in self.composition_interface_output_states:
+            print(self.composition_interface_output_states[OS].name)
+            print(self.composition_interface_output_states[OS].value)
+            print("---------")
+        print()
+        print("inputs = ")
+        print(inputs)
+        print()
         self._assign_values_to_interface_output_states(inputs)
-
+        print("AFTER")
+        for OS in self.composition_interface_output_states:
+            print(self.composition_interface_output_states[OS].name)
+            print(self.composition_interface_output_states[OS].value)
+            print("---------")
         next_pass_before = 1
         next_pass_after = 1
         if clamp_input:
