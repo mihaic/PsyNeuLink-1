@@ -20,6 +20,7 @@ from PsyNeuLink.Scheduling.TimeScale import TimeScale, CurrentTime, CentralClock
 from PsyNeuLink.Globals.Keywords import HARD_CLAMP, SOFT_CLAMP, PULSE_CLAMP, NO_CLAMP
 from PsyNeuLink.Components.System import system
 from PsyNeuLink.Components.Process import process
+from PsyNeuLink.Globals.Keywords import NAME, VARIABLE, WEIGHT
 from PsyNeuLink.Components.States.InputState import InputState
 logger = logging.getLogger(__name__)
 
@@ -2047,6 +2048,7 @@ class TestNestedCompositions:
 
 
 class TestCompositionInterface:
+
     def test_one_input_state_per_origin_two_origins(self):
 
         # 5 -#1-> A --^ --> C --
@@ -2089,27 +2091,97 @@ class TestCompositionInterface:
                        # A : [ [     [0,0], [0,0,0], [0,0,0,0] ] ,     [ [0, 0],   [0] ]  ]
                        B: [[[5.]]]}
         sched = Scheduler(composition=comp)
-        # sched.add_condition(A, EveryNPasses(1))
-        # sched.add_condition(B, EveryNCalls(A, 2))
-        # sched.add_condition(C, AfterNCalls(A, 2))
-        # sched.add_condition(D, AfterNCalls(A, 2))
-        # sched.add_condition(E, AfterNCalls(C, 1))
-        # sched.add_condition(E, AfterNCalls(D, 1))
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched
             )
 
+        assert 250 == output[0][0]
+
+    def test_updating_input_values_for_second_execution(self):
+        # 5 -#1-> A --^ --> C --
+        #                       ==> E
+        # 5 ----> B ------> D --
+
+        # 5 x 1 = 5 ----> 5 x 5 = 25 --
+        #                                25 + 25 = 50  ==> 50 * 5 = 250
+        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        comp = Composition()
+        A = TransferMechanism(name="A",
+                              function=Linear(slope=1.0)
+                              )
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.]]],
+                       B: [[[5.]]]}
+        sched = Scheduler(composition=comp)
+
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
         inputs_dict2 = {A: [[[2.]]],
-                       B: [[[2.]]]}
-        # sched.add_condition(A, EveryNPasses(1))
-        # sched.add_condition(B, EveryNCalls(A, 2))
-        # sched.add_condition(C, AfterNCalls(A, 2))
-        # sched.add_condition(D, AfterNCalls(A, 2))
-        # sched.add_condition(E, AfterNCalls(C, 1))
-        # sched.add_condition(E, AfterNCalls(D, 1))
+                        B: [[[2.]]]}
         output2 = comp.run(
             inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+
+        assert 250 == output[0][0]
+        assert 100 == output2[0][0]
+
+    def test_adding_origin_for_second_execution(self):
+
+        comp = Composition()
+        A = TransferMechanism(name="A",
+                              function=Linear(slope=1.0)
+                              )
+
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.]]],
+                        # two trials of one input state each
+                        #        TRIAL 1     TRIAL 2
+                        # A : [ [ [0,0] ] , [ [0, 0] ]  ]
+
+                       # two trials of multiple input states each
+                       #        TRIAL 1     TRIAL 2
+
+                       #       TRIAL1 IS1      IS2      IS3     TRIAL2    IS1      IS2
+                       # A : [ [     [0,0], [0,0,0], [0,0,0,0] ] ,     [ [0, 0],   [0] ]  ]
+                       B: [[[5.]]]}
+        sched = Scheduler(composition=comp)
+
+        output = comp.run(
+            inputs=inputs_dict,
             scheduler_processing=sched
             )
 
@@ -2125,16 +2197,60 @@ class TestCompositionInterface:
         comp._analyze_graph()
 
         # execute the updated composition
-        inputs_dict3 = {A: [[[1.]]],
+        inputs_dict2 = {A: [[[1.]]],
                        B: [[[2.]]],
                        F: [[[3.]]]}
+
         sched = Scheduler(composition=comp)
-        output3 = comp.run(
-            inputs=inputs_dict3,
+        output2 = comp.run(
+            inputs=inputs_dict2,
             scheduler_processing=sched
             )
 
         assert 250 == output[0][0]
-        assert 100 == output2[0][0]
-        assert 135 == output3[0][0]
+        assert 135 == output2[0][0]
 
+    def test_two_input_states_one_origin(self):
+
+        comp = Composition()
+        my_fun = Linear(default_variable=[0,0], slope=1.0)
+        A = TransferMechanism(name="A",
+                              default_variable=[0, 0],
+                              input_states=[{NAME: "Input State 1",
+                                             # VARIABLE: sample_input,
+                                             # WEIGHT: -1
+                                             },
+                                            {NAME: "Input State 2",
+                                             # VARIABLE: target_input,
+                                             # WEIGHT:1
+                                             }],
+                              function=my_fun
+                              )
+
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.], [5.]]],
+                      }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+            )
+
+        assert 0 == output[0][0]
+
+        # input_states = [{NAME: "Input State 1",
+        #                  # VARIABLE: sample_input,
+        #                  # WEIGHT: -1
+        #                  },
+        #                 {NAME: "Input State 2",
+        #                  # VARIABLE: target_input,
+        #                  # WEIGHT:1
+        #                  }],
