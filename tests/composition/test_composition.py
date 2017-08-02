@@ -2243,3 +2243,110 @@ class TestCompositionInterface:
             )
 
         assert 100 == output[0][0]
+
+    def test_two_input_states_new_inputs_second_trial(self):
+
+        comp = Composition()
+        my_fun = Linear(
+                # default_variable=[[0], [0]],
+                # ^ setting default_variable on the function actually does not matter -- does the mechanism update it?
+                slope=1.0)
+        A = TransferMechanism(name="A",
+                              default_variable=[[0], [0]],
+                              input_states=[{NAME: "Input State 1",
+                                             },
+                                            {NAME: "Input State 2",
+                                             }],
+                              function=my_fun
+                              )
+
+        B = TransferMechanism(name="B", function=Linear(slope=2.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.], [5.]]],
+                      }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+            )
+
+        inputs_dict2 = {A: [[[2.], [4.]]],
+                       }
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+
+        assert 100 == output[0][0]
+        assert 60 == output2[0][0]
+
+    def test_two_input_states_new_origin_second_trial(self):
+        # A --> B --> C
+        #     ^
+        # D __|
+
+        # 6 --> 12x2 =24 --> 24*5 = 120
+        #     ^
+        # 6 __|
+
+
+        comp = Composition()
+        my_fun = Linear(
+                # default_variable=[[0], [0]],
+                # ^ setting default_variable on the function actually does not matter -- does the mechanism update it?
+                slope=1.0)
+        A = TransferMechanism(name="A",
+                              default_variable=[[0], [0]],
+                              input_states=[{NAME: "Input State 1",
+                                             },
+                                            {NAME: "Input State 2",
+                                             }],
+                              function=my_fun
+                              )
+
+        B = TransferMechanism(name="B", function=Linear(slope=2.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.], [5.]]],
+                      }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+            )
+
+        D = TransferMechanism(name="D",
+                              default_variable=[[0], [0]],
+                              input_states=[{NAME: "Input State 1",
+                                             },
+                                            {NAME: "Input State 2",
+                                             }],
+                              function=my_fun
+                              )
+        comp.add_mechanism(D)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=B), B)
+        # Need to analyze graph again (identify D as an origin so that we can assign input) AND create the scheduler
+        # again (sched, even though it is tied to comp, will not update according to changes in comp) 
+        comp._analyze_graph()
+        sched = Scheduler(composition=comp)
+        inputs_dict2 = {A: [[[2.], [4.]]],
+                        D: [[[2.], [4.]]]
+                       }
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+
+        assert 100 == output[0][0]
+        assert 120 == output2[0][0]
