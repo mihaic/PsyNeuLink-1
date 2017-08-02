@@ -2213,22 +2213,20 @@ class TestCompositionInterface:
     def test_two_input_states_one_origin(self):
 
         comp = Composition()
-        my_fun = Linear(default_variable=[0,0], slope=1.0)
+        my_fun = Linear(
+                # default_variable=[[0], [0]],
+                # ^ setting default_variable on the function actually does not matter -- does the mechanism update it?
+                slope=1.0)
         A = TransferMechanism(name="A",
-                              default_variable=[0, 0],
+                              default_variable=[[0], [0]],
                               input_states=[{NAME: "Input State 1",
-                                             # VARIABLE: sample_input,
-                                             # WEIGHT: -1
                                              },
                                             {NAME: "Input State 2",
-                                             # VARIABLE: target_input,
-                                             # WEIGHT:1
                                              }],
                               function=my_fun
                               )
 
-
-        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        B = TransferMechanism(name="B", function=Linear(slope=2.0))
         C = TransferMechanism(name="C", function=Linear(slope=5.0))
         comp.add_mechanism(A)
         comp.add_mechanism(B)
@@ -2244,13 +2242,4 @@ class TestCompositionInterface:
             scheduler_processing=sched
             )
 
-        assert 0 == output[0][0]
-
-        # input_states = [{NAME: "Input State 1",
-        #                  # VARIABLE: sample_input,
-        #                  # WEIGHT: -1
-        #                  },
-        #                 {NAME: "Input State 2",
-        #                  # VARIABLE: target_input,
-        #                  # WEIGHT:1
-        #                  }],
+        assert 100 == output[0][0]
