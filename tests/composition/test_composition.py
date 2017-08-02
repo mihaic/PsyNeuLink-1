@@ -2319,31 +2319,23 @@ class TestCompositionInterface:
 
 class TestInputStateSpecifications:
 
-    def test_two_input_states_one_origin_dicionaries(self):
+    def test_two_input_states_created_with_dicionaries(self):
 
         comp = Composition()
-        my_fun = Linear(
-                # default_variable=[[0], [0]],
-                # ^ setting default_variable on the function actually does not matter -- does the mechanism update it?
-                slope=1.0)
         A = TransferMechanism(name="A",
                               default_variable=[[0], [0]],
                               input_states=[{NAME: "Input State 1",
                                              },
                                             {NAME: "Input State 2",
                                              }],
-                              function=my_fun
+                              function=Linear(slope=1.0)
+                              # specifying default_variable on the function doesn't seem to matter?
                               )
 
-        B = TransferMechanism(name="B", function=Linear(slope=2.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
         comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
+        inputs_dict = {A: [[[2.], [4.]]],
                       }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2351,30 +2343,32 @@ class TestInputStateSpecifications:
             scheduler_processing=sched
             )
 
-        assert 100 == output[0][0]
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
 
-    # def test_two_input_states_one_origin_dicionaries_different_shapes(self):
+        assert 2 == output[0][0]
+
+    # def test_two_input_states_one_origin_different_shapes(self):
     #
     #     comp = Composition()
-    #     my_fun = Linear(slope=1.0, default_variable=[[0], [0, 0, 0]],)
     #     A = TransferMechanism(name="A",
-    #                           default_variable=[[0], [0, 0, 0]],
+    #                           default_variable=[[0], [0,0,0]],
     #                           input_states=[{NAME: "Input State 1",
     #                                          },
     #                                         {NAME: "Input State 2",
     #                                          }],
-    #                           function=my_fun
+    #                           function=Linear(slope=1.0, default_variable=[[0], [0,0,0]])
+    #                           # specifying default_variable on the function doesn't seem to matter?
     #                           )
     #
-    #     B = TransferMechanism(name="B", function=Linear(slope=2.0))
-    #     C = TransferMechanism(name="C", function=Linear(slope=5.0))
     #     comp.add_mechanism(A)
-    #     comp.add_mechanism(B)
-    #     comp.add_mechanism(C)
-    #     comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-    #     comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+    #
     #     comp._analyze_graph()
-    #     inputs_dict = {A: [[[5.], [5., 5., 5.]]],
+    #     inputs_dict = {A: [[[2.], [4., 5., 6.]]],
     #                   }
     #     sched = Scheduler(composition=comp)
     #     output = comp.run(
@@ -2382,32 +2376,35 @@ class TestInputStateSpecifications:
     #         scheduler_processing=sched
     #         )
     #
-    #     # assert 100 == output[0][0]
+    #     assert 2. == A.input_states[0].value
+    #     assert [4.,5.,6.] == A.input_states[1].value
+    #     assert "Input State 1" == A.input_states[0].name
+    #     assert "Input State 2" == A.input_states[1].name
+    #     assert 2. == A.variable[0]
+    #     assert [4.,5.,6.] == A.variable[1]
+    #
+    #     assert 2 == output[0][0]
 
-    def test_two_input_states_one_origin_create_input_states_first(self):
+    def test_two_input_states_created_first_with_deferred_init(self):
         comp = Composition()
 
+        # create mechanism A
         I1 = InputState(name="Input State 1",
                         reference_value=[0])
-
         I2 = InputState(name="Input State 2",
                         reference_value=[0])
-
         A = TransferMechanism(name="A",
                               default_variable=[[0], [0]],
                               input_states=[I1, I2],
                               function=Linear(slope=1.0)
                               )
 
-        B = TransferMechanism(name="B", function=Linear(slope=2.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        # add mech A to composition
         comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
+        inputs_dict = {A: [[[2.], [4.]]],
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2415,137 +2412,134 @@ class TestInputStateSpecifications:
             scheduler_processing=sched
         )
 
-        assert 100 == output[0][0]
 
-    def test_two_input_states_one_origin_create_input_states_with_keyword(self):
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_created_with_keyword(self):
         comp = Composition()
+
+        # create mechanism A
+
         A = TransferMechanism(name="A",
                               default_variable=[[0], [0]],
                               input_states=[INPUT_STATE, INPUT_STATE],
                               function=Linear(slope=1.0)
                               )
 
-        B = TransferMechanism(name="B", function=Linear(slope=2.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        # add mech A to composition
         comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
+        inputs_dict = {A: [[[2.], [4.]]],
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
-        print(A.input_states)
 
-        assert 100 == output[0][0]
 
-    def test_two_input_states_one_origin_create_input_states_with_strings(self):
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "InputState" == A.input_states[0].name
+        assert "InputState-1" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_created_with_strings(self):
         comp = Composition()
+
+        # create mechanism A
+
         A = TransferMechanism(name="A",
                               default_variable=[[0], [0]],
-                              input_states=["input state 1", "input state 2"],
+                              input_states=["Input State 1", "Input State 2"],
                               function=Linear(slope=1.0)
                               )
 
-        B = TransferMechanism(name="B", function=Linear(slope=2.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        # add mech A to composition
         comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
+        inputs_dict = {A: [[[2.], [4.]]],
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
-        print(A.input_states)
 
-        assert 100 == output[0][0]
 
-    def test_two_input_states_one_origin_create_input_states_with_values(self):
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_created_with_values(self):
         comp = Composition()
+
+        # create mechanism A
 
         A = TransferMechanism(name="A",
                               default_variable=[[0], [0]],
-                              input_states=[[1.0], [1.0]],
+                              input_states=[[0.], [0.]],
                               function=Linear(slope=1.0)
                               )
 
-        B = TransferMechanism(name="B", function=Linear(slope=2.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        # add mech A to composition
         comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
+        inputs_dict = {A: [[[2.], [4.]]],
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
-        print(A.input_states)
 
-        assert 100 == output[0][0]
 
-    def test_two_input_states_one_origin_create_input_states_with_values(self):
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Default_InputStat-1" == A.input_states[0].name
+        assert "Default_InputStat-2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_implied_by_default_variable(self):
         comp = Composition()
-        my_fun = Linear(slope=1.0)
+
+        # create mechanism A
 
         A = TransferMechanism(name="A",
                               default_variable=[[0], [0]],
-                              input_states=[[1.0], [1.0]],
-                              function=my_fun
+                              function=Linear(slope=1.0)
                               )
 
-        B = TransferMechanism(name="B", function=Linear(slope=2.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        # add mech A to composition
         comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
-                       }
-        sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
-        print(A.input_states)
-
-        assert 100 == output[0][0]
-
-    def test_two_input_states_one_origin_implied_by_default_variable(self):
-        comp = Composition()
-        my_fun = Linear(slope=1.0)
-
-        A = TransferMechanism(name="A",
-                              default_variable=[[0], [0]],
-                              function=my_fun
-                              )
-
-        B = TransferMechanism(name="B", function=Linear(slope=2.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
-        comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
+        inputs_dict = {A: [[[2.], [4.]]],
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2553,6 +2547,11 @@ class TestInputStateSpecifications:
             scheduler_processing=sched
         )
 
-        print(A.input_states)
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Default_InputStat-1" == A.input_states[0].name
+        assert "Default_InputStat-2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
 
-        assert 100 == output[0][0]
+        assert 2 == output[0][0]
