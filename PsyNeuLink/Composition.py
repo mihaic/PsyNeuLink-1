@@ -725,7 +725,7 @@ class Composition(object):
                                                      name="Interface to " + mech.name + " for " + input_state.name)
                 self.composition_interface_mechanism.add_states(interface_output_state)
                 self.composition_interface_output_states[input_state] = interface_output_state
-                MappingProjection(sender=interface_output_state, receiver=mech)
+                MappingProjection(sender=interface_output_state, receiver=input_state)
         # origin_input_states = set()
         # for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
         #     for input_state in mech.input_states:
