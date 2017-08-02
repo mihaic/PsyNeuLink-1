@@ -756,9 +756,11 @@ class Composition(object):
 
     def _assign_values_to_interface_output_states(self, inputs):
         for mech in list(inputs.keys()):
-            for i in range(len(inputs[mech])):
-                self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
-
+            if type(inputs[mech]) == list:
+                for i in range(len(inputs[mech])):
+                    self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
+            else:
+                self.composition_interface_output_states[mech.input_state].value = inputs[mech]
         # loop over all origin mechanisms
         # input_value = []
         # for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
@@ -852,6 +854,15 @@ class Composition(object):
         # clamp type of this list is NOT same as the one the user set for the whole composition; return empty list
         else:
             return []
+
+    # def _validate_inputs(self, inputs):
+    #
+    #     # 1.0 --> one trial, one input state
+    #     # [1.0] --> one trial, one input state
+    #     # [[1.0]] --> one trial, one input state
+    #     # [[[1.0]]] --> one trial, one input state
+    #
+    #     # [[1.0], [1.0]]
 
     def execute(
         self,
