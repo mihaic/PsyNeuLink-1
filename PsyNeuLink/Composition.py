@@ -653,6 +653,12 @@ class Composition(object):
         except KeyError as e:
             raise CompositionError('Mechanism not assigned to role in mechanisms_to_roles: {0}'.format(e))
 
+    def get_roles_by_mechanism(self, mechanism):
+        try:
+            return self.mechanisms_to_roles[mechanism]
+        except KeyError:
+            raise CompositionError('Mechanism {0} not found in {1}.mechanisms_to_roles'.format(mechanism, self))
+
     def _set_mechanism_roles(self, mech, roles):
         self.clear_mechanism_role(mech)
         for role in roles:

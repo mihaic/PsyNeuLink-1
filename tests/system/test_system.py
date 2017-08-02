@@ -7,6 +7,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism imp
 from PsyNeuLink.Components.Process import process
 from PsyNeuLink.Components.Projections.ModulatoryProjections.ControlProjection import ControlProjection
 from PsyNeuLink.Components.System import system
+from PsyNeuLink.Composition import MechanismRole
 from PsyNeuLink.Globals.Keywords import ALLOCATION_SAMPLES
 from PsyNeuLink.Globals.Keywords import CYCLE, INITIALIZE_CYCLE, INTERNAL, ORIGIN, TERMINAL
 
@@ -125,13 +126,13 @@ class TestGraphAndInput:
         inputs = {a: [2, 2]}
         s.run(inputs)
 
-        assert [a] == s.origin_mechanisms.mechanisms
-        assert set([c, d]) == set(s.terminalMechanisms.mechanisms)
+        assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
+        assert set([c, d]) == set(s.get_mechanisms_by_role(MechanismRole.TERMINAL))
 
-        assert a.systems[s] == ORIGIN
-        assert b.systems[s] == INTERNAL
-        assert c.systems[s] == TERMINAL
-        assert d.systems[s] == TERMINAL
+        assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(c) == {MechanismRole.TERMINAL}
+        assert s.get_roles_by_mechanism(d) == {MechanismRole.TERMINAL}
 
     def test_bypass(self):
         a = TransferMechanism(name='a', default_variable=[0, 0])
@@ -151,13 +152,13 @@ class TestGraphAndInput:
         inputs = {a: [[2, 2], [0, 0]]}
         s.run(inputs=inputs)
 
-        assert [a] == s.origin_mechanisms.mechanisms
-        assert [d] == s.terminalMechanisms.mechanisms
+        assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
+        assert {d} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
-        assert a.systems[s] == ORIGIN
-        assert b.systems[s] == INTERNAL
-        assert c.systems[s] == INTERNAL
-        assert d.systems[s] == TERMINAL
+        assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(c) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(d) == {MechanismRole.TERMINAL}
 
     def test_chain(self):
         a = TransferMechanism(name='a', default_variable=[0, 0, 0])
@@ -178,14 +179,14 @@ class TestGraphAndInput:
         inputs = {a: [[2, 2, 2], [0, 0, 0]]}
         s.run(inputs=inputs)
 
-        assert [a] == s.origin_mechanisms.mechanisms
-        assert [e] == s.terminalMechanisms.mechanisms
+        assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
+        assert {e} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
-        assert a.systems[s] == ORIGIN
-        assert b.systems[s] == INTERNAL
-        assert c.systems[s] == INTERNAL
-        assert d.systems[s] == INTERNAL
-        assert e.systems[s] == TERMINAL
+        assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(c) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(d) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(e) == {MechanismRole.TERMINAL}
 
     def test_convergent(self):
         a = TransferMechanism(name='a', default_variable=[0, 0])
@@ -207,14 +208,14 @@ class TestGraphAndInput:
         inputs = {a: [[2, 2]], c: [[0]]}
         s.run(inputs=inputs)
 
-        assert set([a, c]) == set(s.origin_mechanisms.mechanisms)
-        assert [e] == s.terminalMechanisms.mechanisms
+        assert set([a, c]) == set(s.get_mechanisms_by_role(MechanismRole.ORIGIN))
+        assert {e} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
-        assert a.systems[s] == ORIGIN
-        assert b.systems[s] == INTERNAL
-        assert c.systems[s] == ORIGIN
-        assert d.systems[s] == INTERNAL
-        assert e.systems[s] == TERMINAL
+        assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(c) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(d) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(e) == {MechanismRole.TERMINAL}
 
     def cyclic_one_process(self):
         a = TransferMechanism(name='a', default_variable=[0, 0])
@@ -231,11 +232,11 @@ class TestGraphAndInput:
         inputs = {a: [1, 1]}
         s.run(inputs=inputs)
 
-        assert [a] == s.origin_mechanisms.mechanisms
-        assert [] == s.terminalMechanisms.mechanisms
+        assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
+        assert [] == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
-        assert a.systems[s] == ORIGIN
-        assert b.systems[s] == INITIALIZE_CYCLE
+        assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(b) == {MechanismRole.INITIALIZE_CYCLE}
 
     def cyclic_two_processes(self):
         a = TransferMechanism(name='a', default_variable=[0, 0])
@@ -254,12 +255,12 @@ class TestGraphAndInput:
         inputs = {a: [1, 1]}
         s.run(inputs=inputs)
 
-        assert [a] == s.origin_mechanisms.mechanisms
-        assert [] == s.terminalMechanisms.mechanisms
+        assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
+        assert {} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
-        assert a.systems[s] == ORIGIN
-        assert b.systems[s] == INITIALIZE_CYCLE
-        assert c.systems[s] == INITIALIZE_CYCLE
+        assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(b) == {MechanismRole.INITIALIZE_CYCLE}
+        assert s.get_roles_by_mechanism(c) == {MechanismRole.INITIALIZE_CYCLE}
 
     def cyclic_extended_loop(self):
         a = TransferMechanism(name='a', default_variable=[0, 0])
@@ -281,12 +282,12 @@ class TestGraphAndInput:
         inputs = {a: [2, 2], e: [0]}
         s.run(inputs=inputs)
 
-        assert set([a, c]) == set(s.origin_mechanisms.mechanisms)
-        assert [d] == s.terminalMechanisms.mechanisms
+        assert set([a, c]) == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
+        assert {d} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
-        assert a.systems[s] == ORIGIN
-        assert b.systems[s] == CYCLE
-        assert c.systems[s] == INTERNAL
-        assert d.systems[s] == TERMINAL
-        assert e.systems[s] == ORIGIN
-        assert f.systems[s] == INITIALIZE_CYCLE
+        assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(b) == {MechanismRole.CYCLE}
+        assert s.get_roles_by_mechanism(c) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(d) == {MechanismRole.TERMINAL}
+        assert s.get_roles_by_mechanism(e) == {MechanismRole.ORIGIN}
+        assert s.get_roles_by_mechanism(f) == {MechanismRole.INITIALIZE_CYCLE}
