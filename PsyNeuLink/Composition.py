@@ -732,8 +732,7 @@ class Composition(object):
                     self.composition_interface_output_states[input_state] = interface_output_state
                     MappingProjection(sender=interface_output_state, receiver=input_state)
 
-            sends_to_input_states = set(self.composition_interface_output_states.keys())
-
+        sends_to_input_states = set(self.composition_interface_output_states.keys())
         # For any output state still registered on the CIM that does not map to a corresponding ORIGIN mech I.S.:
         for input_state in sends_to_input_states.difference(current_input_states):
             for projection in input_state.path_afferents:
