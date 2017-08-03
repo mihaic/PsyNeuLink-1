@@ -753,9 +753,13 @@ class Composition(object):
             else:
                 self.composition_interface_output_states[mech.input_state].value = inputs[mech]
 
-        # NOTE:
-        # should an input be required for every origin input state?
-        # what to do if an input is not provided?
+        origins = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
+
+        # NOTE: This may need to change from default_variable to wherever a default value of the mechanism's variable
+        # is stored -- the point is that if an input is not supplied for an origin mechanism, the mechanism should use
+        # its default variable value
+        for mech in origins.difference(set(inputs.keys())):
+            self.composition_interface_output_states[mech.input_state].value = mech.variableInstanceDefault
 
     def _assign_execution_ids(self, execution_id=None):
         '''
@@ -930,7 +934,7 @@ class Composition(object):
                             for input_state in mechanism.input_states:
                             # clamp = None --> "turn off" input mechanism
                             # self.input_mechanisms[mechanism]._output_states[0].value = 0
-                                self.composition_interface_output_states[input_state].value
+                                self.composition_interface_output_states[input_state].value = 0
 
             if call_after_time_step:
                 call_after_time_step()

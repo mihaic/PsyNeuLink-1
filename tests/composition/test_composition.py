@@ -1990,7 +1990,7 @@ class TestNestedCompositions:
                                                                         receiver=myMech4),receiver=myMech4 )
         # assign input to origin mechs
         # myMech4 ignores its input from the outside world because it is no longer considered an origin!
-        stimulus = {myMech1: [[1]], myMech4: [[1]]}
+        stimulus = {myMech1: [[1]]}
         sys._analyze_graph()
         # schedule = Scheduler(composition=sys)
         output = sys.execute(
