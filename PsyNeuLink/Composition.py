@@ -714,45 +714,37 @@ class Composition(object):
             builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
             corresponding OutputState on the CompositionInterfaceMechanism
         '''
-        self.composition_interface_mechanism._execution_id = 0
-        self.composition_interface_mechanism = CompositionInterfaceMechanism()
-        self.composition_interface_output_states = {}
-        # loop over all origin mechanisms
-        for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
-            for input_state in mech.input_states:
-                interface_output_state = OutputState(owner=self.composition_interface_mechanism,
-                                                     variable=input_state.variable,
-                                                     name="Interface to " + mech.name + " for " + input_state.name)
-                self.composition_interface_mechanism.add_states(interface_output_state)
-                self.composition_interface_output_states[input_state] = interface_output_state
-                MappingProjection(sender=interface_output_state, receiver=input_state)
-        # origin_input_states = set()
-        # for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
-        #     for input_state in mech.input_states:
-        #         origin_input_states.add(input_state)
-        #
-        # has_interface_output_state = self.composition_interface_output_states.keys()
-        #
-        # # consider all of the expected inputs that have only origin input states OR only interface output states
-        # for input_state in origin_input_states.difference(has_interface_output_state):
-        #     if input_state not in has_interface_output_state:
-        #         # create an output state owned by the composition interface mechanism
-        #         interface_output_state = OutputState(owner=self.composition_interface_mechanism,
-        #                                              name = "[Interface to "
-        #                                                     + input_state.owner.name + "'s " + input_state.name + "]",
-        #                                              variable=input_state.variable)
-        #         # add the output state to the composition interface mechanism
-        #         self.composition_interface_mechanism.add_states(interface_output_state)
-        #         # add the output state to the registry of this composition's interface output states
-        #         self.composition_interface_output_states[input_state] = interface_output_state
-        #         # create a mapping projection connecting this output state to the correct input state
-        #         MappingProjection(sender=interface_output_state, receiver=input_state.owner)
-        #     else:
-        #         self.composition_interface_output_states[input_state].efferents = None
-        #         del self.composition_interface_output_states[input_state]
-        #
-        # self.composition_interface_mechanism.execute()
 
+        # loop over all origin mechanisms
+        current_input_states = set()
+        for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
+
+            for input_state in mech.input_states:
+                # add it to our set of current input states
+                current_input_states.add(input_state)
+
+                # if there is not a corresponding CIM output state, add one
+                if input_state not in set(self.composition_interface_output_states.keys()):
+                    interface_output_state = OutputState(owner=self.composition_interface_mechanism,
+                                                         variable=input_state.variable,
+                                                         name="Interface to " + mech.name + " for " + input_state.name)
+                    self.composition_interface_mechanism.add_states(interface_output_state)
+                    self.composition_interface_output_states[input_state] = interface_output_state
+                    MappingProjection(sender=interface_output_state, receiver=input_state)
+
+            sends_to_input_states = set(self.composition_interface_output_states.keys())
+
+        # For any output state still registered on the CIM that does not map to a corresponding ORIGIN mech I.S.:
+        for input_state in sends_to_input_states.difference(current_input_states):
+            for projection in input_state.path_afferents:
+                if projection.sender == self.composition_interface_output_states[input_state]:
+                    # remove the corresponding projection from the ORIGIN mechanism's path afferents
+                    input_state.path_afferents.remove(projection)
+                    projection = None
+            # remove the output state from the CIM
+            self.composition_interface_mechanism.output_states.remove(self.composition_interface_output_states[input_state])
+            # and from the dictionary of CIM output state/input state pairs
+            del self.composition_interface_output_states[input_state]
 
     def _assign_values_to_interface_output_states(self, inputs):
         for mech in list(inputs.keys()):
@@ -761,62 +753,10 @@ class Composition(object):
                     self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
             else:
                 self.composition_interface_output_states[mech.input_state].value = inputs[mech]
-        # loop over all origin mechanisms
-        # input_value = []
-        # for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
-        #     # for each one that has inputs
-        #     if mech in inputs.keys():
-        #         # loop over all input states and assign the inputs to their corresponding interface output states
-        #         for i in range(len(inputs[mech])):
-        #
-        #             self.composition_interface_output_states[mech.input_states[i]].variable = inputs[mech][i]
-        #             self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
-        #             input_value.append(inputs[mech][i])
-        #     # for each that does not have inputs
-        #     else:
-        #         # loop over all input states set their corresponding interface output states to zero
-        #         for i in range(len(inputs[mech])):
-        #             self.composition_interface_output_states[mech.input_states[i]].variable = 0
-        #             self.composition_interface_output_states[mech.input_states[i]].value = 0
-        #             input_value.append(0)
-        # self.composition_interface_mechanism.default_variable = input_value
-        #
-        # self.composition_interface_mechanism.execute(input= input_value)
 
-    # def _create_input_mechanisms(self, inputs):
-    #     '''
-    #         builds a dictionary of { Mechanism : InputMechanism } pairs where each origin mechanism has a corresponding
-    #         InputMechanism
-    #     '''
-    #     is_origin = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
-    #     has_input_mechanism = self.input_mechanisms.keys()
-    #
-    #     # consider all of the mechanisms that are only origins OR have input mechanisms
-    #     for mech in is_origin.difference(has_input_mechanism):
-    #
-    #         # If mech IS AN ORIGIN mechanism but it doesn't have an input mechanism, ADD input mechanism
-    #         if mech not in has_input_mechanism:
-    #             if mech in inputs.keys():
-    #                 new_input_mech = CompositionInterfaceMechanism(default_input_value=inputs[mech])
-    #             else:
-    #                 new_input_mech = CompositionInterfaceMechanism()
-    #             self.input_mechanisms[mech] = new_input_mech
-    #             MappingProjection(sender=new_input_mech, receiver=mech)
-    #
-    #         # If mech HAS AN INPUT mechanism but isn't an origin, REMOVE the input mechanism
-    #         else:
-    #             del self.input_mechanisms[mech]
-    #
-    # def _assign_values_to_input_mechanisms(self, input_dict):
-    #     '''
-    #         loops over the input values in the inputs dictionary and assigns each value directly to the output state of
-    #         its corresponding input mechanism
-    #     '''
-    #     for mech in self.input_mechanisms.keys():
-    #         if mech in input_dict.keys():
-    #             self.input_mechanisms[mech]._output_states[0].value = np.array(input_dict[mech])
-    #         else:
-    #             self.input_mechanisms[mech]._output_states[0].value = np.array(mech.variable)
+        # NOTE:
+        # should an input be required for every origin input state?
+        # what to do if an input is not provided?
 
     def _assign_execution_ids(self, execution_id=None):
         '''
