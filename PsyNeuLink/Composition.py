@@ -320,7 +320,7 @@ class Composition(object):
         self.composition_interface_output_states = {}
         self.mechanisms = []
         self.composition_interface_mechanism = CompositionInterfaceMechanism()
-        self.input_mechanisms = {}
+        # self.input_mechanisms = {}
         self.execution_ids = []
 
         self._scheduler_processing = None
@@ -775,8 +775,8 @@ class Composition(object):
             v.component._execution_id = execution_id
 
         # Assign the uuid to all input mechanisms
-        for k in self.input_mechanisms.keys():
-            self.input_mechanisms[k]._execution_id = execution_id
+        # for k in self.input_mechanisms.keys():
+        #     self.input_mechanisms[k]._execution_id = execution_id
 
         self.composition_interface_mechanism._execution_id = execution_id
 
@@ -913,7 +913,9 @@ class Composition(object):
                             if hasattr(mechanism, "recurrent_projection"):
                                 mechanism.recurrent_projection.sender.value = [0.0]
                         elif mechanism in no_clamp_inputs:
-                            self.input_mechanisms[mechanism]._output_states[0].value = 0.0
+                            for input_state in mechanism.input_states:
+                                self.composition_interface_output_states[input_state].value = 0.0
+                            # self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
                     for proj in mechanism.input_states[0].path_afferents:
@@ -925,8 +927,10 @@ class Composition(object):
                 if mechanism in origin_mechanisms:
                     if clamp_input:
                         if mechanism in pulse_clamp_inputs:
+                            for input_state in mechanism.input_states:
                             # clamp = None --> "turn off" input mechanism
-                            self.input_mechanisms[mechanism]._output_states[0].value = 0
+                            # self.input_mechanisms[mechanism]._output_states[0].value = 0
+                                self.composition_interface_output_states[input_state].value
 
             if call_after_time_step:
                 call_after_time_step()
