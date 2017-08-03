@@ -2210,6 +2210,59 @@ class TestCompositionInterface:
         assert 250 == output[0][0]
         assert 135 == output2[0][0]
 
+    def test_changing_origin_for_second_execution(self):
+
+        comp = Composition()
+        A = TransferMechanism(name="A",
+                              function=Linear(slope=1.0)
+                              )
+
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.]]]}
+        sched = Scheduler(composition=comp)
+
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+            )
+
+        assert 25 == output[0][0]
+
+        # add a new origin to the composition
+        F = TransferMechanism(name="F", function=Linear(slope=2.0))
+        comp.add_mechanism(F)
+        comp.add_projection(sender=F, projection=MappingProjection(sender=F, receiver=A), receiver=A)
+
+        # reassign roles
+        comp._analyze_graph()
+
+        # execute the updated composition
+        inputs_dict2 = {F: [[[3.]]]}
+
+        sched = Scheduler(composition=comp)
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+            )
+
+        projections_to_A = []
+        expected_projections_to_A = [("(OutputState RESULT)", "(InputState Default_InputStat)")]
+        for input_state in A.input_states:
+            for p_a in input_state.path_afferents:
+                projections_to_A.append((str(p_a.sender), str(p_a.receiver)))
+
+
+        assert projections_to_A == expected_projections_to_A
+        assert 30 == output2[0][0]
+
     def test_two_input_states_new_inputs_second_trial(self):
 
         comp = Composition()
@@ -2316,7 +2369,6 @@ class TestCompositionInterface:
             inputs=inputs_dict2,
             scheduler_processing=sched
         )
-
         assert 2. == A.input_states[0].value
         assert 4. == A.input_states[1].value
         assert "Input State 1" == A.input_states[0].name
@@ -2356,7 +2408,6 @@ class TestInputStateSpecifications:
             inputs=inputs_dict,
             scheduler_processing=sched
             )
-
         assert 2. == A.input_states[0].value
         assert 4. == A.input_states[1].value
         assert "Input State 1" == A.input_states[0].name
