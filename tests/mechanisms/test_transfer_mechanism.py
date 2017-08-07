@@ -635,7 +635,7 @@ class TestTransferMechanismSize:
     # size = array, variable = incompatible array, check variable
 
 
-    def test_transfer_mech_size_var_incompatible1(self):
+    def test_transfer_mech_size_var_incompatible2(self):
         T = TransferMechanism(
             name='T',
             size=[2, 2],
