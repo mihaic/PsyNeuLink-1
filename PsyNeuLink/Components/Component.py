@@ -668,7 +668,6 @@ class Component(object):
                 value
         '''
         execution_status = 'execution_status'
-        variable = 'variable'
         value = 'value'
 
         @classmethod
@@ -687,7 +686,6 @@ class Component(object):
 
     paramClassDefaults = {}
     default_class_param_values = {
-        Params.variable: [0],
         Params.value: 0,
         Params.execution_status: ExecutionStatus.UNSET,
     }
@@ -2832,14 +2830,6 @@ class Component(object):
     @value.setter
     def value(self, value):
         self.set_param_value(self.Params.value, value, composition=self.default_composition)
-
-    @property
-    def variable(self):
-        return self.get_param_value(self.Params.variable, composition=self.default_composition)
-
-    @variable.setter
-    def variable(self, value):
-        self.set_param_value(self.Params.variable, value, composition=self.default_composition)
 
     @property
     def execution_status(self):

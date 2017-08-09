@@ -1533,10 +1533,6 @@ class Mechanism_Base(Mechanism):
         self.ignore_execution_id = ignore_execution_id
         context = context or NO_CONTEXT
 
-
-        # gather necessary values from composition params dict
-        # variable = self.get_param_value(self.Params.variable, composition=composition, execution_id=execution_id)
-
         # IMPLEMENTATION NOTE: Re-write by calling execute methods according to their order in functionDict:
         #         for func in self.functionDict:
         #             self.functionsDict[func]()
