@@ -325,6 +325,9 @@ class LearningProjection(ModulatoryProjection_Base):
                                        PROJECTION_TYPE: LEARNING_PROJECTION}
                                })
 
+    class Params(ModulatoryProjection_Base.Params):
+        learning_rate = 'learning_rate'
+
     @tc.typecheck
     def __init__(self,
                  sender:tc.optional(tc.any(OutputState, LearningMechanism))=None,

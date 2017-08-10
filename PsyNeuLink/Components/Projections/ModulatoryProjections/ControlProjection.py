@@ -244,6 +244,9 @@ class ControlProjection(ModulatoryProjection_Base):
         PROJECTION_SENDER: ControlMechanism_Base,
         PROJECTION_SENDER_VALUE: defaultControlAllocation})
 
+    class Params(ModulatoryProjection_Base.Params):
+        allocation_samples = 'allocation_samples'
+
     @tc.typecheck
     def __init__(self,
                  sender=None,

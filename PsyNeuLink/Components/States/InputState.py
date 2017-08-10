@@ -442,6 +442,10 @@ class InputState(State_Base):
     paramClassDefaults = State_Base.paramClassDefaults.copy()
     paramClassDefaults.update({PROJECTION_TYPE: MAPPING_PROJECTION})
 
+    class Params(State_Base.Params):
+        weight = 'weight'
+        exponent = 'exponent'
+
     #endregion
 
     @tc.typecheck

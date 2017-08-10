@@ -306,6 +306,10 @@ class MappingProjection(PathwayProjection_Base):
                                PROJECTION_SENDER: OUTPUT_STATE, # Assigned to class ref in __init__.py module
                                PROJECTION_SENDER_VALUE: [1],
                                })
+
+    class Params(PathwayProjection_Base.Params):
+        matrix = 'matrix'
+
     @tc.typecheck
     def __init__(self,
                  sender=None,

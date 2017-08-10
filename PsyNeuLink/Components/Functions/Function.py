@@ -374,6 +374,12 @@ def get_param_value_for_function(owner, function):
         return None
 
 
+# Params Mixins ********************************************************************************************************
+class ScaleOffsetParams(object):
+    scale = 'scale'
+    offset = 'offset'
+
+
 class Function_Base(Function):
     """
     Function_Base(           \
@@ -753,6 +759,10 @@ class ArgumentTherapy(Function_Base):
                                # PROPENSITY: Manner.CONTRARIAN,
                                # PERTINACITY:  10
                                })
+
+    class Params(Function_Base.Params):
+        propensity = 'propensity'
+        pertinacity = 'pertinacity'
 
     def __init__(self,
                  default_variable=variableClassDefault,
@@ -1158,6 +1168,9 @@ class Reduce(CombinationFunction):  # ------------------------------------------
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
+    class Params(CombinationFunction.Params, ScaleOffsetParams):
+        pass
+
     @tc.typecheck
     def __init__(self,
                  default_variable=variableClassDefault,
@@ -1425,6 +1438,10 @@ class LinearCombination(
     # variableClassDefault_locked = True
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(CombinationFunction.Params, ScaleOffsetParams):
+        weights = 'weights'
+        exponents = 'exponents'
 
     @tc.typecheck
     def __init__(self,
@@ -1873,6 +1890,10 @@ class Linear(TransferFunction):  # ---------------------------------------------
         PARAMETER_STATE_PARAMS: None
     })
 
+    class Params(TransferFunction.Params):
+        slope = 'slope'
+        intercept = 'intercept'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=variableClassDefault,
@@ -2072,6 +2093,10 @@ class Exponential(TransferFunction):  # ----------------------------------------
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
+    class Params(TransferFunction.Params):
+        rate = 'rate'
+        scale = 'scale'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=variableClassDefault,
@@ -2224,6 +2249,10 @@ class Logistic(
     variableClassDefault = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(TransferFunction.Params):
+        gain = 'gain'
+        bias = 'bias'
 
     @tc.typecheck
     def __init__(self,
@@ -2379,6 +2408,9 @@ class SoftMax(TransferFunction):
     variableClassDefault = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(TransferFunction.Params):
+        gain = 'gain'
 
     @tc.typecheck
     def __init__(self,
@@ -2634,6 +2666,9 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
     variableClassDefault = [DEFAULT_FILLER_VALUE]  # Sender vector
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(TransferFunction.Params):
+        matrix = 'matrix'
 
     # def is_matrix_spec(m):
     #     if m is None:
@@ -3165,6 +3200,10 @@ class Integrator(
         RATE: None
     })
 
+    class Params(IntegratorFunction.Params):
+        rate = 'rate'
+        noise = 'noise'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -3490,6 +3529,9 @@ class SimpleIntegrator(
     multiplicative_param = RATE
     additive_param = OFFSET
 
+    class Params(Integrator.Params):
+        offset = 'offset'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -3715,6 +3757,9 @@ class ConstantIntegrator(
     multiplicative_param = SCALE
     additive_param = RATE
 
+    class Params(Integrator.Params, ScaleOffsetParams):
+        pass
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -3927,6 +3972,9 @@ class AdaptiveIntegrator(
         NOISE: None,
         RATE: None
     })
+
+    class Params(Integrator.Params):
+        offset = 'offset'
 
     @tc.typecheck
     def __init__(self,
@@ -4199,6 +4247,9 @@ class DriftDiffusionIntegrator(
         RATE: None
     })
 
+    class Params(Integrator.Params):
+        offset = 'offset'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -4419,6 +4470,9 @@ class OrnsteinUhlenbeckIntegrator(
         NOISE: None,
         RATE: None
     })
+
+    class Params(Integrator.Params):
+        offset = 'offset'
 
     @tc.typecheck
     def __init__(self,
@@ -4965,6 +5019,10 @@ class BogaczEtAl(
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
+    class Params(IntegratorFunction.Params):
+        drift_rate = 'drift_rate'
+        noise = 'noise'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=variableClassDefault,
@@ -5259,6 +5317,10 @@ class NavarroAndFuss(IntegratorFunction):
     variableClassDefault = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(IntegratorFunction.Params):
+        drift_rate = 'drift_rate'
+        noise = 'noise'
 
     @tc.typecheck
     def __init__(self,

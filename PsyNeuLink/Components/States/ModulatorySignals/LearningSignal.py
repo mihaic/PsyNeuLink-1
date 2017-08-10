@@ -342,6 +342,9 @@ class LearningSignal(ModulatorySignal):
     })
     #endregion
 
+    class Params(ModulatorySignal.Params):
+        learning_rate = 'learning_rate'
+
 
     @tc.typecheck
     def __init__(self,
