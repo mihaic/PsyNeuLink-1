@@ -44,6 +44,12 @@ class KWTA(RecurrentTransferMechanism):
 
     standard_output_states = RecurrentTransferMechanism.standard_output_states.copy()
 
+    class Params(RecurrentTransferMechanism.Params):
+        k_value = 'k_value'
+        ratio = 'ratio'
+        threshold = 'threshold'
+
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,

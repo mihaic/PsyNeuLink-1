@@ -394,6 +394,9 @@ class LCA(RecurrentTransferMechanism):
                                    {NAME:MAX_VS_AVG,
                                     CALCULATE:max_vs_avg}])
 
+    class Params(RecurrentTransferMechanism.Params):
+        inhibition = 'inhibition'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,

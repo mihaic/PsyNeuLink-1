@@ -373,6 +373,11 @@ class RecurrentTransferMechanism(TransferMechanism):
     standard_output_states = TransferMechanism.standard_output_states.copy()
     standard_output_states.extend([{NAME:ENERGY}, {NAME:ENTROPY}])
 
+    class Params(TransferMechanism.Params):
+        auto = 'auto'
+        cross = 'cross'
+        decay = 'decay'
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
