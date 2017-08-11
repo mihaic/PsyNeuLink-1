@@ -337,6 +337,8 @@ class TestTransferMechanismTimeConstant:
         )
         val = T.execute([1, 1, 1, 1]).tolist()
         assert val == [[0.8, 0.8, 0.8, 0.8]]
+        val = T.execute([1, 1, 1, 1]).tolist()
+        assert val == [[0.96, 0.96, 0.96, 0.96]]
 
     def test_transfer_mech_time_constant_1_0(self):
         T = TransferMechanism(
@@ -359,6 +361,22 @@ class TestTransferMechanismTimeConstant:
         )
         val = T.execute([1, 1, 1, 1]).tolist()
         assert val == [[0.0, 0.0, 0.0, 0.0]]
+
+    def test_transfer_mech_time_constant_0_8_initial_0_5(self):
+        T = TransferMechanism(
+            name='T',
+            default_variable=[0, 0, 0, 0],
+            function=Linear(),
+            time_constant=0.8,
+            initial_value=np.array([[.5, .5, .5, .5]]),
+            time_scale=TimeScale.TIME_STEP
+        )
+        val = T.execute([1, 1, 1, 1]).tolist()
+        assert val == [[0.9, 0.9, 0.9, 0.9]]
+        T.noise = 10
+        val = T.execute([1, 2, -3, 0]).tolist()
+        assert val == [[10.98, 11.78, 7.779999999999999, 10.18]]  # testing noise changes to an integrator
+
 
     def test_transfer_mech_time_constant_0_8_list(self):
         with pytest.raises(ComponentError) as error_text:
@@ -550,9 +568,7 @@ class TestTransferMechanismSize:
     # TEST 11
     # size = list of floats, variable = a compatible 2D array: check that variable is correct
     # note that this output under the Linear function is useless/odd, but the purpose of allowing this configuration
-    # is for possible user-defined functions.
-
-
+    # is for possible user-defined functions that do use unusual shapes.
     def test_transfer_mech_size_var_both_lists(self):
         T = TransferMechanism(
             name='T',
@@ -673,12 +689,8 @@ class TestTransferMechanismSize:
             )
         assert "is not a positive number" in str(error_text.value)
 
-    # ------------------------------------------------------------------------------------------------
-    # TEST 3
-    # size = non-integer float, check integer-cast value-change warning
-    # this test and the (currently commented) test immediately after it _may_ be deprecated if we ever fix
+    # this test below and the (currently commented) test immediately after it _may_ be deprecated if we ever fix
     # warnings to be no longer fatal. At the time of writing (6/30/17, CW), warnings are always fatal.
-
 
     # the test commented out here is similar to what we'd want if we got warnings to be non-fatal
     # and error_text was correctly representing the warning. For now, the warning is hidden under

@@ -55,12 +55,12 @@ Learning Functions:
 Overview
 --------
 
-A Function is a `component <Component>` that "packages" a function (in its `function <Function_Base.function>` method)
-for use by other PsyNeuLink components.  Every `component <Component>` in PsyNeuLink is assigned a Function; when that
-component is executed, its Function's `function <Function_Base.function>` is executed.  The
+A Function is a `Component` that "packages" a function (in its `function <Function_Base.function>` method)
+for use by other Components.  Every `Component` in PsyNeuLink is assigned a Function; when that
+Component is executed, its Function's `function <Function_Base.function>` is executed.  The
 `function <Function_Base.function>` can be any callable operation, although most commonly it is a mathematical operation
 (and, for those, almost always uses a call to one or more numpy functions).  There are two reasons PsyNeuLink
-packages functions in a Function component: to *manage parameters*, and for *modularity*.
+packages functions in a Function Component: to *manage parameters*, and for *modularity*.
 
 **Manage parameters**. Parameters are attributes of a Function that either remain stable over multiple calls to the
 function (e.g., the `gain <Logistic.gain>` or `bias <Logistic.bias>` of a `Logistic` function, or the learning rate
@@ -70,9 +70,9 @@ function's variable, and not have to provide them every time the function is cal
 PsyNeuLink Function has a set of attributes corresponding to the parameters of the function, that can be specified at
 the time the Function is created (in arguments to its constructor), and can be modified independently
 of a call to its :keyword:`function`. Modifications can be directly (e.g., in a script), or by the operation of other
-PsyNeuLink components (e.g., `AdaptiveMechanisms`) by way of `ControlProjections <ControlProjection>`.
+PsyNeuLink Components (e.g., `AdaptiveMechanisms`) by way of `ControlProjections <ControlProjection>`.
 
-**Modularity**. By providing a standard interface, any Function assigned to a components in PsyNeuLink can be replaced
+**Modularity**. By providing a standard interface, any Function assigned to a Components in PsyNeuLink can be replaced
 with other PsyNeuLink Functions, or with user-written custom functions so long as they adhere to certain standards
 (the PsyNeuLink :ref:`Function API <LINK>`).
 
@@ -82,7 +82,7 @@ Creating a Function
 -------------------
 
 A Function can be created directly by calling its constructor.  Functions are also created automatically whenever
-any other type of PsyNeuLink component is created (and its :keyword:`function` is not otherwise specified). The
+any other type of PsyNeuLink Component is created (and its :keyword:`function` is not otherwise specified). The
 constructor for a Function has an argument for its `variable <Function_Base.variable>` and each of the parameters of
 its `function <Function_Base.function>`.  The `variable <Function_Base.variable>` argument is used both to format the
 input to the `function <Function_Base.function>`, and assign its default value.  The arguments for each parameter can
@@ -97,10 +97,10 @@ Structure
 Every Function has a `variable <Function_Base.variable>` that provides the input to its
 `function <Function_Base.function>` method.  Its core attribute is its `function <Function_Base.function>` attribute
 that determines the computation that it carries out.  Ths must be a callable object (that is, a python function or
-method of some kind). Unlike other PsyNeuLink `Components`, it *cannot* be (another) Function object (it can't be
-"turtles" all the way down!).  A Function also has an attribute for each of the parameters of its `function
-<Function_Base.function>`.   If a Function has been assigned to another component, then it also has an `owner
-<Function_Base.owner>` attribute that refers to that component.  The Function itself is assigned as the component's
+method of some kind). Unlike other PsyNeuLink `Components <Component>`, it *cannot* be (another) Function object (it
+can't be "turtles" all the way down!).  A Function also has an attribute for each of the parameters of its `function
+<Function_Base.function>`.   If a Function has been assigned to another Component, then it also has an `owner
+<Function_Base.owner>` attribute that refers to that Component.  The Function itself is assigned as the Component's
 `function_object <Component.function_object>` attribute.  Each of the Function's attributes is also assigned
 as an attribute of the `owner <Function_Base.owner>`, and those are each associated with with a
 `parameterState <ParameterState>` of the `owner <Function_Base.owner>`.  Projections to those parameterStates can be
@@ -1205,8 +1205,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
         return result
 
 
-class LinearCombination(
-    CombinationFunction):  # ------------------------------------------------------------------------
+class LinearCombination(CombinationFunction):  # ------------------------------------------------------------------------
     # FIX: CONFIRM THAT 1D KWEIGHTS USES EACH ELEMENT TO SCALE CORRESPONDING VECTOR IN VARIABLE
     # FIX  CONFIRM THAT LINEAR TRANSFORMATION (OFFSET, SCALE) APPLY TO THE RESULTING ARRAY
     # FIX: CONFIRM RETURNS LIST IF GIVEN LIST, AND SIMLARLY FOR NP.ARRAY
@@ -1898,7 +1897,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
         # region Type conversion (specified by outputType):
         # Convert to 2D array, irrespective of variable type:
         if outputType is FunctionOutputType.NP_2D_ARRAY:
-            result = np.atleast2d(result)
+            result = np.atleast_2d(result)
 
         # Convert to 1D array, irrespective of variable type:
         # Note: if 2D array (or higher) has more than two items in the outer dimension, generate exception
@@ -2107,8 +2106,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
         return self.rate * input
 
 
-class Logistic(
-    TransferFunction):  # ------------------------------------------------------------------------------------
+class Logistic(TransferFunction):  # ------------------------------------------------------------------------------------
     """
     Logistic(              \
          default_variable, \
@@ -2240,7 +2238,13 @@ class Logistic(
         gain = self.paramsCurrent[GAIN]
         bias = self.paramsCurrent[BIAS]
 
-        return 1 / (1 + np.exp(-(gain * self.variable) + bias))
+        try:
+            return_val = 1 / (1 + np.exp(-(gain * self.variable) + bias))
+        except (Warning):
+            # handle RuntimeWarning: overflow in exp
+            return_val = 0
+
+        return return_val
 
     def derivative(self, output, input=None):
         """
@@ -2807,7 +2811,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                                                self.owner.name,
                                                MATRIX_KEYWORD_NAMES))
             else:
-                message += "Unrecognized param ({}) specified for the {} function of {}".format(param_name,
+                message += "Unrecognized param ({}) specified for the {} function of {}\n".format(param_name,
                                                                                                 self.componentName,
                                                                                                 self.owner.name)
                 continue
@@ -2816,7 +2820,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
             raise FunctionError(message)
 
     def _instantiate_attributes_before_function(self, context=None):
-        self._matrix = self.instantiate_matrix(self.matrix)
+        self.matrix = self.instantiate_matrix(self.matrix)
 
     def instantiate_matrix(self, specification, context=None):
         """Implements matrix indicated by specification
@@ -2852,7 +2856,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         if matrix is None:
             raise FunctionError("MATRIX param ({}) for the {} function of {} must be a matrix, a function that returns "
                                 "one, a matrix specification keyword ({}), or a number (filler)".
-                                format(specification, self.name, self.owner.name, matrix_keywords))
+                                format(specification, self.name, self.owner.name, MATRIX_KEYWORD_NAMES))
         else:
             return matrix
 
@@ -2940,13 +2944,9 @@ def get_matrix(specification, rows=1, cols=1, context=None):
      Returns 2D np.array with length=rows in dim 0 and length=cols in dim 1, or none if specification is not recognized
     """
 
-
-    if isinstance(specification, list):
-        specification = np.array(specification)
-
     # Matrix provided (and validated in _validate_params); convert to np.array
-    if isinstance(specification, np.matrix):
-        return np.array(specification)
+    if isinstance(specification, (list, np.matrix)):
+        specification = np.array(specification)
 
     if isinstance(specification, np.ndarray):
         if specification.ndim == 2:
@@ -2958,7 +2958,7 @@ def get_matrix(specification, rows=1, cols=1, context=None):
             raise FunctionError("Specification of np.array for matrix ({}) is more than 2d".
                                 format(specification))
 
-    if specification is AUTO_ASSIGN_MATRIX:
+    if specification == AUTO_ASSIGN_MATRIX:
         if rows == cols:
             specification = IDENTITY_MATRIX
         else:
@@ -2967,19 +2967,19 @@ def get_matrix(specification, rows=1, cols=1, context=None):
     if specification == FULL_CONNECTIVITY_MATRIX:
         return np.full((rows, cols), 1.0)
 
-    if specification is IDENTITY_MATRIX:
+    if specification == IDENTITY_MATRIX:
         if rows != cols:
             raise FunctionError("Sender length ({}) must equal receiver length ({}) to use {}".
                                 format(rows, cols, specification))
         return np.identity(rows)
 
-    if specification is HOLLOW_MATRIX:
+    if specification == HOLLOW_MATRIX:
         if rows != cols:
             raise FunctionError("Sender length ({}) must equal receiver length ({}) to use {}".
                                 format(rows, cols, specification))
         return 1-np.identity(rows)
 
-    if specification is RANDOM_CONNECTIVITY_MATRIX:
+    if specification == RANDOM_CONNECTIVITY_MATRIX:
         return np.random.rand(rows, cols)
 
     # Function is specified, so assume it uses random.rand() and call with sender_len and receiver_len
@@ -3012,8 +3012,7 @@ class IntegratorFunction(Function_Base):
 # • are rate and noise converted to 1d np.array?  If not, correct docstring
 # • can noise and initializer be an array?  If so, validated in validate_param?
 
-class Integrator(
-    IntegratorFunction):  # --------------------------------------------------------------------------------
+class Integrator(IntegratorFunction):  # --------------------------------------------------------------------------------
     """
     Integrator(                 \
         default_variable=None,  \
@@ -3216,7 +3215,7 @@ class Integrator(
 
     def _validate_noise(self, noise, var):
         # Noise is a list or array
-        if isinstance(noise, (np.ndarray, list)):
+        if isinstance(noise, (np.ndarray, list)) and len(noise) != 1:
             # Variable is a list/array
             if isinstance(var, (np.ndarray, list)):
                 if len(noise) != np.array(var).size:
@@ -3248,7 +3247,7 @@ class Integrator(
             #     raise FunctionError("All elements of noise list/array ({}) for {} must be of the same type. "
             #                         .format(noise, self.name))
 
-        elif not isinstance(noise, (float, int)) and not callable(noise):
+        elif not isinstance(noise, (float, int, np.ndarray)) and not callable(noise):
             raise FunctionError(
                 "Noise parameter ({}) for {} must be a float, function, or array/list of these."
                     .format(noise, self.name))
@@ -4655,7 +4654,7 @@ class AccumulatorIntegrator(
                          prefs=prefs,
                          context=context)
 
-        self.variable = self.initializer
+        self.previous_value = self.initializer
 
         self.auto_dependent = True
 
@@ -4792,7 +4791,7 @@ class AccumulatorIntegrator(
         #     previous_value = params[INITIALIZER]
         # except (TypeError, KeyError):
 
-        previous_value = np.atleast_2d(self.variable)
+        previous_value = np.atleast_2d(self.previous_value)
 
         value = previous_value*rate + noise + increment
 
@@ -4800,8 +4799,19 @@ class AccumulatorIntegrator(
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if not context or not INITIALIZING in context:
-            self.variable = value
+            self.previous_value = value
         return value
+
+    # In an AccumulatorIntegrator, `previous_value` mirrors `variable` because the EVC control mechanism
+    # manipulates `variable`: for the AccumulatorIntegrator, the appropriate attribute for
+    # EVC to manipulate is instead `previous_value`.
+    @property
+    def previous_value(self):
+        return self.variable
+
+    @previous_value.setter
+    def previous_value(self, setting):
+        self.variable = setting
 
 
 # Note:  For any of these that correspond to args, value must match the name of the corresponding arg in __init__()
@@ -6340,7 +6350,7 @@ class Reinforcement(
         specifies the function of the Mechanism that generates `activation_output <Reinforcement.activation_output>`.
 
     learning_rate : float : default default_learning_rate
-        supersedes any specification for the `process <Process>` and/or `system <System>` to which the function's
+        supersedes any specification for the `Process` and/or `System` to which the function's
         `owner <Function.owner>` belongs (see `learning_rate <Reinforcement.learning_rate>` for details).
 
     params : Optional[Dict[param keyword, param value]]
@@ -6384,11 +6394,11 @@ class Reinforcement(
 
     learning_rate : float
         the learning rate used by the function.  If specified, it supersedes any learning_rate specified for the
-        `process <Process.learning_Rate>` and/or `system <System.learning_rate>` to which the function's  `owner
-        <Reinforcement.owner>` belongs.  If it is `None`, then the learning_rate specified for the process to
-        which the `owner <Reinforcement.owner>` belongs is used;  and, if that is `None`, then the learning_rate for the
-        system to which it belongs is used. If all are `None`, then the
-        `default_learning_rate <Reinforcement.default_learning_rate>` is used.
+        `Process <Process_Base_Learning>` and/or `System <System_Learning>` to which the function's
+        `owner <Reinforcement.owner>` belongs.  If it is `None`, then the `learning_rate <Process_Base.learning_rate>`
+        specified for the Process to which the `owner <Reinforcement.owner>` belongs is used;  and, if that is `None`,
+        then the `learning_rate <System_Base.learning_rate>` for the System to which it belongs is used. If all are
+        `None`, then the `default_learning_rate <Reinforcement.default_learning_rate>` is used.
 
     default_learning_rate : float
         the value used for the `learning_rate <Reinforcement.learning_rate>` if it is not otherwise specified.
@@ -6597,7 +6607,7 @@ class BackPropagation(LearningFunction):
         MATRIX parameterState.
 
     learning_rate : float : default default_learning_rate
-        supersedes any specification for the `process <Process>` and/or `system <System>` to which the function's
+        supersedes any specification for the `Process` and/or `System` to which the function's
         `owner <Function.owner>` belongs (see `learning_rate <BackPropagation.learning_rate>` for details).
 
     params : Optional[Dict[param keyword, param value]]

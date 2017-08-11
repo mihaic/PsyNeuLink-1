@@ -82,16 +82,17 @@ PsyNeuLink assigns a default Projection. Specifying the components of a pathway 
 Mechanisms
 ~~~~~~~~~~
 
-The `Mechanisms` of a Process must be listed in the `pathway` argument of the :py:func:`process` function explicitly,
-in the order to be executed.  The first Mechanism in the Process is designated as the `ORIGIN`, and receives as its
-input any input provided to the Process' `execute <Process_Base.execute>` or `run <Process_Base.run>` methods. The last
-Mechanism listed in the `pathway` is designated as the `TERMINAL` Mechanism, and its output is assigned as the output
-of the Process when it is executed.
+The `Mechanisms <Mechanism>` of a Process must be listed in the `pathway` argument of the :py:func:`process` function
+explicitly, in the order to be executed.  The first Mechanism in the Process is designated as the `ORIGIN`,
+and receives as its input any input provided to the Process' `execute <Process_Base.execute>` or `run
+<Process_Base.run>` methods. The last Mechanism listed in the `pathway` is designated as the `TERMINAL` Mechanism,
+and its output is assigned as the output of the Process when it is executed.
 
 .. note::
-   The `ORIGIN` and `TERMINAL` Mechanisms of a Process are not necessarily the `ORIGIN` and/or `TERMINAL` Mechanisms
-   of the `System(s) <System_Mechanisms>` to which it belongs.  The designations of a Mechanism's status in the
-   Process(es) to which it belongs are listed in its `Processes <Mechanism.Mechanism_Base.processes>` attribute.
+   The `ORIGIN` and `TERMINAL` Mechanisms of a Process are not necessarily the `ORIGIN` and/or `TERMINAL` Mechanisms of
+   the `System(s) <System_Mechanisms>` to which it the Process belongs (see `example
+   <LearningProjection_Target_vs_Terminal_Figure>`).  The designations of a Mechanism's status in the Process(es) to
+   which it belongs are listed in its `Processes <Mechanism_Base.processes>` attribute.
 
 .. _Process_Mechanism_Specification:
 
@@ -158,7 +159,7 @@ automatically created to transmit the Process' input to its `ORIGIN` Mechanism, 
     a ProcessInputState is created for each input item, and all project to the `ORIGIN` Mechanism's InputState;
 
 * otherwise, if the **input** has more than one item and the `ORIGIN` Mechanism has more than one InputState,
-  but the numbers are not equal, an error message is generated indicating that the there is an ambiguous mapping from
+  but the numbers are not equal, an error message is generated indicating that there is an ambiguous mapping from
   the Process' **input** value to `ORIGIN` Mechanism's InputStates.
 
 The output of a Process is a 2d np.array containing the values of its `TERMINAL` Mechanism's OutputStates.
@@ -169,10 +170,10 @@ Learning
 ~~~~~~~~
 
 Learning modifies Projections between Mechanisms in a Process's `pathway`, so that the input to each Projection's
-`sender <MappingProjection_Sender>` produces the desired ("target") output from its
-`receiver <MappingProjection_Receiver>`.  Learning occurs when a Projection or Process for which learning has been
-specified is executed.  Learning can be specified for a particular Projection in a Process, or for the entire Process.
-It is specified for a particular Projection by including a `learning specification <LearningSignal_Specification>`
+`sender <MappingProjection_Sender>` produces the desired ("target") output from its`receiver
+<MappingProjection_Receiver>`.  Learning occurs when a Projection or Process for which learning has been specified is
+executed.  Learning can be specified for a particular Projection in a Process, or for the entire Process. It is
+specified for a particular Projection by including a `learning specification <MappingProjection_Learning_Specification>`
 in the specification for the Projection.  It is specified for the entire Process by assigning either a
 `LearningProjection <LearningProjection_Creation>` or `LearningSignal <LearningSignal_Specification>` specification,
 or the keyword *ENABLED* to the **learning** argument of the Process' constructor.  Specifying learning for a Process
@@ -443,8 +444,8 @@ def process(process_spec=None,
     initial_values : Optional[Dict[Mechanism, param value]] : default None
         a dictionary of values used to initialize the specified Mechanisms. The key for each entry must be a Mechanism
         object, and the value must be a number, list or np.array that must be compatible with the format of
-        the Mechanism's `value <Mechanism.Mechanism_Base.value>` attribute. Mechanisms not specified will be initialized
-        with their `default_variable <Mechanism.Mechanism_Base.default_variable>`.
+        the Mechanism's `value <Mechanism_Base.value>` attribute. Mechanisms not specified will be initialized
+        with their `default_variable <Mechanism_Base.default_variable>`.
 
     clamp_input : Optional[keyword] : default None
         specifies whether the input to the Process continues to be applied to the `ORIGIN` Mechanism after
@@ -658,10 +659,10 @@ class Process_Base(Process):
         input to the Process for each `TRIAL` of executions;  it is assigned the value of the :keyword:`input` argument
         in a call to the Process' `execute <Process_Base.execute>`  or `run <Process_Base.run>` method. Its items are
         assigned as the value of the corresponding ProcessInputStates in `process_input_states`, and must match the
-        format of the `variable <Mechanism.Mechanism_Base.variable>` for the Process' `ORIGIN` Mechanism.
+        format of the `variable <Mechanism_Base.variable>` for the Process' `ORIGIN` Mechanism.
 
         .. note:: The :keyword:`input` attribute of a Process preserves its value throughout the execution of the
-                  Process. It's value is assigned to the `variable <Mechanism.Mechanism_Base.variable>` attribute of
+                  Process. It's value is assigned to the `variable <Mechanism_Base.variable>` attribute of
                   the `ORIGIN` Mechanism at the start of execution.  After that, by default, that Mechanism's
                   :keyword:`variable` attribute is zeroed. This is so that if the `ORIGIN` Mechanism is executed
                   again in the same `PASS` of executions (e.g., if it is part of a recurrent loop) it does not continue
@@ -688,8 +689,8 @@ class Process_Base(Process):
     initial_values : Optional[Dict[Mechanism, param value]]
         a dictionary of values used to initialize the specified Mechanisms. The key for each entry is a Mechanism
         object, and the value is a number, list or np.array that must be compatible with the format of
-        the Mechanism's `value <Mechanism.Mechanism_Base.value>` attribute. Mechanisms not specified will be
-        initialized with their `default_variable <Mechanism.Mechanism_Base.default_variable>`.
+        the Mechanism's `value <Mechanism_Base.value>` attribute. Mechanisms not specified will be
+        initialized with their `default_variable <Mechanism_Base.default_variable>`.
 
     value: 2d. np.array
         the value of the `primary OutputState <OutputState_Primary>` of the `TERMINAL` Mechanism of the Process.
@@ -921,7 +922,7 @@ class Process_Base(Process):
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate initial_values args
            Note: validation of target (for learning) is deferred until _instantiate_target since,
-                 if it doesn't have a TARGET mechanism (see _check_for_target_mechanism),
+                 if it doesn't have a TARGET Mechanism (see _check_for_target_mechanism),
                  it will not need a target.
         """
 
@@ -994,7 +995,7 @@ class Process_Base(Process):
                 if it DOES already has a Projection, and it is from:
                     (A) the current Process input, leave intact
                     (B) another Process input, if verbose warn
-                    (C) another mechanism in the current process, if verbose warn about recurrence
+                    (C) another Mechanism in the current process, if verbose warn about recurrence
                     (D) a Mechanism not in the current Process or System, if verbose warn
                     (E) another Mechanism in the current System, OK so ignore
                     (F) from something other than a Mechanism in the System, so warn (irrespective of verbose)
@@ -1029,7 +1030,7 @@ class Process_Base(Process):
         self._origin_mechs = [pathway[0]]
         self.origin_mechanisms = MechanismList(self, self._origin_mechs)
 
-        # Assign last mechanism in pathwway to lastMechanism attribute
+        # Assign last mechanism in pathway to lastMechanism attribute
         i = -1
         while not isinstance(pathway[i],Mechanism_Base):
             i -=1
@@ -1200,9 +1201,9 @@ class Process_Base(Process):
             # self.mechanismNames.append(mech.name)
 
             # FIX: ADD RECURRENT PROJECTION AND MECHANISM
-            # IMPLEMENTATION NOTE:  THIS IS A TOTAL HACK TO ALLOW RECURRENT MECHANISMS IN THE CURRENT SYSTEM
+            # IMPLEMENTATION NOTE:  THIS IS A TOTAL HACK TO ALLOW SELF-RECURRENT MECHANISMS IN THE CURRENT SYSTEM
             #                       SHOULD BE HANDLED MORE APPROPRIATELY IN COMPOSITION
-            # If this is the last mechanism in the pathway, and it has a recurrent Projection,
+            # If this is the last mechanism in the pathway, and it has a self-recurrent Projection,
             #    add that to the pathway so that it can be identified and assigned for learning if so specified
             if i+1 == len(pathway):
                 if any(any(proj.receiver.owner is mech
@@ -1212,7 +1213,7 @@ class Process_Base(Process):
                         for proj in state.efferents:
                             if proj.receiver.owner is mech:
                                 pathway.append(proj)
-                                pathway.append(pathway[i-2])
+                                pathway.append(pathway[i])
 
 
         # Validate initial values
@@ -1440,7 +1441,7 @@ class Process_Base(Process):
                                raise AttributeError
                        except AttributeError:
                            raise ProcessError("The last entry in the pathway for {} is a project specification {}, "
-                                              "so its receiver must be a mechanism in the pathway".
+                                              "so its receiver must be a Mechanism in the pathway".
                                               format(self.name, item))
 
                     # Projection spec is an instance of a MappingProjection
@@ -1456,7 +1457,7 @@ class Process_Base(Process):
                             try:
                                 sender_arg = item.init_args[SENDER]
                             except AttributeError:
-                                raise ProcessError("PROGRAM ERROR: Value of {} is {} but it does not have init_args".
+                                raise ProcessError("PROGRAM ERROR: init_status of {} is {} but it does not have init_args".
                                                    format(item, InitStatus.DEFERRED_INITIALIZATION))
                             except KeyError:
                                 raise ProcessError("PROGRAM ERROR: Value of {} is {} "
@@ -1477,10 +1478,10 @@ class Process_Base(Process):
                             try:
                                 receiver_arg = item.init_args[kwReceiverArg]
                             except AttributeError:
-                                raise ProcessError("PROGRAM ERROR: Value of {} is {} but it does not have init_args".
+                                raise ProcessError("PROGRAM ERROR: init_status of {} is {} but it does not have init_args".
                                                    format(item, InitStatus.DEFERRED_INITIALIZATION))
                             except KeyError:
-                                raise ProcessError("PROGRAM ERROR: Value of {} is {} "
+                                raise ProcessError("PROGRAM ERROR: init_status of {} is {} "
                                                    "but init_args does not have entry for {}".
                                                    format(item.init_args[NAME], InitStatus.DEFERRED_INITIALIZATION, kwReceiverArg))
                             else:
@@ -1617,19 +1618,19 @@ class Process_Base(Process):
         """Create Projection(s) for each item in Process input to InputState(s) of the specified Mechanism
 
         For each item in Process input:
-        - create process_input_state, as sender for MappingProjection to the mechanism.input_state
-        - create the MappingProjection (with process_input_state as sender, and mechanism as receiver)
+        - create process_input_state, as sender for MappingProjection to the Mechanism.input_state
+        - create the MappingProjection (with process_input_state as sender, and Mechanism as receiver)
 
         If len(Process.input) == len(mechanism.variable):
-            - create one Projection for each of the mechanism.input_state(s)
-        If len(Process.input) == 1 but len(mechanism.variable) > 1:
-            - create a Projection for each of the mechanism.input_states, and provide Process.input[value] to each
-        If len(Process.input) > 1 but len(mechanism.variable) == 1:
-            - create one Projection for each Process.input[value] and assign all to mechanism.input_state
-        Otherwise,  if len(Process.input) != len(mechanism.variable) and both > 1:
-            - raise exception:  ambiguous mapping from Process input values to mechanism's input_states
+            - create one Projection for each of the Mechanism.input_state(s)
+        If len(Process.input) == 1 but len(Mechanism.variable) > 1:
+            - create a Projection for each of the Mechanism.input_states, and provide Process.input[value] to each
+        If len(Process.input) > 1 but len(Mechanism.variable) == 1:
+            - create one Projection for each Process.input[value] and assign all to Mechanism.input_state
+        Otherwise,  if len(Process.input) != len(Mechanism.variable) and both > 1:
+            - raise exception:  ambiguous mapping from Process input values to Mechanism's input_states
 
-        :param mechanism:
+        :param Mechanism:
         :return:
         """
 
@@ -1768,13 +1769,13 @@ class Process_Base(Process):
             For learning:
                 go through _mechs in reverse order of pathway since
                     LearningProjections are processed from the output (where the training signal is provided) backwards
-                exhaustively check all of components of each mechanism,
+                exhaustively check all of Components of each Mechanism,
                     including all projections to its input_states and _parameter_states
                 initialize all items that specified deferred initialization
-                construct a _learning_mechs of mechanism tuples (mech, params, phase_spec):
+                construct a _learning_mechs of Mechanism tuples (mech, params, phase_spec):
                     assign phase_spec for each LearningMechanism = self._phaseSpecMax + 1 (i.e., execute them last)
                 add _learning_mechs to the Process' _mechs
-                assign input Projection from Process to first mechanism in _learning_mechs
+                assign input Projection from Process to first Mechanism in _learning_mechs
 
         IMPLEMENTATION NOTE: assume that the only Projection to a Projection is a LearningProjection
                              this is implemented to be fully general, but at present may be overkill
@@ -2037,7 +2038,7 @@ class Process_Base(Process):
 
         COMMENT:
             First check that input is provided (required) and appropriate.
-            Then execute each mechanism in the order they appear in the `pathway` list.
+            Then execute each Mechanism in the order they appear in the `pathway` list.
         COMMENT
 
         Arguments
@@ -2464,7 +2465,7 @@ class ProcessInputState(OutputState):
 
     Each instance encodes one of the following:
     - an item of the `input <Process.input>` to the process (a 1d array in the 2d input array) and provides it to a
-        `MappingProjection` that projects to one or more `input_states <Mechanism.Mechanism_Base.input_states>` of the
+        `MappingProjection` that projects to one or more `input_states <Mechanism_Base.input_states>` of the
         `ORIGIN` Mechanism in the process.
     - a `target <Process.target>` to the process (also a 1d array) and provides it to a `MappingProjection` that
          projects to the `TARGET` Mechanism of the process.

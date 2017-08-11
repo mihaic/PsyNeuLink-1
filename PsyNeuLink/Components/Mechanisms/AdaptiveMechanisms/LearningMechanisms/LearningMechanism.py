@@ -20,7 +20,7 @@ of one or more `MappingProjections <MappingProjection>`.  Its function takes an 
 as well as information about the `MappingProjection and activity <LearningMechanism_Additional_Attributes>` that
 generated the error, calculates a `learning_signal` that is used to modify the MappingProjection(s) by way of
 `LearningProjection(s) <LearningProjection>`.  Typically, a LearningMechanism is used to "train" a single
-MappingProjection (its `primary_learned_projection`), using the output of the mechanism to which that
+MappingProjection (its `primary_learned_projection`), using the output of the Mechanism to which that
 MappingProjection projects (its `output_source`) as the source of the error it attempts to reduce.  A LearningMechanism
 can be used to train multiple MappingProjections, by assigning it `additional LearningProjections
 <LearningMechanism_Multiple_LearningSignals>`; however, these will all use the same `learning_signal
@@ -43,7 +43,7 @@ More commonly, however, LearningMechanisms are created automatically when:
 * the learning attribute is specified for a `System <System_Execution_Learning>` or `Process <Process_Learning>`;
 ..
 * a `LearningProjection` (or the keyword *LEARNING*) is specified as the second item of a
-  `tuple used to specify the matrix parameter <Mapping_Matrix_Specification>` of a `MappingProjection` in
+  `tuple specification` for the matrix parameter <Mapping_Matrix_Specification>` of a `MappingProjection` in
   the `pathway <Process_Base.pathway>` of a `Process`.
 ..
 * a `LearningProjection` is created without specifying its `sender <LearningProjection.sender>` attribute.
@@ -58,6 +58,13 @@ must be specified.  The **variable** must have three items that are compatible (
 **error_source** must be a `ComparatorMechanism` for `single layer learning <LearningMechanism_Single_Layer_Learning>`
 or for the last `MappingProjection` in a learning sequence for `multilayer learning
 <LearningMechanism_Multilayer_Learning>`;  otherwise it must be a `LearningProjection`.
+
+.. _LearningMechanism_Learning_Signals:
+
+When a LearningMechanism is created explicitly, it can also be assigned existing LearningSignals and/or specified to
+create these, as well as `LearningProjections <LearningProjection>` from these to specified MappingProjections.  These
+are specified in the **learning_signals** argument of the LearningMechanism's constructor, using any of forms allowed
+for `specifying a LearningSignal <LearningSignal_Specification>`.
 
 .. _LearningMechanism_Structure:
 

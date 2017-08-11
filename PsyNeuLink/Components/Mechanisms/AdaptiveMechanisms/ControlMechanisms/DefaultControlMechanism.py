@@ -11,12 +11,12 @@
 """
 
 The DefaultControlMechanism is created for a `System` if no other controller type is specified. The
-DefaultControlMechanism createsan inputState for each ControlProjection it is assigned, and uses
-`defaultControlAllocation` as the value for the control signal.  By default,  :py:data:`defaultControlAllocation` =  1,
-so that ControlProjections from the DefaultControlMechanism have no effect on their parameters.  However, it can be
-used to uniformly control the parameters that receive ControlProjections from it, by manually changing the value of
-`defaultControlAllocation`.  See :doc:`ControlMechanism` for additional details of how ControlMechanisms are
-created, executed and their attributes.
+DefaultControlMechanism creates an `ControlSignal` for each `ControlProjection` it is assigned, and uses
+`defaultControlAllocation` as the `value <ControlSignal.value>` for the ControlSignal.  By default,
+`defaultControlAllocation` =  1, so that ControlProjections from the DefaultControlMechanism have no effect on their
+parameters.  However, it can be used to uniformly control the parameters that receive ControlProjections from it,
+by manually changing the value of `defaultControlAllocation`.  See `ControlMechanism` for additional details of
+how ControlMechanisms are created, executed and their attributes.
 
 COMMENT:
    ADD LINK FOR defaultControlAllocation
@@ -34,6 +34,7 @@ COMMENT
 """
 
 import typecheck as tc
+import numpy as np
 
 from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanisms.ControlMechanism import ControlMechanismError, ControlMechanism_Base
 from PsyNeuLink.Components.States.InputState import InputState
@@ -44,6 +45,7 @@ from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Utilities import ContentAddressableList
 from PsyNeuLink.Scheduling.TimeScale import CentralClock, TimeScale
+from PsyNeuLink.Components.States.ParameterState import ParameterState
 
 
 class DefaultControlMechanismError(Exception):
@@ -57,9 +59,10 @@ class DefaultControlMechanism(ControlMechanism_Base):
     COMMENT:
         Description:
             Implements default source of control signals, with one inputState and outputState for each.
-            Uses defaultControlAllocation as input(s) and pass value(s) unchanged to outputState(s) and ControlProjection(s)
+            Uses defaultControlAllocation as input(s) and pass value(s) unchanged to outputState(s) and
+            ControlProjection(s)
 
-            Every ControlProjection is assigned this mechanism as its sender by default (i.e., unless a sender is
+            Every ControlProjection is assigned this Mechanism as its sender by default (i.e., unless a sender is
                 explicitly specified in its constructor).
 
             An inputState and outputState is created for each ControlProjection assigned:
@@ -162,6 +165,13 @@ class DefaultControlMechanism(ControlMechanism_Base):
 
         elif isinstance(control_signal, tuple):
             input_name = 'DefaultControlAllocation for ' + control_signal[0] + '_ControlSignal'
+
+        elif isinstance(control_signal, ParameterState):
+            input_name = 'DefaultControlAllocation for ' + control_signal.name + '_ControlSignal'
+
+        else:
+            raise DefaultControlMechanismError("control signal ({}) was not a dict, tuple, or ParameterState".
+                                               format(control_signal))
 
         # Instantiate input_states and allocation_policy attribute for control_signal allocations
         self._instantiate_default_input_state(input_name, defaultControlAllocation, context=context)

@@ -33,7 +33,7 @@ that modulate different types of components and their states:
 * `ControlProjection`
     takes the `value of a <ControlSignal.value> of a `ControlSignal` belonging to a ControlMechanism,
     and conveys it to the `ParameterState` for the parameter of a `Mechanism` or its
-    `function <Mechanism.function>`, for use in modulating the value of the parameter.
+    `function <Mechanism_Base.function>`, for use in modulating the value of the parameter.
 
 .. _Projection_Creation:
 
@@ -44,7 +44,7 @@ A ModulatoryProjection is a base class, and cannot be instantiated directly.  Ho
 ModulatoryProjections listed above can be created directly, by calling the constructor for the desired type.
 More commonly, however, ModulatoryProjections are either specified `in context <Projection_In_Context_Specification>`,
 or are `created automatically <Projection_Automatic_Creation>`, the details of which are described in the documentation
-for each type.
+for each type of ModulatoryProjection.
 
 .. _ModulatoryProjection_Structure:
 
@@ -69,7 +69,7 @@ attribute, and then calls the function to determine the `value <State_Base.value
 
 .. note::
    The change made to the parameter of the State's Function in response to the execution of a ModulatoryProjection
-   are not applied until the state is updated which, in turn, does not occur until the mechanism to which the state 
+   are not applied until the state is updated which, in turn, does not occur until the Mechanism to which the State
    belongs is next executed; see :ref:`Lazy Evaluation` for an explanation of "lazy" updating).
 
 .. _ModulatoryProjection_Class_Reference:
