@@ -1020,6 +1020,8 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
+        self._analyze_graph()
+
         execution_id = self._assign_execution_ids(execution_id)
 
         scheduler_processing._init_counts(execution_id=execution_id)
