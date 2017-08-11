@@ -665,9 +665,16 @@ class Component(object):
 
     class ClassDefaults(Defaults):
         variable = NotImplemented
+        value = 0
+        execution_status = ExecutionStatus.UNSET
 
     class InstanceDefaults(Defaults):
-        def __init__(self, **kwargs):
+        def __init__(self, owner, **kwargs):
+            class_defaults = owner.ClassDefaults.values()
+            for k in class_defaults:
+                setattr(self, k, class_defaults[k])
+
+            # kwargs override any class defaults
             for param in kwargs:
                 setattr(self, param, kwargs[param])
 
@@ -713,10 +720,6 @@ class Component(object):
     requiredParamClassDefaultTypes = {}
 
     paramClassDefaults = {}
-    default_class_param_values = {
-        Params.value: 0,
-        Params.execution_status: ExecutionStatus.UNSET,
-    }
 
     # IMPLEMENTATION NOTE: This is needed so that the State class can be used with ContentAddressableList,
     #                      which requires that the attribute used for addressing is on the class;
@@ -761,11 +764,10 @@ class Component(object):
         self.execution_status = ExecutionStatus.INITIALIZING
         self.init_status = InitStatus.UNSET
 
-        self.instance_defaults = self.InstanceDefaults(variable=default_variable, **param_defaults)
+        self.instance_defaults = self.InstanceDefaults(owner=self, variable=default_variable, **param_defaults)
 
         # These ensure that subclass values are preserved, while allowing them to be referred to below
         self.paramInstanceDefaults = {}
-        self.default_instance_param_values = dict(Component.default_class_param_values)
 
         self._auto_dependent = False
         self._role = None
@@ -1990,7 +1992,7 @@ class Component(object):
 
         try:
             if param not in composition.params_by_execution_id[execution_id][self]:
-                self.set_param_value(param, self.default_instance_param_values[param], composition=composition, execution_id=execution_id)
+                self.set_param_value(param, getattr(self.instance_defaults, param), composition=composition, execution_id=execution_id)
 
             return composition.params_by_execution_id[execution_id][self][param]
         except KeyError as e:
