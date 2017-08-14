@@ -41,7 +41,7 @@ class TestConstructor:
         assert isinstance(comp, Composition)
 
         comp_2 = Composition()
-        assert isinstance(comp, Composition)
+        assert isinstance(comp_2, Composition)
 
     @pytest.mark.stress
     @pytest.mark.parametrize(
