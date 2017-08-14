@@ -746,7 +746,7 @@ class TestRun:
         with pytest.raises(CompositionError) as error_text:
             comp.add_projection(B, MappingProjection(sender=B, receiver=D), C)
 
-        assert "is incompatible with the positions of these components in their composition" in str(error_text.value)
+        assert "is incompatible with the positions of these Components in their Composition" in str(error_text.value)
 
     def test_projection_assignment_mistake_swap2(self):
         # A ----> C --
@@ -767,7 +767,7 @@ class TestRun:
         with pytest.raises(CompositionError) as error_text:
             comp.add_projection(B, MappingProjection(sender=B, receiver=C), D)
 
-        assert "is incompatible with the positions of these components in their composition" in str(error_text.value)
+        assert "is incompatible with the positions of these Components in their Composition" in str(error_text.value)
 
     def test_run_5_mechanisms_2_origins_1_terminal(self):
         # A ----> C --
