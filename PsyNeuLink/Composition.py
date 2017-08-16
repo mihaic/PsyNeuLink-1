@@ -838,6 +838,7 @@ class Composition(object):
                 if overwrite or param not in self.params_by_execution_id[execution_id][component]:
                     try:
                         self.params_by_execution_id[execution_id][component][param] = base_vals[param]
+                        logger.debug('{0}: Setting value of Param {1} to {2}'.format(component, param, base_vals[param]))
                     except KeyError:
                         raise CompositionError('Param {0} is not in base_vals but is expected'.format(param))
 

@@ -986,7 +986,8 @@ def prune_unused_args(func, args, kwargs):
         for kw in kwargs_to_pass:
             if kw not in func_kwargs_names:
                 filtered.add(kw)
-        logger.info('{1} extra keyword arguments specified to function {0}, will be ignored (values: {2})'.format(func, len(filtered), filtered))
+        if len(filtered) > 0:
+            logger.info('{1} extra keyword arguments specified to function {0}, will be ignored (values: {2})'.format(func, len(filtered), filtered))
         for kw in filtered:
             del kwargs_to_pass[kw]
 
