@@ -2890,12 +2890,15 @@ class Component(object):
     @property
     def _full_class_dict(self):
         '''
-        Returns the dictionary that consists of __dict__ combined with all of this class's parent __dict__ s
+        Returns the dictionary that consists of __dict__ combined with all of this class's ancestor __dict__ s
         '''
-        full_dict = dict(self.__class__.__dict__)
+        full_dict = {}
 
-        for parent in self.__class__.__mro__:
+        # iterate through parents in reverse order
+        for parent in self.__class__.__mro__[::-1]:
             full_dict.update(parent.__dict__)
+
+        full_dict.update(self.__class__.__dict__)
 
         return full_dict
 
