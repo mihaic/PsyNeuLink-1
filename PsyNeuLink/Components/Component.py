@@ -1982,7 +1982,12 @@ class Component(object):
 
         '''
         if param not in self.Params.values():
-            raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
+            try:
+                return self.function_object.get_param_value(param, composition, execution_id)
+            except AttributeError:
+                raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
+            except ComponentError:
+                raise ComponentError('{0} is not a valid user param for {1} (or its function_object {2}), please see self.Params.values for valid parameters'.format(param, self, self.function_object))
 
         if composition is None:
             if not hasattr(self, param):

@@ -2000,6 +2000,28 @@ class TestNestedCompositions:
 
 class TestParamsDict:
 
+    def test_get_function_param_on_mechanism_by_Param(self):
+        A = TransferMechanism(
+            function=Linear(
+                slope=2,
+                intercept=3,
+            ),
+        )
+
+        assert A.get_param_value(Linear.Params.slope) == 2
+        assert A.get_param_value(Linear.Params.intercept) == 3
+
+    def test_get_function_param_on_mechanism_by_string(self):
+        A = TransferMechanism(
+            function=Linear(
+                slope=2,
+                intercept=3,
+            ),
+        )
+
+        assert A.get_param_value('slope') == 2
+        assert A.get_param_value('intercept') == 3
+
     def test_run_integrator_two_contexts(self):
         comp1 = Composition()
         comp2 = Composition()
