@@ -1988,7 +1988,7 @@ class Component(object):
             composition = self.default_composition
 
         if execution_id is None:
-            execution_id = composition._execution_id
+            execution_id = composition.default_execution_id
 
         try:
             if param not in composition.params_by_execution_id[execution_id][self]:
@@ -2024,7 +2024,7 @@ class Component(object):
             composition = self.default_composition
 
         if execution_id is None:
-            execution_id = composition._execution_id
+            execution_id = composition.default_execution_id
 
         # create dictionaries as necessary if not existent
         if execution_id not in composition.params_by_execution_id:

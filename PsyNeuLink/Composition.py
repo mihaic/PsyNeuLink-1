@@ -324,6 +324,7 @@ class Composition(object):
         self._scheduler_learning = None
 
         self._execution_id = self._get_unique_id()
+        self.default_execution_id = self._execution_id
         self.params_by_execution_id = {}
         self.params_by_execution_id[self._execution_id] = {}
 
