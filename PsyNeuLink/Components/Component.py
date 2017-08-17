@@ -1965,6 +1965,7 @@ class Component(object):
     def get_param_value(self, param, composition=None, execution_id=None):
         '''
             Gets the value of a stateful `Param <Params>` in the context of **composition** and **execution_id**
+            If no composition is specified, attributes on self will be used
 
             Arguments
             ---------
@@ -1974,7 +1975,6 @@ class Component(object):
 
                 composition : `Composition`
                     the Composition in which **param**'s value is stored
-                    default : self.default_composition
 
                 execution_id : UUID
                     the execution context associated with **composition** for which **param**'s value is stored
@@ -1985,22 +1985,26 @@ class Component(object):
             raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
 
         if composition is None:
-            composition = self.default_composition
+            if not hasattr(self, param):
+                return getattr(self.instance_defaults, param)
+            else:
+                return getattr(self, param)
+        else:
+            if execution_id is None:
+                execution_id = composition.default_execution_id
 
-        if execution_id is None:
-            execution_id = composition.default_execution_id
+            try:
+                if param not in composition.params_by_execution_id[execution_id][self]:
+                    self.set_param_value(param, getattr(self.instance_defaults, param), composition=composition, execution_id=execution_id)
 
-        try:
-            if param not in composition.params_by_execution_id[execution_id][self]:
-                self.set_param_value(param, getattr(self.instance_defaults, param), composition=composition, execution_id=execution_id)
-
-            return composition.params_by_execution_id[execution_id][self][param]
-        except KeyError as e:
-            raise ComponentError('Key not found in {0}.params_by_execution_id: {1}'.format(composition, e))
+                return composition.params_by_execution_id[execution_id][self][param]
+            except KeyError as e:
+                raise ComponentError('Key not found in {0}.params_by_execution_id: {1}'.format(composition, e))
 
     def set_param_value(self, param, value, composition=None, execution_id=None):
         '''
             Sets the value of a stateful `Param <Params>` to **value** in the context of **composition** and **execution_id**
+            If no composition is specified, attributes on self will be used
 
             Arguments
             ---------
@@ -2021,19 +2025,19 @@ class Component(object):
             raise ComponentError('{0} is not a valid user param for {1}, please see self.Params.values for valid parameters'.format(param, self))
 
         if composition is None:
-            composition = self.default_composition
+            setattr(self, param, value)
+        else:
+            if execution_id is None:
+                execution_id = composition.default_execution_id
 
-        if execution_id is None:
-            execution_id = composition.default_execution_id
+            # create dictionaries as necessary if not existent
+            if execution_id not in composition.params_by_execution_id:
+                composition.params_by_execution_id[execution_id] = {}
 
-        # create dictionaries as necessary if not existent
-        if execution_id not in composition.params_by_execution_id:
-            composition.params_by_execution_id[execution_id] = {}
+            if self not in composition.params_by_execution_id[execution_id]:
+                composition.params_by_execution_id[execution_id][self] = {}
 
-        if self not in composition.params_by_execution_id[execution_id]:
-            composition.params_by_execution_id[execution_id][self] = {}
-
-        composition.params_by_execution_id[execution_id][self][param] = value
+            composition.params_by_execution_id[execution_id][self][param] = value
 
     def _validate_variable(self, variable, context=None):
         """Validate variable and return validated variable
