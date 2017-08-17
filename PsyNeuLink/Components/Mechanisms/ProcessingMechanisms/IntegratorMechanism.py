@@ -23,15 +23,14 @@ assigned a custom function.
 Creating an IntegratorMechanism
 -------------------------------
 
-An IntegratorMechanism can be created directly by calling its constructor, or using the
-`mechanism() <Mechanism.mechanism>` function and specifying *INTEGRATOR_MECHANISM* as its **mech_spec**
-argument.  Its function is specified in the **function** argument, which can be parametrized by calling its
-constructor with parameter values::
+An IntegratorMechanism can be created directly by calling its constructor, or using the `mechanism` command and
+specifying *INTEGRATOR_MECHANISM* as its **mech_spec** argument.  Its function is specified in the **function**
+argument, which can be parametrized by calling its constructor with parameter values::
 
     my_time_averaging_mechanism = IntegratorMechanism(function=AdaptiveIntegrator(rate=0.5))
 
 The **default_variable** argument specifies the format of its input (i.e., whether it is a single scalar or an
-array), as well as the value to use if none is provided when mechanism is executed.  Alternatively, the **size**
+array), as well as the value to use if none is provided when Mechanism is executed.  Alternatively, the **size**
 argument can be used to specify the length of the array, in which case it will be initialized with all zeros.
 
 .. _IntegratorMechanism_Structure
@@ -43,7 +42,7 @@ An IntegratorMechanism has a single `InputState`, the `value <InputState.InputSt
 used as the  `variable <IntegratorMechanism.variable>` for its `function <IntegratorMechanism.function>`.
 The default for `function <IntegratorMechanism.function>` is `AdaptiveIntegrator(rate=0.5)`. However,
 a custom function can also be specified,  so long as it takes a numeric value, or a list or np.ndarray of numeric
-values as its input, and returns a value of the same type and format.  The mechanism has a single `OutputState`,
+values as its input, and returns a value of the same type and format.  The Mechanism has a single `OutputState`,
 the `value <OutputState.OutputState.value>` of which is assigned the result of  the call to the Mechanism's
 `function  <IntegratorMechanism.function>`.
 
@@ -108,7 +107,7 @@ class IntegratorMechanism(ProcessingMechanism_Base):
             + componentType (str): SigmoidLayer
             + classPreference (PreferenceSet): SigmoidLayer_PreferenceSet, instantiated in __init__()
             + classPreferenceLevel (PreferenceLevel): PreferenceLevel.TYPE
-            + variableClassDefault (value):  SigmoidLayer_DEFAULT_BIAS
+            + ClassDefaults.variable (value):  SigmoidLayer_DEFAULT_BIAS
             + paramClassDefaults (dict): {TIME_SCALE: TimeScale.TRIAL,
                                           FUNCTION_PARAMS:{kwSigmoidLayer_Unitst: kwSigmoidLayer_NetInput
                                                                      kwSigmoidLayer_Gain: SigmoidLayer_DEFAULT_GAIN
@@ -126,11 +125,11 @@ class IntegratorMechanism(ProcessingMechanism_Base):
     ---------
 
     default_variable : number, list or np.ndarray
-        the input to the mechanism to use if none is provided in a call to its
-        `execute <Mechanism.Mechanism_Base.execute>` or `run <Mechanism.Mechanism_Base.run>` methods;
+        the input to the Mechanism to use if none is provided in a call to its
+        `execute <Mechanism_Base.execute>` or `run <Mechanism_Base.run>` methods;
         also serves as a template to specify the length of `variable <IntegratorMechanism.variable>` for
         `function <IntegratorMechanism.function>`, and the `primary outputState <OutputState_Primary>` of the
-        mechanism.
+        Mechanism.
 
     size : int, list or np.ndarray of ints
         specifies default_variable as array(s) of zeros if **default_variable** is not passed as an argument;
@@ -141,22 +140,22 @@ class IntegratorMechanism(ProcessingMechanism_Base):
         of values, and return one of the same form.
 
     time_scale :  TimeScale : TimeScale.TRIAL
-        specifies whether the mechanism is executed on the TIME_STEP or TRIAL time scale.
+        specifies whether the Mechanism is executed on the `TIME_STEP` or `TRIAL` time scale.
         This must be set to `TimeScale.TIME_STEP` for the :keyword:`rate` parameter to have an effect.
 
     params : Optional[Dict[param keyword, param value]]
         a `parameter dictionary <ParameterState_Specification>` that can be used to specify the parameters for
-        the mechanism, parameters for its `function <IntegratorMechanism.function>`, and/or a custom function and its
+        the Mechanism, parameters for its `function <IntegratorMechanism.function>`, and/or a custom function and its
         parameters.  Values specified for parameters in the dictionary override any assigned to those parameters in
         arguments of the constructor.
 
     name : str : default IntegratorMechanism-<index>
-        a string used for the name of the mechanism.
+        a string used for the name of the Mechanism.
         If not is specified, a default is assigned by `MechanismRegistry`
         (see :doc:`Registry <LINK>` for conventions used in naming, including for default and duplicate names).
 
     prefs : Optional[PreferenceSet or specification dict : Mechanism.classPreferences]
-        the `PreferenceSet` for mechanism.
+        the `PreferenceSet` for Mechanism.
         If it is not specified, a default is assigned using `classPreferences` defined in __init__.py
         (see :doc:`PreferenceSet <LINK>` for details).
 
@@ -190,8 +189,9 @@ class IntegratorMechanism(ProcessingMechanism_Base):
         kwPreferenceSetName: 'IntegratorMechanismCustomClassPreferences',
         kpReportOutputPref: PreferenceEntry(True, PreferenceLevel.INSTANCE)}
 
-    # Sets template for variable (input)
-    variableClassDefault = [[0]]
+    class ClassDefaults(ProcessingMechanism_Base.ClassDefaults):
+        # Sets template for variable (input)
+        variable = [[0]]
 
     paramClassDefaults = Mechanism_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -216,10 +216,10 @@ class IntegratorMechanism(ProcessingMechanism_Base):
         """
 
         if default_variable is None and size is None:
-            default_variable = self.variableClassDefault
+            default_variable = self.ClassDefaults.variable
 
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
-        # self.variableClassDefault = default_variable or [[0]]
+        # self.ClassDefaults.variable = default_variable or [[0]]
         params = self._assign_args_to_param_dicts(function=function,
                                                   params=params)
 

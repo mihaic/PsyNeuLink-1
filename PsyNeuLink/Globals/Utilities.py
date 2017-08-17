@@ -299,7 +299,6 @@ def iscompatible(candidate, reference=None, **kargs):
     # If the two are equal, can settle it right here
     # IMPLEMENTATION NOTE: remove the duck typing when numpy supports a direct comparison of iterables
 
-    import warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("error")
         try:
@@ -695,7 +694,7 @@ class ContentAddressableList(UserList):
             - they are most commonly accessed either exhaustively (e.g., in looping through them during execution),
                 or by key (e.g., to get the first, "primary" one), which makes the efficiencies of a dict for
                 accessing by key/name less critical;
-            - the number of states in a collection for a given mechanism is likely to be small so that, even when
+            - the number of states in a collection for a given Mechanism is likely to be small so that, even when
                 accessed by key/name, the inefficiencies of searching a list are likely to be inconsequential.
 
     Arguments

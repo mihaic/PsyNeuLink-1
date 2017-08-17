@@ -48,7 +48,7 @@ COMMENT:
 
 * `ParameterState`:
     * used by a Mechanism to represent the value of one of its parameters, or a parameter of its
-      `function <Mechanism.function>`, that can be modulated by a `ControlSignal`;
+      `function <Mechanism_Base.function>`, that can be modulated by a `ControlSignal`;
     * used by a `MappingProjection` to represent the value of its `matrix <MappingProjection.MappingProjection.matrix>`
       parameter, that can be modulated by a `LearningSignal`.
 
@@ -120,13 +120,10 @@ Wherever a State is specified, it can be done using any of the following:
       ..
       * *PROJECTIONS*:<List>
           the list must contain specifications for one or more
-          `projections <Projection_In_Context_Specification> to or from the State, and/or
+          `Projections <Projection_In_Context_Specification>` to or from the State, and/or
           `ModulatorySignals <ModulatorySignal>` from which it should receive projections;
           the type of Projections it can send and/or receive depends the type of State and
-          the context in which it is specified;
-          COMMENT:
-              REFER TO TABLE OF STATES AND TYPES OF PREOJCTIONS THEY CAN RECEIVE
-          COMMENT
+          the context in which it is specified (see `State_Projections` below);
       ..
       * *str*:<List>
           the key is used as the name of the State, and the list must contain specifications for
@@ -233,7 +230,7 @@ In addition, like all PsyNeuLink Components, it also has the three following cor
     * `variable <State_Base.variable>`:  for an `InputState` and `ParameterState`,
       the value of this is determined by the value(s) of the Projection(s) that it receives (and that are listed in
       its `path_afferents <State_Base.path_afferents>` attribute).  For an `OutputState`, it is the item of the owner
-      Mechanism's `value <Mechanism.value>` to which the OutputState is assigned (specified by the OutputState's
+      Mechanism's `value <Mechanism_Base.value>` to which the OutputState is assigned (specified by the OutputState's
       `index <OutputState_Index>` attribute.
     ..
     * `function <State_Base.function>`:  for an `InputState` this aggregates the values of the Projections that the
@@ -241,7 +238,7 @@ In addition, like all PsyNeuLink Components, it also has the three following cor
       `GatingSignal`;  for a `ParameterState`, it determines the value of the associated parameter, under the
       potential influence of a `ControlSignal` (for a `Mechanism`) or a `LearningSignal` (for a `MappingProjection`);
       for an OutputState, it conveys the result  of the Mechanism's function to its
-      `output_values <Mechanism.output_values>` attribute, under the potential influence of a `GatingSignal`.  See
+      `output_values <Mechanism_Base.output_values>` attribute, under the potential influence of a `GatingSignal`.  See
       `ModulatorySignals <ModulatorySignal_Structure>` and the `AdaptiveMechanism <AdaptiveMechanism>` associated with
       each type for a description of how they can be used to modulate the `function <State_Base.function>` of a State.
     ..
@@ -262,7 +259,7 @@ Every type of State has a `mod_afferents <State_Base.mod_afferents>` attribute, 
 that specifies how it should modulate the State's `value <State_Base.value>` when the State is updated (see
 `ModulatorySignal_Modulation` and `ModulatorySignal_Anatomy_Figure`).  In most cases, a ModulatorySignal uses the
 State's `function <State_Base.function>` to modulate its `value <State_Base.value>`.  The function of every State
-assigns one of its parameters as its *MULTIPLICATIVE_PARAM* and another as its *MULTIPLICATIVE_PARAM*. The
+assigns one of its parameters as its *ADDITIVE_PARAM* and another as its *MULTIPLICATIVE_PARAM*. The
 `modulation <ModulatorySignal.modulation>` attribute of a ModulatorySignal determines which of these to modify when the
 State uses it `function <State_Base.function>` to calculate its `value  <State_Base.value>`.  However, the
 ModulatorySignal can also be configured to override the State's `value <State_Base.value>` (i.e., assign it directly),
@@ -435,7 +432,7 @@ class State_Base(State):
             + suffix
             + classPreference (PreferenceSet): StatePreferenceSet, instantiated in __init__()
             + classPreferenceLevel (PreferenceLevel): PreferenceLevel.CATEGORY
-            + variableClassDefault (value): [0]
+            + ClassDefaults.variable (value): [0]
             + requiredParamClassDefaultTypes = {FUNCTION_PARAMS : [dict],    # Subclass function params
                                                PROJECTION_TYPE: [str, Projection]})   # Default projection type
             + paramClassDefaults (dict): {PROJECTIONS: []}             # Projections to States
@@ -545,11 +542,12 @@ class State_Base(State):
     suffix = " " + className
     paramsType = None
 
+    class ClassDefaults(State.ClassDefaults):
+        variable = [0]
+
     registry = StateRegistry
 
     classPreferenceLevel = PreferenceLevel.CATEGORY
-
-    variableClassDefault = [0]
 
     requiredParamClassDefaultTypes = Component.requiredParamClassDefaultTypes.copy()
     requiredParamClassDefaultTypes.update({FUNCTION_PARAMS : [dict],
@@ -606,7 +604,7 @@ class State_Base(State):
         """
         if kargs:
             try:
-                variable = kargs[VARIABLE]
+                variable = self._update_variable(kargs[VARIABLE])
             except (KeyError, NameError):
                 pass
             try:
@@ -711,7 +709,7 @@ class State_Base(State):
                 size = checkAndCastInt(size)
             try:
                 if variable is not None:
-                    variable = np.atleast_1d(variable)
+                    variable = self._update_variable(np.atleast_1d(variable))
             except:
                 raise StateError("Failed to convert variable (of type {}) to a 1D array.".format(type(variable)))
             # endregion
@@ -719,7 +717,7 @@ class State_Base(State):
             # region if variable is None and size is not None, make variable a 1D array of zeros of length = size
             if variable is None and size is not None:
                 try:
-                    variable = np.zeros(size)
+                    variable = self._update_variable(np.zeros(size))
                 except:
                     raise ComponentError("variable (perhaps default_variable) was not specified, but PsyNeuLink "
                                          "was unable to infer variable from the size argument, {}. size should be"
@@ -736,9 +734,9 @@ class State_Base(State):
         return variable
 
     def _validate_variable(self, variable, context=None):
-        """Validate variable and assign validated values to self.variable
+        """Validate variable and return validated variable
 
-        Sets self.base_value = self.value = self.variable = variable
+        Sets self.base_value = self.value = variable
         Insures that it is a number of list or tuple of numbers
 
         This overrides the class method, to perform more detailed type checking
@@ -746,16 +744,14 @@ class State_Base(State):
         Note:  this method (or the class version) is called only if the parameter_validation attribute is True
         """
 
-        super(State,self)._validate_variable(variable, context)
+        variable = self._update_variable(super(State, self)._validate_variable(variable, context))
 
         if not context:
             context = kwAssign + ' Base Value'
         else:
             context = context + kwAssign + ' Base Value'
 
-        # # MODIFIED 6/1/17 OLD:
-        # self.base_value = self.variable
-        # MODIFIED 6/1/17 END
+        return variable
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """validate projection specification(s)
@@ -806,7 +802,7 @@ class State_Base(State):
                                        self.owner.name))
 
     def _instantiate_function(self, context=None):
-        """Insure that output of function (self.value) is compatible with its input (self.variable)
+        """Insure that output of function (self.value) is compatible with its input (self.instance_defaults.variable)
 
         This constraint reflects the role of State functions:
             they simply update the value of the State;
@@ -824,33 +820,45 @@ class State_Base(State):
         # FIX: UPDATE WITH MODULATION_MODS REMOVE THE FOLLOWING COMMENT:
         #     * no change is made to PARAMETER_MODULATION_FUNCTION here (matrices may be multiplied or added)
         #         (that is handled by the individual State subclasses (e.g., ADD is enforced for MATRIX ParameterState)
-        if ((inspect.isclass(self.function) and issubclass(self.function, LinearCombination) or
-                 isinstance(self.function, LinearCombination)) and
-                (isinstance(self.variable, np.matrix) or
-                (isinstance(self.variable, np.ndarray) and self.variable.ndim >= 2))):
-            self.variable = [self.variable]
+        if (
+            (
+                (inspect.isclass(self.function) and issubclass(self.function, LinearCombination))
+                or isinstance(self.function, LinearCombination)
+            )
+            and (
+                isinstance(self.instance_defaults.variable, np.matrix)
+                or (
+                    isinstance(self.instance_defaults.variable, np.ndarray)
+                    and self.instance_defaults.variable.ndim >= 2
+                )
+            )
+        ):
+            self.instance_defaults.variable = [self.instance_defaults.variable]
             var_is_matrix = True
 
         super()._instantiate_function(context=context)
 
         # If it is a matrix, remove from list in which it was embedded after instantiating and evaluating function
         if var_is_matrix:
-            self.variable = self.variable[0]
+            self.instance_defaults.variable = self.instance_defaults.variable[0]
 
-        # Ensure that output of the function (self.value) is compatible with (same format as) its input (self.variable)
+        # Ensure that output of the function (self.value) is compatible with (same format as) its input (self.instance_defaults.variable)
         #     (this enforces constraint that State functions should only combine values from multiple projections,
         #     but not transform them in any other way;  so the format of its value should be the same as its variable).
-        if not iscompatible(self.variable, self.value):
-            raise StateError("Output ({0}: {1}) of function ({2}) for {3} {4} of {5}"
-                                      " must be the same format as its input ({6}: {7})".
-                                      format(type(self.value).__name__,
-                                             self.value,
-                                             self.function.__self__.componentName,
-                                             self.name,
-                                             self.__class__.__name__,
-                                             self.owner.name,
-                                             self.variable.__class__.__name__,
-                                             self.variable))
+        if not iscompatible(self.instance_defaults.variable, self.value):
+            raise StateError(
+                "Output ({0}: {1}) of function ({2}) for {3} {4} of {5}"
+                " must be the same format as its input ({6}: {7})".format(
+                    type(self.value).__name__,
+                    self.value,
+                    self.function.__self__.componentName,
+                    self.name,
+                    self.__class__.__name__,
+                    self.owner.name,
+                    self.instance_defaults.variable.__class__.__name__,
+                    self.instance_defaults.variable
+                )
+            )
 
     def _instantiate_projections(self, projections, context=None):
         """Implement any Projection(s) to/from State specified in PROJECTIONS entry of params arg
@@ -1145,7 +1153,7 @@ class State_Base(State):
             #    - check that projection's value is compatible with the State's variable
             #    - assign projection to path_afferents
             else:
-                if iscompatible(self.variable, projection_spec.value):
+                if iscompatible(self.instance_defaults.variable, projection_spec.value):
                     # This is needed to avoid duplicates, since instantiation of projection (e.g., of ControlProjection)
                     #    may have already called this method and assigned projection to self.path_afferents list
                     if not projection_spec in self.path_afferents:
@@ -1335,19 +1343,13 @@ class State_Base(State):
                                               context=context)
 
         # Check that self.value is compatible with projection's function variable
-        if not iscompatible(self.value, projection_spec.variable):
+        if not iscompatible(self.value, projection_spec.instance_defaults.variable):
             raise StateError("{0}Output ({1}) of {2} is not compatible with variable ({3}) of function for {4}".
                   format(
-                         # item_prefix_string,
-                         # self.value,
-                         # self.name,
-                         # projection_spec.variable,
-                         # projection_spec.name,
-                         # item_suffix_string))
                          item_prefix_string,
                          self.value,
                          item_suffix_string,
-                         projection_spec.variable,
+                         projection_spec.instance_defaults.variable,
                          projection_spec.name
                          ))
 
@@ -1779,7 +1781,7 @@ def _instantiate_state_list(owner,
         - OUTPUT_STATE
     - constraint_value (2D np.array): set of 1D np.ndarrays used as default values and
         for compatibility testing in instantiation of State(s):
-        - INPUT_STATE: self.variable
+        - INPUT_STATE: self.instance_defaults.variable
         - OUTPUT_STATE: self.value
         ?? ** Note:
         * this is ignored if param turns out to be a dict (entry value used instead)
@@ -2064,9 +2066,9 @@ def _instantiate_state(owner,                  # Object to which state will belo
         if state_spec.init_status is InitStatus.DEFERRED_INITIALIZATION:
             if not state_spec.init_args[OWNER]:
                 state_spec.init_args[OWNER] = owner
-                state_spec.init_args[VARIABLE] = owner.variable[0]
+                state_spec.init_args[VARIABLE] = owner.instance_defaults.variable[0]
             if not hasattr(state_spec, 'reference_value'):
-                state_spec.reference_value = owner.variable[0]
+                state_spec.reference_value = owner.instance_defaults.variable[0]
             state_spec._deferred_init()
 
         # Check that State's value is compatible with Mechanism's variable
@@ -2344,7 +2346,7 @@ def _parse_state_spec(owner,
     #             else:
     #                 state.params[param] = filter_params(state.params[param])
     #     return dict(**{NAME:state.name,
-    #                   VARIABLE:state.variable,
+    #                   VARIABLE:variable,
     #                   VALUE:state.value,
     #                   # PARAMS:{PROJECTIONS:state.pathway_projections}})
     #                   PARAMS:state.params})
@@ -2391,7 +2393,7 @@ def _parse_state_spec(owner,
     if params:
         # If variable is specified in state_params, use that
         if VARIABLE in params and params[VARIABLE] is not None:
-            variable = params[VARIABLE]
+            variable = self._update_variable(params[VARIABLE])
 
     # Create default dict for return
     state_dict = {NAME: name,
@@ -2404,7 +2406,7 @@ def _parse_state_spec(owner,
     # State class
     if inspect.isclass(state_spec) and issubclass(state_spec, State):
         if state_spec is state_type:
-            state_dict[VARIABLE] = state_spec.variableClassDefault
+            state_dict[VARIABLE] = state_spec.ClassDefaults.variable
         else:
             raise StateError("PROGRAM ERROR: state_spec specified as class ({}) that does not match "
                              "class of state being instantiated ({})".format(state_spec, state_type_name))
@@ -2414,8 +2416,7 @@ def _parse_state_spec(owner,
     #     if state_spec is state_type:
     #         name = state_spec.name
     #         # variable = state_spec.value
-    #         # variable = state_spec.variableClassDefault
-    #         variable = state_spec.variable
+    #         # variable = state_spec.ClassDefaults.variable
     #         value = state_spec.value
     #         modulatory_projections =  state_spec.mod_projections
     #         params = state_spec.user_params.copy()
@@ -2517,6 +2518,8 @@ def _parse_state_spec(owner,
         # A value was returned, so use value of keyword as variable
         if spec is not None:
             state_dict[VARIABLE] = spec
+            # NOTE: (7/26/17 CW) This warning below may not be appropriate, since this routine is run if the
+            # matrix parameter is specified as a keyword, which may be intentional.
             if owner.prefs.verbosePref:
                 print("{} not specified for {} of {};  default ({}) will be used".
                       format(VARIABLE, state_type, owner.name, value))

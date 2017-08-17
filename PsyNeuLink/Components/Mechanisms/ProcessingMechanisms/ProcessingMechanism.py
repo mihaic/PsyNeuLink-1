@@ -9,17 +9,18 @@
 # ********************************************  ProcessingMechanism ****************************************************
 
 """
+.. _ProcessingMechanism_Overview:
 
 Overview
 --------
 
-A ProcessingMechanism is a type of `Mechanism <Mechanism>` that transforms its input in some way.  A
-ProcessingMechanism always receives its input either from another ProcessingMechanism, or from the input to a `process
-<Process>` or `system <System>` when it is executed.  Similarly, its output is generally conveyed to another
-ProcessingMechanism or used as the ouput for a process or system.  However, the output of a ProcessingMechanism may
-also be used by an `AdaptiveMechanism` to modify the parameters of other components (or its own). ProcessingMechanisms
-are always executed before all AdaptiveMechanisms in the Process and/or System to which they belong, so that any
-modificatons made by the AdpativeMechanism are available to all ProcessingMechanisms in the next `TRIAL`.
+A ProcessingMechanism is a type of `Mechanism` that transforms its input in some way.  A ProcessingMechanism always
+receives its input either from another ProcessingMechanism, or from the input to a `Process` or `System` when it is
+executed.  Similarly, its output is generally conveyed to another ProcessingMechanism or used as the ouput for a Process
+or System.  However, the output of a ProcessingMechanism may also be used by an `AdaptiveMechanism` to modify the
+parameters of other components (or its own). ProcessingMechanisms are always executed before all AdaptiveMechanisms in
+the Process and/or System to which they belong, so that any modificatons made by the AdpativeMechanism are available to
+all ProcessingMechanisms in the next `TRIAL`.
 
 .. _ProcessingMechanism_Creation:
 
@@ -43,8 +44,8 @@ individual subtypes of ProcessingMechanism for more specific information about t
 Execution
 ---------
 
-A ProcessingMechanism always executes before any `AdaptiveMechanisms <AdaptiveMechanism>` in the process or
-system to which it belongs.
+A ProcessingMechanism always executes before any `AdaptiveMechanisms <AdaptiveMechanism>` in the `Process
+<Process_Execution>` or `System <System_Execution>` to which it belongs.
 
 """
 
@@ -81,9 +82,9 @@ class ProcessingMechanism_Base(Mechanism_Base):
     #     kwPreferenceSetName: 'ProcessingMechanismClassPreferences',
     #     kp<pref>: <setting>...}
 
-    # variableClassDefault = defaultControlAllocation
-    # This must be a list, as there may be more than one (e.g., one per control_signal)
-    variableClassDefault = defaultControlAllocation
+    class ClassDefaults(Mechanism_Base.ClassDefaults):
+        # This must be a list, as there may be more than one (e.g., one per control_signal)
+        variable = defaultControlAllocation
 
     def __init__(self,
                  variable=None,
@@ -105,8 +106,6 @@ class ProcessingMechanism_Base(Mechanism_Base):
         """
 
         self.system = None
-
-        self.variableClassDefault = variable  # should this line be here? (7/5/17 CW)
 
         super().__init__(variable=variable,
                          size=size,

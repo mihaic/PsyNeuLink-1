@@ -109,19 +109,18 @@ COMMENT
   described in the specifications below.
 ..
 
-COMMENT: TBI
-    .. _ObjectiveMechanism_OutputState_Tuple:
+.. _ObjectiveMechanism_OutputState_Tuple:
 
-    * **MonitoredOutputState Tuple**  tuple can be used wherever an OutputState can be specified, to determine how
-      its value is combined with others by the ObjectiveMechanism's `function <ObjectiveMechanism.function>`. Each
-      tuple must have the three following items in the order listed:
+* **MonitoredOutputState Tuple**: a tuple can be used wherever an OutputState can be specified, to determine how
+  its value is combined with others by the ObjectiveMechanism's `function <ObjectiveMechanism.function>` (see
+  `example <ObjectiveMechanism_OutputState_Tuple_Example>`). Each tuple must have the three following items in the
+  order listed:
 
-          * an OutputState or Mechanism, the name of one, or a specification dictionary for one;
-          ..
-          * a weight (int) - multiplies the value of the OutputState.
-          ..
-          * an exponent (int) - exponentiates the value of the OutputState;
-COMMENT
+      * an OutputState or Mechanism, the name of one, or a specification dictionary for one;
+      ..
+      * a weight (int) - multiplies the value of the OutputState.
+      ..
+      * an exponent (int) - exponentiates the value of the OutputState;
 
 * **string**, **value** or **dict**: These can be used as placemarkers for a monitored_state that will be instantiated
   later (for example, for the TARGET input of a Composition).  If a string is specified, it is used as the
@@ -212,9 +211,28 @@ of the action selected from the value of the reward::
 This is done by specifying the `weights <LinearCombination.weights>` parameter of the `LinearCombination` function,
 with two values [-1] and [1] corresponding to the two items in `monitored_values` (and `default_variable`).  This
 will multiply the value from `my_action_select_mech` by -1 before adding it to (and thus
-subtracting it from) the value of `my_reward_mech`.  Similarly, the `operation <LinearCombination.operation>`
-and `exponents <LinearCombination.exponents>` parameters of `LinearCombination` can be used together to multiply and
-divide quantities.
+subtracting it from) the value of `my_reward_mech`.  Notice that the weight for ``my_reward_mech`` had to be specified,
+even though it is using the default value (1);  whenever a weight and/or exponent parameter is specified, there must
+be an entry for every item of the function's variable.  The `operation <LinearCombination.operation>`
+and `exponents <LinearCombination.exponents>` parameters of `LinearCombination` can be used similarly, and together,
+to multiply and divide quantities.
+
+.. ObjectiveMechanism_OutputState_Tuple_Example:
+
+As a conveninence notation, weights and exponents can be included with the specification of the OutputState itself, in
+the **monitored_value** argument, by placing them in a tuple with the OutputState (see `MonitoredOutputState Tuple
+<ObjectiveMechanism_OutputState_Tuple>`).  The following example specifies the example same ObjectiveMechanism as the
+previous example::
+
+    my_objective_mech = ObjectiveMechanism(default_variable = [[0],[0]],
+                                          monitored_values = [(my_action_select_mech, -1, 1), my_reward_mech])
+
+This specifies that ``my_action_select_mech`` should be assigned a weight of -1 and an exponent of 1 when it is
+submitted to the ObjectiveMechanism's `function <ObjectiveMechanism.function>`.  Notice that the exponent had to be
+included, even though it is the default value;  when a tuple is used, the weight and exponent values must both be
+specified.  Notice also that ``my_reward_mech`` does not use a tuple, so it will be assigned defaults for both the
+weight and exponent parameters.
+
 
 .. _ObjectiveMechanism_Class_Reference:
 
@@ -286,7 +304,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
         Description:
             ObjectiveMechanism is a subtype of the ProcessingMechanism Type of the Mechanism Category of the
                 Component class
-            It's function uses the LinearCombination Function to compare two input variables
+            Its function uses the LinearCombination Function to compare two input variables
             COMPARISON_OPERATION (functionParams) determines whether the comparison is subtractive or divisive
             The function returns an array with the Hadamard (element-wise) differece/quotient of target vs. sample,
                 as well as the mean, sum, sum of squares, and mean sum of squares of the comparison array
@@ -295,7 +313,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
             + componentType (str): ObjectiveMechanism
             + classPreference (PreferenceSet): Comparator_PreferenceSet, instantiated in __init__()
             + classPreferenceLevel (PreferenceLevel): PreferenceLevel.SUBTYPE
-            + variableClassDefault (value):  Comparator_DEFAULT_STARTING_POINT // QUESTION: What to change here
+            + ClassDefaults.variable (value):  Comparator_DEFAULT_STARTING_POINT // QUESTION: What to change here
             + paramClassDefaults (dict): {TIME_SCALE: TimeScale.TRIAL,
                                           FUNCTION_PARAMS:{COMPARISON_OPERATION: SUBTRACTION}}
 
@@ -346,7 +364,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
     COMMENT:
         [TBI]
         time_scale :  TimeScale : TimeScale.TRIAL
-            specifies whether the mechanism is executed on the TIME_STEP or TRIAL time scale.
+            specifies whether the Mechanism is executed on the TIME_STEP or TRIAL time scale.
             This must be set to :keyword:`TimeScale.TIME_STEP` for the ``rate`` parameter to have an effect.
     COMMENT
 
@@ -392,8 +410,8 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
 
     output_state : OutputState
         contains the `primary OutputState <OutputState_Primary>` of the ObjectiveMechanism; the default is
-        its *ERROR_SIGNAL* OutputState, the value of which is equal to the `value <ObjectiveMechanism.value>`
-        attribute of the ObjectiveMechanism.
+        its *ERROR_SIGNAL* OutputState (see ObjectiveMechanism_Structure), the value of which is equal to the
+        `value <ObjectiveMechanism.value>` attribute of the ObjectiveMechanism.
 
     output_states : ContentAddressableList[OutputState]
         contains, by default, only the *ERROR_SIGNAL* (primary) OutputState of the ObjectiveMechanism.
@@ -424,8 +442,9 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
         kwPreferenceSetName: 'ObjectiveCustomClassPreferences',
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
 
-    # variableClassDefault = [[0],[0]]  # By default, ObjectiveMechanism compares two 1D np.array input_states
-    variableClassDefault = None
+    # ClassDefaults.variable = [[0],[0]]  # By default, ObjectiveMechanism compares two 1D np.array input_states
+    class ClassDefaults(ProcessingMechanism_Base.ClassDefaults):
+        variable = None
 
     # ObjectiveMechanism parameter and control signal assignments):
     paramClassDefaults = Mechanism_Base.paramClassDefaults.copy()
@@ -477,12 +496,12 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
         """
         # NOTE 6/29/17: (CW)
         # This is a very questionable check. The problem is that TransferMechanism (if default_variable is passed as
-        # None) expects variable to be initialized to variableClassDefault ([[0]]) while ObjectiveMechanism expects
-        # variable to be initialized to variableClassDefault ([[0]]) AFTER this check has occurred. The problem is,
+        # None) expects variable to be initialized to ClassDefaults.variable ([[0]]) while ObjectiveMechanism expects
+        # variable to be initialized to ClassDefaults.variable ([[0]]) AFTER this check has occurred. The problem is,
         # my solution to this has been to write (in each subclass of ProcessingMechanism) specific behavior on how to
         # react if both variable and size are None. This is fine but potentially cumbersome for future developers.
         # We should consider deleting this check entirely, and allowing ProcessingMechanism (or a further parent class)
-        # to always set variable to variableClassDefault if variable and size are both None.
+        # to always set variable to ClassDefaults.variable if variable and size are both None.
         # IMPLEMENTATION NOTE:  use self.user_params (i.e., values specified in constructor)
         #                       since params have not yet been validated and so self.params is not yet available
         if variable is not None and len(variable) != len(self.user_params[MONITORED_VALUES]):
@@ -491,7 +510,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
                                           format(len(variable), self.name, len(self.user_params[MONITORED_VALUES])))
         # MODIFIED 6/29/17 END
 
-        super()._validate_variable(variable=variable, context=context)
+        return super()._validate_variable(variable=variable, context=context)
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate `role`, `monitored_values`, amd `input_states <ObjectiveMechanism.input_states>` arguments
@@ -580,7 +599,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
     #                      ADDS an input_state FOR EACH ITEM IN monitored_values
     #                      (AKIN _instantiate_control_signal)
     def _instantiate_input_states(self, context=None):
-        """Instantiate input state for each value specified in `monitored_values` arg and instantiate self.variable
+        """Instantiate input state for each value specified in `monitored_values` arg and instantiate self.instance_defaults.variable
 
         Parse specifications for input_states, using monitored_values where relevant, and instantiate input_states.
         Re-specify corresponding items of variable to match the values of the InputStates in input_states.
@@ -603,8 +622,8 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
                 monitored_value_dict = monitored_value
             elif isinstance(monitored_value, State):
                 monitored_value_dict[NAME] = monitored_value.name
-                monitored_value_dict[VARIABLE] = monitored_value.variable
-                monitored_value_dict[VALUE] = monitored_value.variable
+                monitored_value_dict[VARIABLE] = monitored_value.instance_defaults.variable
+                monitored_value_dict[VALUE] = monitored_value.instance_defaults.variable
                 # monitored_value_dict[PARAMS] = monitored_value.params
             else:
                 raise ObjectiveMechanismError("PROGRAM ERROR: call to State._parse_state_spec() for {} of {} "
@@ -635,14 +654,13 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
                                                       name=monitored_values[i][NAME],
                                                       value=monitored_values[i][VALUE])
 
+        # TODO: stateful - what is this doing?
         constraint_value = []
         for input_state in self.input_states:
             constraint_value.append(input_state[VARIABLE])
-        self.variable = constraint_value
+        self.instance_defaults.variable = constraint_value
 
         super()._instantiate_input_states(context=context)
-
-        # self.variableClassDefault = self.variable.copy()
 
         # Get any projections specified in input_states arg, else set to default (AUTO_ASSIGN_MATRIX)
         input_state_projection_specs = []

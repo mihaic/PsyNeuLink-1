@@ -55,12 +55,12 @@ Learning Functions:
 Overview
 --------
 
-A Function is a `component <Component>` that "packages" a function (in its `function <Function_Base.function>` method)
-for use by other PsyNeuLink components.  Every `component <Component>` in PsyNeuLink is assigned a Function; when that
-component is executed, its Function's `function <Function_Base.function>` is executed.  The
+A Function is a `Component` that "packages" a function (in its `function <Function_Base.function>` method)
+for use by other Components.  Every `Component` in PsyNeuLink is assigned a Function; when that
+Component is executed, its Function's `function <Function_Base.function>` is executed.  The
 `function <Function_Base.function>` can be any callable operation, although most commonly it is a mathematical operation
 (and, for those, almost always uses a call to one or more numpy functions).  There are two reasons PsyNeuLink
-packages functions in a Function component: to *manage parameters*, and for *modularity*.
+packages functions in a Function Component: to *manage parameters*, and for *modularity*.
 
 **Manage parameters**. Parameters are attributes of a Function that either remain stable over multiple calls to the
 function (e.g., the `gain <Logistic.gain>` or `bias <Logistic.bias>` of a `Logistic` function, or the learning rate
@@ -70,9 +70,9 @@ function's variable, and not have to provide them every time the function is cal
 PsyNeuLink Function has a set of attributes corresponding to the parameters of the function, that can be specified at
 the time the Function is created (in arguments to its constructor), and can be modified independently
 of a call to its :keyword:`function`. Modifications can be directly (e.g., in a script), or by the operation of other
-PsyNeuLink components (e.g., `AdaptiveMechanisms`) by way of `ControlProjections <ControlProjection>`.
+PsyNeuLink Components (e.g., `AdaptiveMechanisms`) by way of `ControlProjections <ControlProjection>`.
 
-**Modularity**. By providing a standard interface, any Function assigned to a components in PsyNeuLink can be replaced
+**Modularity**. By providing a standard interface, any Function assigned to a Components in PsyNeuLink can be replaced
 with other PsyNeuLink Functions, or with user-written custom functions so long as they adhere to certain standards
 (the PsyNeuLink :ref:`Function API <LINK>`).
 
@@ -82,7 +82,7 @@ Creating a Function
 -------------------
 
 A Function can be created directly by calling its constructor.  Functions are also created automatically whenever
-any other type of PsyNeuLink component is created (and its :keyword:`function` is not otherwise specified). The
+any other type of PsyNeuLink Component is created (and its :keyword:`function` is not otherwise specified). The
 constructor for a Function has an argument for its `variable <Function_Base.variable>` and each of the parameters of
 its `function <Function_Base.function>`.  The `variable <Function_Base.variable>` argument is used both to format the
 input to the `function <Function_Base.function>`, and assign its default value.  The arguments for each parameter can
@@ -97,10 +97,10 @@ Structure
 Every Function has a `variable <Function_Base.variable>` that provides the input to its
 `function <Function_Base.function>` method.  Its core attribute is its `function <Function_Base.function>` attribute
 that determines the computation that it carries out.  Ths must be a callable object (that is, a python function or
-method of some kind). Unlike other PsyNeuLink `Components`, it *cannot* be (another) Function object (it can't be
-"turtles" all the way down!).  A Function also has an attribute for each of the parameters of its `function
-<Function_Base.function>`.   If a Function has been assigned to another component, then it also has an `owner
-<Function_Base.owner>` attribute that refers to that component.  The Function itself is assigned as the component's
+method of some kind). Unlike other PsyNeuLink `Components <Component>`, it *cannot* be (another) Function object (it
+can't be "turtles" all the way down!).  A Function also has an attribute for each of the parameters of its `function
+<Function_Base.function>`.   If a Function has been assigned to another Component, then it also has an `owner
+<Function_Base.owner>` attribute that refers to that Component.  The Function itself is assigned as the Component's
 `function_object <Component.function_object>` attribute.  Each of the Function's attributes is also assigned
 as an attribute of the `owner <Function_Base.owner>`, and those are each associated with with a
 `parameterState <ParameterState>` of the `owner <Function_Base.owner>`.  Projections to those parameterStates can be
@@ -468,7 +468,7 @@ class Function_Base(Function):
     Arguments
     ---------
 
-    variable : value : default variableClassDefault
+    variable : value : default ClassDefaults.variable
         specifies the format and a default value for the input to `function <Function>`.
 
     params : Optional[Dict[param keyword, param value]]
@@ -489,7 +489,7 @@ class Function_Base(Function):
 
     variable: value
         format and default value can be specified by the :keyword:`variable` argument of the constructor;  otherwise,
-        they are specified by the Function's :keyword:`variableClassDefault`.
+        they are specified by the Function's :keyword:`ClassDefaults.variable`.
 
     function : function
         called by the Function's `owner <Function_Base.owner>` when it is executed.
@@ -522,7 +522,6 @@ class Function_Base(Function):
 
     classPreferenceLevel = PreferenceLevel.CATEGORY
 
-    variableClassDefault = None
     variableClassDefault_locked = False
 
     # Note: the following enforce encoding as 1D np.ndarrays (one array per variable)
@@ -556,7 +555,7 @@ class Function_Base(Function):
         - params_default (dict): assigned as paramInstanceDefaults
         Note: if parameter_validation is off, validation is suppressed (for efficiency) (Function class default = on)
 
-        :param default_variable: (anything but a dict) - value to assign as variableInstanceDefault
+        :param default_variable: (anything but a dict) - value to assign as self.instance_defaults.variable
         :param params: (dict) - params to be assigned to paramInstanceDefaults
         :param log: (ComponentLog enum) - log entry types set in self.componentLog
         :param name: (string) - optional, overrides assignment of default (componentName of subclass)
@@ -617,8 +616,7 @@ class Function_Base(Function):
                                 format(self.functionOutputType, self.__class__.__name__))
 
         # Can't convert from arrays of length > 1 to number
-        # if (self.variable.size  > 1 and (self.functionOutputType is FunctionOutputType.RAW_NUMBER)):
-        if (len(self.variable) > 1 and (self.functionOutputType is FunctionOutputType.RAW_NUMBER)):
+        if (len(self.instance_defaults.variable) > 1 and (self.functionOutputType is FunctionOutputType.RAW_NUMBER)):
             raise FunctionError(
                 "{0} can't be set to return a single number since its variable has more than one number".
                 format(self.__class__.__name__))
@@ -685,7 +683,7 @@ class ArgumentTherapy(Function_Base):
     Arguments
     ---------
 
-    variable : boolean or statement that resolves to one : default variableClassDefault
+    variable : boolean or statement that resolves to one : default ClassDefaults.variable
         assertion for which a therapeutic response will be offered.
 
     propensity : Manner value : default Manner.CONTRARIAN
@@ -733,6 +731,9 @@ class ArgumentTherapy(Function_Base):
     componentName = ARGUMENT_THERAPY_FUNCTION
     componentType = EXAMPLE_FUNCTION_TYPE
 
+    class ClassDefaults(Function_Base.ClassDefaults):
+        variable = 0
+
     classPreferences = {
         kwPreferenceSetName: 'ExampleClassPreferences',
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE),
@@ -740,9 +741,8 @@ class ArgumentTherapy(Function_Base):
     }
 
     # Variable class default
-    # This is used both to type-cast the variable, and to initialize variableInstanceDefault
-    variableClassDefault = 0
-    variableClassDeafult_locked = False
+    # This is used both to type-cast the variable, and to initialize instance_defaults.variable
+    variableClassDefault_locked = False
 
     # Mode indicators
     class Manner(Enum):
@@ -765,7 +765,7 @@ class ArgumentTherapy(Function_Base):
         pertinacity = 'pertinacity'
 
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  propensity=10.0,
                  pertincacity=Manner.CONTRARIAN,
                  params=None,
@@ -793,7 +793,7 @@ class ArgumentTherapy(Function_Base):
         self.functionOutputType = None
 
     def _validate_variable(self, variable, context=None):
-        """Validates variable and assigns validated values to self.variable
+        """Validates variable and returns validated value
 
         This overrides the class method, to perform more detailed type checking
         See explanation in class method.
@@ -801,14 +801,14 @@ class ArgumentTherapy(Function_Base):
 
         :param variable: (anything but a dict) - variable to be validated:
         :param context: (str)
-        :return none:
+        :return variable: - validated
         """
 
-        if type(variable) == type(self.variableClassDefault) or \
-                (isinstance(variable, numbers.Number) and isinstance(self.variableClassDefault, numbers.Number)):
-            self.variable = variable
+        if type(variable) == type(self.ClassDefaults.variable) or \
+                (isinstance(variable, numbers.Number) and isinstance(self.ClassDefaults.variable, numbers.Number)):
+            return variable
         else:
-            raise FunctionError("Variable must be {0}".format(type(self.variableClassDefault)))
+            raise FunctionError("Variable must be {0}".format(type(self.ClassDefaults.variable)))
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validates variable and /or params and assigns to targets
@@ -864,7 +864,7 @@ class ArgumentTherapy(Function_Base):
         Arguments
         ---------
 
-        variable : boolean : default variableClassDefault
+        variable : boolean : default ClassDefaults.variable
            an assertion to which a therapeutic response is made.
 
         params : Optional[Dict[param keyword, param value]]
@@ -881,12 +881,10 @@ class ArgumentTherapy(Function_Base):
         therapeutic response : boolean
 
         """
-        self._check_args(variable, params, context)
+        variable = self._update_variable(self._update_variable(self._check_args(variable, params, context)))
 
         # Compute the function
-
-        # Use self.variable (rather than variable), as it has been validated (and default assigned, if necessary)
-        statement = self.variable
+        statement = variable
         propensity = self.paramsCurrent[PROPENSITY]
         pertinacity = self.paramsCurrent[PERTINACITY]
         whim = randint(-10, 10)
@@ -938,7 +936,7 @@ class UserDefinedFunction(Function_Base):
         such as :keyword:`params` and :keyword:`context`) and return any value(s), so long as these are consistent
         with the context in which the UserDefinedFunction will be used.
 
-    variable : value : default variableClassDefault
+    variable : value : default ClassDefaults.variable
         specifies the format and a default value for the input to `function <Function>`.
 
     params : Optional[Dict[param keyword, param value]]
@@ -959,7 +957,7 @@ class UserDefinedFunction(Function_Base):
 
     variable: value
         format and default value can be specified by the :keyword:`variable` argument of the constructor;  otherwise,
-        they are specified by the Function's :keyword:`variableClassDefault`.
+        they are specified by the Function's :keyword:`ClassDefaults.variable`.
 
     function : function
         called by the Function's `owner <Function_Base.owner>` when it is executed.
@@ -986,7 +984,8 @@ class UserDefinedFunction(Function_Base):
     componentName = USER_DEFINED_FUNCTION
     componentType = USER_DEFINED_FUNCTION_TYPE
 
-    variableClassDefault = [0]
+    class ClassDefaults(Function_Base.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -1080,7 +1079,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
     # FIX: CONFIRM RETURNS LIST IF GIVEN LIST, AND SIMLARLY FOR NP.ARRAY
     """
     Reduce(                                     \
-         default_variable=variableClassDefault, \
+         default_variable=ClassDefaults.variable, \
          operation=SUM,                         \
          scale=1.0,                             \
          offset=0.0,                            \
@@ -1102,7 +1101,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
     Arguments
     ---------
 
-    default_variable : list or np.array : default variableClassDefault
+    default_variable : list or np.array : default ClassDefaults.variable
         specifies a template for the value to be transformed and its default value;  all entries must be numeric.
 
     operation : SUM or PRODUCT : default SUM
@@ -1163,7 +1162,8 @@ class Reduce(CombinationFunction):  # ------------------------------------------
     multiplicative_param = SCALE
     additive_param = OFFSET
 
-    variableClassDefault = [0, 0]
+    class ClassDefaults(CombinationFunction.ClassDefaults):
+        variable = [0, 0]
     # variableClassDefault_locked = True
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
@@ -1173,7 +1173,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  operation: tc.enum(SUM, PRODUCT) = SUM,
                  scale: parameter_spec = 1.0,
                  offset: parameter_spec = 0.0,
@@ -1201,10 +1201,11 @@ class Reduce(CombinationFunction):  # ------------------------------------------
             variable:
             context:
         """
-        super()._validate_variable(variable=variable, context=context)
+        variable = self._update_variable(super()._validate_variable(variable=variable, context=context))
         if not is_numeric(variable):
             raise FunctionError("All elements of {} must be scalar values".
                                 format(self.__class__.__name__))
+        return variable
 
     def function(self,
                  variable=None,
@@ -1218,7 +1219,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
         Arguments
         ---------
 
-        variable : list or np.array : default variableClassDefault
+        variable : list or np.array : default ClassDefaults.variable
            a list or np.array of numeric values.
 
         params : Optional[Dict[param keyword, param value]]
@@ -1238,8 +1239,8 @@ class Reduce(CombinationFunction):  # ------------------------------------------
 
         """
 
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and assign to variable, and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         operation = self.paramsCurrent[OPERATION]
         scale = self.paramsCurrent[SCALE]
@@ -1247,17 +1248,16 @@ class Reduce(CombinationFunction):  # ------------------------------------------
 
         # Calculate using relevant aggregation operation and return
         if (operation is SUM):
-            result = np.sum(self.variable) * scale + offset
+            result = np.sum(variable) * scale + offset
         elif operation is PRODUCT:
-            result = np.product(self.variable) * scale + offset
+            result = np.product(variable) * scale + offset
         else:
             raise FunctionError("Unrecognized operator ({0}) for Reduce function".
                                 format(self.paramsCurrent[OPERATION].self.Operation.SUM))
         return result
 
 
-class LinearCombination(
-    CombinationFunction):  # ------------------------------------------------------------------------
+class LinearCombination(CombinationFunction):  # ------------------------------------------------------------------------
     # FIX: CONFIRM THAT 1D KWEIGHTS USES EACH ELEMENT TO SCALE CORRESPONDING VECTOR IN VARIABLE
     # FIX  CONFIRM THAT LINEAR TRANSFORMATION (OFFSET, SCALE) APPLY TO THE RESULTING ARRAY
     # FIX: CONFIRM RETURNS LIST IF GIVEN LIST, AND SIMLARLY FOR NP.ARRAY
@@ -1319,7 +1319,7 @@ class LinearCombination(
     Arguments
     ---------
 
-    variable : 1d or 2d np.array : default variableClassDefault
+    variable : 1d or 2d np.array : default ClassDefaults.variable
         specifies a template for the arrays to be combined.  If it is 2d, all items must have the same length.
 
     weights : 1d or 2d np.array : default None
@@ -1434,7 +1434,8 @@ class LinearCombination(
     multiplicative_param = SCALE
     additive_param = OFFSET
 
-    variableClassDefault = [2, 2]
+    class ClassDefaults(CombinationFunction.ClassDefaults):
+        variable = [2, 2]
     # variableClassDefault_locked = True
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
@@ -1445,7 +1446,7 @@ class LinearCombination(
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  # IMPLEMENTATION NOTE - these don't check whether every element of np.array is numerical:
                  # weights:tc.optional(tc.any(int, float, tc.list_of(tc.any(int, float)), np.ndarray))=None,
                  # exponents:tc.optional(tc.any(int, float, tc.list_of(tc.any(int, float)), np.ndarray))=None,
@@ -1496,13 +1497,13 @@ class LinearCombination(
             variable:
             context:
         """
-        super()._validate_variable(variable=variable, context=context)
+        variable = self._update_variable(super()._validate_variable(variable=variable, context=context))
         # FIX: CONVERT TO AT LEAST 1D NP ARRAY IN INIT AND EXECUTE, SO ALWAYS NP ARRAY
         # FIX: THEN TEST THAT SHAPES OF EVERY ELEMENT ALONG AXIS 0 ARE THE SAME
         # FIX; PUT THIS IN DOCUMENTATION
         if isinstance(variable, (list, np.ndarray)):
             if isinstance(variable, np.ndarray) and not variable.ndim:
-                return
+                return variable
             length = 0
             for i in range(len(variable)):
                 if i == 0:
@@ -1518,6 +1519,7 @@ class LinearCombination(
                 if old_length != new_length:
                     raise FunctionError("Length of all arrays in variable {0} for {1} must be the same".
                                         format(variable, self.__class__.__name__))
+        return variable
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate weghts, exponents, scale and offset parameters
@@ -1539,16 +1541,16 @@ class LinearCombination(
         if WEIGHTS in target_set and target_set[WEIGHTS] is not None:
             target_set[WEIGHTS] = np.atleast_2d(target_set[WEIGHTS]).reshape(-1, 1)
             if EXECUTING in context:
-                if len(target_set[WEIGHTS]) != len(self.variable):
+                if len(target_set[WEIGHTS]) != len(self.instance_defaults.variable):
                     raise FunctionError("Number of weights ({0}) is not equal to number of items in variable ({1})".
-                                        format(len(target_set[WEIGHTS]), len(self.variable.shape)))
+                                        format(len(target_set[WEIGHTS]), len(self.instance_defaults.variable.shape)))
 
         if EXPONENTS in target_set and target_set[EXPONENTS] is not None:
             target_set[EXPONENTS] = np.atleast_2d(target_set[EXPONENTS]).reshape(-1, 1)
             if EXECUTING in context:
-                if len(target_set[EXPONENTS]) != len(self.variable):
+                if len(target_set[EXPONENTS]) != len(self.instance_defaults.variable):
                     raise FunctionError("Number of exponents ({0}) does not equal number of items in variable ({1})".
-                                        format(len(target_set[EXPONENTS]), len(self.variable.shape)))
+                                        format(len(target_set[EXPONENTS]), len(self.instance_defaults.variable.shape)))
 
         if SCALE in target_set and target_set[SCALE] is not None:
             scale = target_set[SCALE]
@@ -1561,12 +1563,12 @@ class LinearCombination(
                                     format(SCALE, self.name, scale))
             if EXECUTING in context:
                 if (isinstance(scale, np.ndarray) and
-                        (scale.size != self.variable.size or
-                         scale.shape != self.variable.shape)):
+                        (scale.size != self.instance_defaults.variable.size or
+                         scale.shape != self.instance_defaults.variable.shape)):
                     raise FunctionError("Scale is using Hadamard modulation "
                                         "but its shape and/or size (shape: {}, size:{}) "
                                         "do not match the variable being modulated (shape: {}, size: {})".
-                                        format(scale.shape, scale.size, self.variable.shape, self.variable.size))
+                                        format(scale.shape, scale.size, self.instance_defaults.variable.shape, self.instance_defaults.variable.size))
 
         if OFFSET in target_set and target_set[OFFSET] is not None:
             offset = target_set[OFFSET]
@@ -1579,12 +1581,12 @@ class LinearCombination(
                                     format(OFFSET, self.name, offset))
             if EXECUTING in context:
                 if (isinstance(offset, np.ndarray) and
-                        (offset.size != self.variable.size or
-                         offset.shape != self.variable.shape)):
+                        (offset.size != self.instance_defaults.variable.size or
+                         offset.shape != self.instance_defaults.variable.shape)):
                     raise FunctionError("Offset is using Hadamard modulation "
                                         "but its shape and/or size (shape: {}, size:{}) "
                                         "do not match the variable being modulated (shape: {}, size: {})".
-                                        format(offset.shape, offset.size, self.variable.shape, self.variable.size))
+                                        format(offset.shape, offset.size, self.instance_defaults.variable.shape, self.instance_defaults.variable.size))
 
             # if not operation:
             #     raise FunctionError("Operation param missing")
@@ -1612,7 +1614,7 @@ class LinearCombination(
         Arguments
         ---------
 
-        variable : 1d or 2d np.array : default variableClassDefault
+        variable : 1d or 2d np.array : default ClassDefaults.variable
            a single numeric array, or multiple arrays to be combined; if it is 2d, all arrays must have the same length.
 
         params : Optional[Dict[param keyword, param value]]
@@ -1631,8 +1633,8 @@ class LinearCombination(
 
         """
 
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and assign to variable, and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         exponents = self.exponents
         weights = self.weights
@@ -1653,22 +1655,22 @@ class LinearCombination(
 
         # IMPLEMENTATION NOTE: CONFIRM: SHOULD NEVER OCCUR, AS _validate_variable NOW ENFORCES 2D np.ndarray
         # If variable is 0D or 1D:
-        if np_array_less_than_2d(self.variable):
-            return (self.variable * scale) + offset
+        if np_array_less_than_2d(variable):
+            return (variable * scale) + offset
 
         # FIX FOR EFFICIENCY: CHANGE THIS AND WEIGHTS TO TRY/EXCEPT // OR IS IT EVEN NECESSARY, GIVEN VALIDATION ABOVE??
         # Apply exponents if they were specified
         if exponents is not None:
             # Avoid divide by zero warning:
             #    make sure there are no zeros for an element that is assigned a negative exponent
-            if INITIALIZING in context and any(not any(i) and j < 0 for i, j in zip(self.variable, exponents)):
-                self.variable = np.ones_like(self.variable)
+            if INITIALIZING in context and any(not any(i) and j < 0 for i, j in zip(variable, exponents)):
+                variable = self._update_variable(np.ones_like(variable))
             else:
-                self.variable = self.variable ** exponents
+                variable = self._update_variable(variable ** exponents)
 
         # Apply weights if they were specified
         if weights is not None:
-            self.variable = self.variable * weights
+            variable = self._update_variable(variable * weights)
 
         # CALCULATE RESULT USING RELEVANT COMBINATION OPERATION AND MODULATION
 
@@ -1676,21 +1678,21 @@ class LinearCombination(
             if isinstance(scale, numbers.Number):
                 # Scalar scale and offset
                 if isinstance(offset, numbers.Number):
-                    result = np.sum(self.variable, axis=0) * scale + offset
+                    result = np.sum(variable, axis=0) * scale + offset
                 # Scalar scale and Hadamard offset
                 else:
-                    result = np.sum(np.append([self.variable * scale], [offset], axis=0), axis=0)
+                    result = np.sum(np.append([variable * scale], [offset], axis=0), axis=0)
             else:
                 # Hadamard scale, scalar offset
                 if isinstance(offset, numbers.Number):
-                    result = np.product([np.sum([self.variable], axis=0), scale], axis=0)
+                    result = np.product([np.sum([variable], axis=0), scale], axis=0)
                 # Hadamard scale and offset
                 else:
-                    hadamard_product = np.product([np.sum([self.variable], axis=0), scale], axis=0)
+                    hadamard_product = np.product([np.sum([variable], axis=0), scale], axis=0)
                     result = np.sum(np.append([hadamard_product], [offset], axis=0), axis=0)
 
         elif (operation is PRODUCT):
-            product = np.product(self.variable, axis=0)
+            product = np.product(variable, axis=0)
             if isinstance(scale, numbers.Number):
                 # Scalar scale and offset
                 if isinstance(offset, numbers.Number):
@@ -1706,9 +1708,6 @@ class LinearCombination(
                 else:
                     hadamard_product = np.product(np.append([product], [scale], axis=0), axis=0)
                     result = np.sum(np.append([hadamard_product], [offset], axis=0), axis=0)
-
-        # elif operation is PRODUCT:
-        #     result = reduce(mul, self.variable, 1)
 
         else:
             raise FunctionError("Unrecognized operator ({0}) for LinearCombination function".
@@ -1822,7 +1821,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
     Arguments
     ---------
 
-    variable : number or np.array : default variableClassDefault
+    variable : number or np.array : default ClassDefaults.variable
         specifies a template for the value to be transformed.
 
     slope : float : default 1.0
@@ -1882,7 +1881,8 @@ class Linear(TransferFunction):  # ---------------------------------------------
         kpRuntimeParamStickyAssignmentPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)
     }
 
-    variableClassDefault = [0]
+    class ClassDefaults(TransferFunction.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -1896,7 +1896,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  slope: parameter_spec = 1.0,
                  intercept: parameter_spec = 0.0,
                  params=None,
@@ -1928,7 +1928,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
         Arguments
         ---------
 
-        variable : number or np.array : default variableClassDefault
+        variable : number or np.array : default ClassDefaults.variable
            a single value or array to be transformed.
 
         params : Optional[Dict[param keyword, param value]]
@@ -1946,33 +1946,33 @@ class Linear(TransferFunction):  # ---------------------------------------------
 
         """
 
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
         slope = self.paramsCurrent[SLOPE]
         intercept = self.paramsCurrent[INTERCEPT]
         outputType = self.functionOutputType
 
         # By default, result should be returned as np.ndarray with same dimensionality as input
-        result = self.variable * slope + intercept
+        result = variable * slope + intercept
 
         # region Type conversion (specified by outputType):
         # Convert to 2D array, irrespective of variable type:
         if outputType is FunctionOutputType.NP_2D_ARRAY:
-            result = np.atleast2d(result)
+            result = np.atleast_2d(result)
 
         # Convert to 1D array, irrespective of variable type:
         # Note: if 2D array (or higher) has more than two items in the outer dimension, generate exception
         elif outputType is FunctionOutputType.NP_1D_ARRAY:
             # If variable is 2D
-            if self.variable.ndim == 2:
+            if variable.ndim == 2:
                 # If there is only one item:
-                if len(self.variable) == 1:
+                if len(variable) == 1:
                     result = result[0]
                 else:
                     raise FunctionError("Can't convert result ({0}: 2D np.ndarray object with more than one array)"
                                         " to 1D array".format(result))
-            elif len(self.variable) == 1:
+            elif len(variable) == 1:
                 result = result
-            elif len(self.variable) == 0:
+            elif len(variable) == 0:
                 result = np.atleast_1d(result)
             else:
                 raise FunctionError("Can't convert result ({0} to 1D array".format(result))
@@ -1981,15 +1981,15 @@ class Linear(TransferFunction):  # ---------------------------------------------
         # Note: if 2D or 1D array has more than two items, generate exception
         elif outputType is FunctionOutputType.RAW_NUMBER:
             # If variable is 2D
-            if self.variable.ndim == 2:
+            if variable.ndim == 2:
                 # If there is only one item:
-                if len(self.variable) == 1 and len(self.variable[0]) == 1:
+                if len(variable) == 1 and len(variable[0]) == 1:
                     result = result[0][0]
                 else:
                     raise FunctionError("Can't convert result ({0}) with more than a single number to a raw number".
                                         format(result))
-            elif len(self.variable) == 1:
-                if len(self.variable) == 1:
+            elif len(variable) == 1:
+                if len(variable) == 1:
                     result = result[0]
                 else:
                     raise FunctionError("Can't convert result ({0}) with more than a single number to a raw number".
@@ -2036,7 +2036,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
     Arguments
     ---------
 
-    variable : number or np.array : default variableClassDefault
+    variable : number or np.array : default ClassDefaults.variable
         specifies a template for the value to be transformed.
 
     rate : float : default 1.0
@@ -2089,7 +2089,8 @@ class Exponential(TransferFunction):  # ----------------------------------------
     additive_param = SCALE
 
 
-    variableClassDefault = 0
+    class ClassDefaults(TransferFunction.ClassDefaults):
+        variable = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -2099,7 +2100,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  rate: parameter_spec = 1.0,
                  scale: parameter_spec = 1.0,
                  params=None,
@@ -2128,7 +2129,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
         Arguments
         ---------
 
-        variable : number or np.array : default variableClassDefault
+        variable : number or np.array : default ClassDefaults.variable
            a single value or array to be exponentiated.
 
         params : Optional[Dict[param keyword, param value]]
@@ -2146,13 +2147,13 @@ class Exponential(TransferFunction):  # ----------------------------------------
 
         """
 
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         # Assign the params and return the result
         rate = self.paramsCurrent[RATE]
         scale = self.paramsCurrent[SCALE]
 
-        return scale * np.exp(rate * self.variable)
+        return scale * np.exp(rate * variable)
 
     def derivative(self, input, output=None):
         """
@@ -2170,8 +2171,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
         return self.rate * input
 
 
-class Logistic(
-    TransferFunction):  # ------------------------------------------------------------------------------------
+class Logistic(TransferFunction):  # ------------------------------------------------------------------------------------
     """
     Logistic(              \
          default_variable, \
@@ -2190,7 +2190,7 @@ class Logistic(
     Arguments
     ---------
 
-    variable : number or np.array : default variableClassDefault
+    variable : number or np.array : default ClassDefaults.variable
         specifies a template for the value to be transformed.
 
     gain : float : default 1.0
@@ -2246,7 +2246,8 @@ class Logistic(
     multiplicative_param = GAIN
     additive_param = BIAS
 
-    variableClassDefault = 0
+    class ClassDefaults(TransferFunction.ClassDefaults):
+        variable = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -2256,7 +2257,7 @@ class Logistic(
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  gain: parameter_spec = 1.0,
                  bias: parameter_spec = 0.0,
                  params=None,
@@ -2285,7 +2286,7 @@ class Logistic(
         Arguments
         ---------
 
-        variable : number or np.array : default variableClassDefault
+        variable : number or np.array : default ClassDefaults.variable
            a single value or array to be transformed.
 
         params : Optional[Dict[param keyword, param value]]
@@ -2303,11 +2304,17 @@ class Logistic(
 
         """
 
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
         gain = self.paramsCurrent[GAIN]
         bias = self.paramsCurrent[BIAS]
 
-        return 1 / (1 + np.exp(-(gain * self.variable) + bias))
+        try:
+            return_val = 1 / (1 + np.exp(-(gain * variable) + bias))
+        except (Warning):
+            # handle RuntimeWarning: overflow in exp
+            return_val = 0
+
+        return return_val
 
     def derivative(self, output, input=None):
         """
@@ -2345,7 +2352,7 @@ class SoftMax(TransferFunction):
     Arguments
     ---------
 
-    default_variable : 1d np.array : default variableClassDefault
+    default_variable : 1d np.array : default ClassDefaults.variable
         specifies a template for the value to be transformed.
 
     gain : float : default 1.0
@@ -2405,7 +2412,8 @@ class SoftMax(TransferFunction):
     multiplicative_param = GAIN
     additive_param = None
 
-    variableClassDefault = 0
+    class ClassDefaults(TransferFunction.ClassDefaults):
+        variable = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -2414,7 +2422,7 @@ class SoftMax(TransferFunction):
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  gain: parameter_spec = 1.0,
                  output: tc.enum(ALL, MAX_VAL, MAX_INDICATOR, PROB) = ALL,
                  params: tc.optional(dict) = None,
@@ -2448,7 +2456,7 @@ class SoftMax(TransferFunction):
         Arguments
         ---------
 
-        variable : 1d np.array : default variableClassDefault
+        variable : 1d np.array : default ClassDefaults.variable
            an array to be transformed.
 
         params : Optional[Dict[param keyword, param value]]
@@ -2466,14 +2474,14 @@ class SoftMax(TransferFunction):
 
         """
 
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         # Assign the params and return the result
         output_type = self.params[OUTPUT_TYPE]
         gain = self.params[GAIN]
 
         # Modulate variable by gain
-        v = gain * self.variable
+        v = gain * variable
         # Shift by max to avoid extreme values:
         v = v - np.max(v)
         # Exponentiate
@@ -2499,7 +2507,7 @@ class SoftMax(TransferFunction):
             random_value = np.random.uniform()
             chosen_item = next(element for element in cum_sum if element > random_value)
             chosen_in_cum_sum = np.where(cum_sum == chosen_item, 1, 0)
-            sm = self.variable * chosen_in_cum_sum
+            sm = variable * chosen_in_cum_sum
 
         return sm
 
@@ -2607,7 +2615,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
     Arguments
     ---------
 
-    variable : list or 1d np.array : default variableClassDefault
+    variable : list or 1d np.array : default ClassDefaults.variable
         specifies a template for the value to be transformed; length must equal the number of rows of `matrix
         <LinearMatrix.matrix>`.
 
@@ -2663,7 +2671,8 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
     DEFAULT_FILLER_VALUE = 0
 
-    variableClassDefault = [DEFAULT_FILLER_VALUE]  # Sender vector
+    class ClassDefaults(TransferFunction.ClassDefaults):
+        variable = [0]  # Sender vector
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -2681,7 +2690,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  matrix:tc.optional(is_matrix) = None,
                  params=None,
                  owner=None,
@@ -2710,15 +2719,17 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         :param context:
         :return:
         """
-        super()._validate_variable(variable, context)
+        variable = self._update_variable(super()._validate_variable(variable, context))
 
-        # Check that self.variable <= 2D
+        # Check that variable <= 2D
         try:
-            if not self.variable.ndim <= 2:
-                raise FunctionError("variable ({0}) for {1} must be a numpy.ndarray of dimension at most 2".format(self.variable, self.__class__.__name__))
+            if not variable.ndim <= 2:
+                raise FunctionError("variable ({0}) for {1} must be a numpy.ndarray of dimension at most 2".format(variable, self.__class__.__name__))
         except AttributeError:
             raise FunctionError("PROGRAM ERROR: variable ({0}) for {1} should be a numpy.ndarray".
-                                    format(self.variable, self.__class__.__name__))
+                                    format(variable, self.__class__.__name__))
+
+        return variable
 
 
     def _validate_params(self, request_set, target_set=None, context=None):
@@ -2735,8 +2746,8 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
         super()._validate_params(request_set, target_set, context)
         param_set = target_set
-        sender = self.variable
-        # Note: this assumes self.variable is a 1D np.array, as enforced by _validate_variable
+        sender = self.instance_defaults.variable
+        # Note: this assumes variable is a 1D np.array, as enforced by _validate_variable
         sender_len = sender.size
 
         # FIX: RELABEL sender -> input AND receiver -> output
@@ -2880,7 +2891,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                                                self.owner.name,
                                                MATRIX_KEYWORD_NAMES))
             else:
-                message += "Unrecognized param ({}) specified for the {} function of {}".format(param_name,
+                message += "Unrecognized param ({}) specified for the {} function of {}\n".format(param_name,
                                                                                                 self.componentName,
                                                                                                 self.owner.name)
                 continue
@@ -2889,7 +2900,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
             raise FunctionError(message)
 
     def _instantiate_attributes_before_function(self, context=None):
-        self._matrix = self.instantiate_matrix(self.matrix)
+        self.matrix = self.instantiate_matrix(self.matrix)
 
     def instantiate_matrix(self, specification, context=None):
         """Implements matrix indicated by specification
@@ -2908,7 +2919,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         if isinstance(specification, np.matrix):
             return np.array(specification)
 
-        sender = self.variable
+        sender = self.instance_defaults.variable
         sender_len = sender.shape[0]
         try:
             receiver = self.receiver
@@ -2925,7 +2936,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         if matrix is None:
             raise FunctionError("MATRIX param ({}) for the {} function of {} must be a matrix, a function that returns "
                                 "one, a matrix specification keyword ({}), or a number (filler)".
-                                format(specification, self.name, self.owner.name, matrix_keywords))
+                                format(specification, self.name, self.owner.name, MATRIX_KEYWORD_NAMES))
         else:
             return matrix
 
@@ -2959,18 +2970,19 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         """
 
         # Note: this calls _validate_variable and _validate_params which are overridden above;
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
-        return np.dot(self.variable, self.matrix)
+        return np.dot(variable, self.matrix)
 
     def keyword(self, keyword):
 
         from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
         rows = None
         cols = None
+        # use of variable attribute here should be ok because it's using it as a format/type
         if isinstance(self, MappingProjection):
             rows = len(self.sender.value)
-            cols = len(self.receiver.variable)
+            cols = len(self.receiver.instance_defaults.variable)
         matrix = get_matrix(keyword, rows, cols)
 
         if matrix is None:
@@ -2981,7 +2993,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
     def param_function(owner, function):
         sender_len = len(owner.sender.value)
-        receiver_len = len(owner.receiver.variable)
+        receiver_len = len(owner.receiver.instance_defaults.variable)
         return function(sender_len, receiver_len)
 
 
@@ -3013,13 +3025,9 @@ def get_matrix(specification, rows=1, cols=1, context=None):
      Returns 2D np.array with length=rows in dim 0 and length=cols in dim 1, or none if specification is not recognized
     """
 
-
-    if isinstance(specification, list):
-        specification = np.array(specification)
-
     # Matrix provided (and validated in _validate_params); convert to np.array
-    if isinstance(specification, np.matrix):
-        return np.array(specification)
+    if isinstance(specification, (list, np.matrix)):
+        specification = np.array(specification)
 
     if isinstance(specification, np.ndarray):
         if specification.ndim == 2:
@@ -3031,7 +3039,7 @@ def get_matrix(specification, rows=1, cols=1, context=None):
             raise FunctionError("Specification of np.array for matrix ({}) is more than 2d".
                                 format(specification))
 
-    if specification is AUTO_ASSIGN_MATRIX:
+    if specification == AUTO_ASSIGN_MATRIX:
         if rows == cols:
             specification = IDENTITY_MATRIX
         else:
@@ -3040,19 +3048,19 @@ def get_matrix(specification, rows=1, cols=1, context=None):
     if specification == FULL_CONNECTIVITY_MATRIX:
         return np.full((rows, cols), 1.0)
 
-    if specification is IDENTITY_MATRIX:
+    if specification == IDENTITY_MATRIX:
         if rows != cols:
             raise FunctionError("Sender length ({}) must equal receiver length ({}) to use {}".
                                 format(rows, cols, specification))
         return np.identity(rows)
 
-    if specification is HOLLOW_MATRIX:
+    if specification == HOLLOW_MATRIX:
         if rows != cols:
             raise FunctionError("Sender length ({}) must equal receiver length ({}) to use {}".
                                 format(rows, cols, specification))
         return 1-np.identity(rows)
 
-    if specification is RANDOM_CONNECTIVITY_MATRIX:
+    if specification == RANDOM_CONNECTIVITY_MATRIX:
         return np.random.rand(rows, cols)
 
     # Function is specified, so assume it uses random.rand() and call with sender_len and receiver_len
@@ -3085,8 +3093,7 @@ class IntegratorFunction(Function_Base):
 # • are rate and noise converted to 1d np.array?  If not, correct docstring
 # • can noise and initializer be an array?  If so, validated in validate_param?
 
-class Integrator(
-    IntegratorFunction):  # --------------------------------------------------------------------------------
+class Integrator(IntegratorFunction):  # --------------------------------------------------------------------------------
     """
     Integrator(                 \
         default_variable=None,  \
@@ -3107,7 +3114,7 @@ class Integrator(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for the value to be integrated;  if it is a list or array, each element is independently
         integrated.
 
@@ -3177,7 +3184,7 @@ class Integrator(
         array, initializer will be applied to each variable element. In the case of an initializer function, this means
         that the function will be executed separately for each variable element.
 
-    previous_value : 1d np.array : default variableClassDefault
+    previous_value : 1d np.array : default ClassDefaults.variable
         stores previous value with which `variable <Integrator.variable>` is integrated.
 
     owner : Mechanism
@@ -3191,10 +3198,11 @@ class Integrator(
     """
 
     componentName = INTEGRATOR_FUNCTION
-    variableClassDefault = [[0]]
+    class ClassDefaults(IntegratorFunction.ClassDefaults):
+        variable = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    # paramClassDefaults.update({INITIALIZER: variableClassDefault})
+    # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None
@@ -3209,7 +3217,7 @@ class Integrator(
                  default_variable=None,
                  rate: parameter_spec = 1.0,
                  noise=0.0,
-                 initializer=variableClassDefault,
+                 initializer=ClassDefaults.variable,
                  params: tc.optional(dict) = None,
                  owner=None,
                  prefs: is_pref_set = None,
@@ -3242,35 +3250,41 @@ class Integrator(
         # Handle list or array for rate specification
         if RATE in request_set:
             rate = request_set[RATE]
-            if isinstance(rate, (list, np.ndarray)) and not iscompatible(rate, self.variable):
-                if len(rate) != np.array(self.variable).size:
+            if isinstance(rate, (list, np.ndarray)) and not iscompatible(rate, self.instance_defaults.variable):
+                if len(rate) != np.array(self.instance_defaults.variable).size:
                     # If the variable was not specified, then reformat it to match rate specification
-                    #    and assign variableClassDefault accordingly
+                    #    and assign ClassDefaults.variable accordingly
                     # Note: this situation can arise when the rate is parameterized (e.g., as an array) in the
                     #       Integrator's constructor, where that is used as a specification for a function parameter
                     #       (e.g., for an IntegratorMechanism), whereas the input is specified as part of the
                     #       object to which the function parameter belongs (e.g., the IntegratorMechanism);
-                    #       in that case, the Integrator gets instantiated using its variableClassDefault ([[0]]) before
+                    #       in that case, the Integrator gets instantiated using its ClassDefaults.variable ([[0]]) before
                     #       the object itself, thus does not see the array specification for the input.
                     if self._variable_not_specified:
                         self._instantiate_defaults(variable=np.zeros_like(np.array(rate)), context=context)
                         if self.verbosePref:
-                            warnings.warn("The length ({}) of the array specified for the rate parameter ({}) of {} "
-                                          "must match the length ({}) of the default input ({});  "
-                                          "the default input has been updated to match".
-                                          format(len(rate),
-                                                 rate,
-                                                 self.name,
-                                                 np.array(self.variable).size),
-                                          self.variable)
+                            warnings.warn(
+                                "The length ({}) of the array specified for the rate parameter ({}) of {} "
+                                "must match the length ({}) of the default input ({});  "
+                                "the default input has been updated to match".format(
+                                    len(rate),
+                                    rate,
+                                    self.name,
+                                    np.array(self.instance_defaults.variable).size
+                                ),
+                                self.instance_defaults.variable,
+                            )
                     else:
-                        raise FunctionError("The length ({}) of the array specified for the rate parameter ({}) of {} "
-                                            "must match the length ({}) of the default input ({})".
-                                            format(len(rate),
-                                                   rate,
-                                                   self.name,
-                                                   np.array(self.variable).size,
-                                                   self.variable))
+                        raise FunctionError(
+                            "The length ({}) of the array specified for the rate parameter ({}) of {} "
+                            "must match the length ({}) of the default input ({})".format(
+                                len(rate),
+                                rate,
+                                self.name,
+                                np.array(self.instance_defaults.variable).size,
+                                self.instance_defaults.variable,
+                            )
+                        )
                 # OLD:
                 # self.paramClassDefaults[RATE] = np.zeros_like(np.array(rate))
 
@@ -3286,14 +3300,14 @@ class Integrator(
         #     self._validate_initializer(target_set[INITIALIZER])
 
         if NOISE in target_set:
-            self._validate_noise(target_set[NOISE], self.variable)
+            self._validate_noise(target_set[NOISE], self.instance_defaults.variable)
 
     # Ensure that the noise parameter makes sense with the input type and shape; flag any noise functions that will
     # need to be executed
 
     def _validate_noise(self, noise, var):
         # Noise is a list or array
-        if isinstance(noise, (np.ndarray, list)):
+        if isinstance(noise, (np.ndarray, list)) and len(noise) != 1:
             # Variable is a list/array
             if isinstance(var, (np.ndarray, list)):
                 if len(noise) != np.array(var).size:
@@ -3325,7 +3339,7 @@ class Integrator(
             #     raise FunctionError("All elements of noise list/array ({}) for {} must be of the same type. "
             #                         .format(noise, self.name))
 
-        elif not isinstance(noise, (float, int)) and not callable(noise):
+        elif not isinstance(noise, (float, int, np.ndarray)) and not callable(noise):
             raise FunctionError(
                 "Noise parameter ({}) for {} must be a float, function, or array/list of these."
                     .format(noise, self.name))
@@ -3432,7 +3446,7 @@ class SimpleIntegrator(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for the value to be integrated;  if it is a list or array, each element is independently
         integrated.
 
@@ -3502,7 +3516,7 @@ class SimpleIntegrator(
         a list or array, initializer will be applied to each variable element. In the case of an initializer function,
         this means that the function will be executed separately for each variable element.
 
-    previous_value : 1d np.array : default variableClassDefault
+    previous_value : 1d np.array : default ClassDefaults.variable
         stores previous value with which `variable <SimpleIntegrator.variable>` is integrated.
 
     owner : Mechanism
@@ -3517,10 +3531,11 @@ class SimpleIntegrator(
 
     componentName = SIMPLE_INTEGRATOR_FUNCTION
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(Integrator.ClassDefaults):
+        variable = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    # paramClassDefaults.update({INITIALIZER: variableClassDefault})
+    # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None
@@ -3538,7 +3553,7 @@ class SimpleIntegrator(
                  rate: parameter_spec=1.0,
                  noise=0.0,
                  offset=None,
-                 initializer=variableClassDefault,
+                 initializer=ClassDefaults.variable,
                  params: tc.optional(dict)=None,
                  owner=None,
                  prefs: is_pref_set = None,
@@ -3573,7 +3588,7 @@ class SimpleIntegrator(
         Arguments
         ---------
 
-        variable : number, list or np.array : default variableClassDefault
+        variable : number, list or np.array : default ClassDefaults.variable
            a single value or array of values to be integrated.
 
         params : Optional[Dict[param keyword, param value]]
@@ -3591,7 +3606,7 @@ class SimpleIntegrator(
 
         """
 
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         rate = np.array(self.paramsCurrent[RATE]).astype(float)
 
@@ -3609,7 +3624,7 @@ class SimpleIntegrator(
         previous_value = self.previous_value
 
         # previous_value = np.atleast_2d(previous_value)
-        new_value = self.variable
+        new_value = variable
 
 
         # if params and VARIABLE in params:
@@ -3653,7 +3668,7 @@ class ConstantIntegrator(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for the value to be integrated;  if it is a list or array, each element is independently
         integrated.
 
@@ -3727,7 +3742,7 @@ class ConstantIntegrator(
         a list or array, initializer will be applied to each variable element. In the case of an initializer function,
         this means that the function will be executed separately for each variable element.
 
-    previous_value : 1d np.array : default variableClassDefault
+    previous_value : 1d np.array : default ClassDefaults.variable
         stores previous value to which `rate <ConstantIntegrator.rate>` and `noise <ConstantIntegrator.noise>` will be
         added.
 
@@ -3743,10 +3758,11 @@ class ConstantIntegrator(
 
     componentName = CONSTANT_INTEGRATOR_FUNCTION
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(Integrator.ClassDefaults):
+        variable = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    # paramClassDefaults.update({INITIALIZER: variableClassDefault})
+    # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None,
@@ -3768,7 +3784,7 @@ class ConstantIntegrator(
                  noise=0.0,
                  offset=0.0,
                  scale = 1.0,
-                 initializer=variableClassDefault,
+                 initializer=ClassDefaults.variable,
                  params: tc.optional(dict) = None,
                  owner=None,
                  prefs: is_pref_set = None,
@@ -3822,12 +3838,13 @@ class ConstantIntegrator(
         updated value of integral : 2d np.array
 
         """
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         rate = np.array(self.rate).astype(float)
         offset = self.offset
         scale = self.scale
 
+        # CAVEAT: why was self.variable never used in this function previously?
         # execute noise if it is a function
         noise = self._try_execute_param(self.noise, variable)
 
@@ -3873,7 +3890,7 @@ class AdaptiveIntegrator(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for the value to be integrated;  if it is a list or array, each element is independently
         integrated.
 
@@ -3946,7 +3963,7 @@ class AdaptiveIntegrator(
         a list or array, initializer will be applied to each variable element. In the case of an initializer function,
         this means that the function will be executed separately for each variable element.
 
-    previous_value : 1d np.array : default variableClassDefault
+    previous_value : 1d np.array : default ClassDefaults.variable
         stores previous value with which `variable <AdaptiveIntegrator.variable>` is integrated.
 
     owner : Mechanism
@@ -3961,13 +3978,14 @@ class AdaptiveIntegrator(
 
     componentName = ADAPTIVE_INTEGRATOR_FUNCTION
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(Integrator.ClassDefaults):
+        variable = [[0]]
 
     multiplicative_param = RATE
     additive_param = OFFSET
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    # paramClassDefaults.update({INITIALIZER: variableClassDefault})
+    # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None
@@ -3982,7 +4000,7 @@ class AdaptiveIntegrator(
                  rate: parameter_spec = 1.0,
                  noise=0.0,
                  offset= 0.0,
-                 initializer=variableClassDefault,
+                 initializer=ClassDefaults.variable,
                  params: tc.optional(dict) = None,
                  owner=None,
                  prefs: is_pref_set = None,
@@ -4011,14 +4029,14 @@ class AdaptiveIntegrator(
         if RATE in request_set:
             rate = request_set[RATE]
             if isinstance(rate, (list, np.ndarray)):
-                if len(rate) != np.array(self.variable).size:
+                if len(rate) != np.array(self.instance_defaults.variable).size:
                     # If the variable was not specified, then reformat it to match rate specification
-                    #    and assign variableClassDefault accordingly
+                    #    and assign ClassDefaults.variable accordingly
                     # Note: this situation can arise when the rate is parameterized (e.g., as an array) in the
                     #       AdaptiveIntegrator's constructor, where that is used as a specification for a function parameter
                     #       (e.g., for an IntegratorMechanism), whereas the input is specified as part of the
                     #       object to which the function parameter belongs (e.g., the IntegratorMechanism);
-                    #       in that case, the Integrator gets instantiated using its variableClassDefault ([[0]]) before
+                    #       in that case, the Integrator gets instantiated using its ClassDefaults.variable ([[0]]) before
                     #       the object itself, thus does not see the array specification for the input.
                     if self._variable_not_specified:
                         self._instantiate_defaults(variable=np.zeros_like(np.array(rate)), context=context)
@@ -4026,21 +4044,25 @@ class AdaptiveIntegrator(
                             warnings.warn(
                                 "The length ({}) of the array specified for the rate parameter ({}) of {} "
                                 "must match the length ({}) of the default input ({});  "
-                                "the default input has been updated to match".
-                                    format(len(rate),
-                                           rate,
-                                           self.name,
-                                           np.array(self.variable).size),
-                                self.variable)
+                                "the default input has been updated to match".format(
+                                    len(rate),
+                                    rate,
+                                    self.name,
+                                    np.array(self.instance_defaults.variable).size
+                                ),
+                                self.instance_defaults.variable
+                            )
                     else:
                         raise FunctionError(
                             "The length ({}) of the array specified for the rate parameter ({}) of {} "
-                            "must match the length ({}) of the default input ({})".
-                                format(len(rate),
-                                       rate,
-                                       self.name,
-                                       np.array(self.variable).size,
-                                       self.variable))
+                            "must match the length ({}) of the default input ({})".format(
+                                len(rate),
+                                rate,
+                                self.name,
+                                np.array(self.instance_defaults.variable).size,
+                                self.instance_defaults.variable,
+                            )
+                        )
                         # OLD:
                         # self.paramClassDefaults[RATE] = np.zeros_like(np.array(rate))
 
@@ -4065,7 +4087,7 @@ class AdaptiveIntegrator(
                         "1.0 when integration_type is set to ADAPTIVE.".format(target_set[RATE], self.name))
 
         if NOISE in target_set:
-            self._validate_noise(target_set[NOISE], self.variable)
+            self._validate_noise(target_set[NOISE], self.instance_defaults.variable)
         # if INITIALIZER in target_set:
         #     self._validate_initializer(target_set[INITIALIZER])
 
@@ -4082,7 +4104,7 @@ class AdaptiveIntegrator(
         Arguments
         ---------
 
-        variable : number, list or np.array : default variableClassDefault
+        variable : number, list or np.array : default ClassDefaults.variable
            a single value or array of values to be integrated.
 
         params : Optional[Dict[param keyword, param value]]
@@ -4099,7 +4121,7 @@ class AdaptiveIntegrator(
         updated value of integral : 2d np.array
 
         """
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         rate = np.array(self.paramsCurrent[RATE]).astype(float)
         offset = self.paramsCurrent[OFFSET]
@@ -4113,7 +4135,7 @@ class AdaptiveIntegrator(
         previous_value = self.previous_value
 
         previous_value = np.atleast_2d(previous_value)
-        new_value = self.variable
+        new_value = variable
 
         value = (1 - rate) * previous_value + rate * new_value + noise
 
@@ -4150,7 +4172,7 @@ class DriftDiffusionIntegrator(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for the value to be integrated;  if it is a list or array, each element is independently
         integrated.
 
@@ -4220,7 +4242,7 @@ class DriftDiffusionIntegrator(
         a list or array, initializer will be applied to each variable element. In the case of an initializer function,
         this means that the function will be executed separately for each variable element.
 
-    previous_value : 1d np.array : default variableClassDefault
+    previous_value : 1d np.array : default ClassDefaults.variable
         stores previous value with which `variable <DriftDiffusionIntegrator.variable>` is integrated.
 
     owner : Mechanism
@@ -4235,13 +4257,14 @@ class DriftDiffusionIntegrator(
 
     componentName = DRIFT_DIFFUSION_INTEGRATOR_FUNCTION
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(Integrator.ClassDefaults):
+        variable = [[0]]
 
     multiplicative_param = RATE
     additive_param = OFFSET
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    # paramClassDefaults.update({INITIALIZER: variableClassDefault})
+    # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None
@@ -4257,7 +4280,7 @@ class DriftDiffusionIntegrator(
                  noise=0.0,
                  offset: parameter_spec = 0.0,
                  time_step_size=1.0,
-                 initializer=variableClassDefault,
+                 initializer=ClassDefaults.variable,
                  params: tc.optional(dict) = None,
                  owner=None,
                  prefs: is_pref_set = None,
@@ -4303,7 +4326,7 @@ class DriftDiffusionIntegrator(
         Arguments
         ---------
 
-        variable : number, list or np.array : default variableClassDefault
+        variable : number, list or np.array : default ClassDefaults.variable
            a single value or array of values to be integrated.
 
         params : Optional[Dict[param keyword, param value]]
@@ -4320,7 +4343,7 @@ class DriftDiffusionIntegrator(
         updated value of integral : 2d np.array
 
         """
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         rate = np.array(self.paramsCurrent[RATE]).astype(float)
         offset = self.paramsCurrent[OFFSET]
@@ -4335,7 +4358,7 @@ class DriftDiffusionIntegrator(
         previous_value = self.previous_value
 
         previous_value = np.atleast_2d(previous_value)
-        new_value = self.variable
+        new_value = variable
 
         value = previous_value + rate * new_value * time_step_size + np.sqrt(
             time_step_size * noise) * np.random.normal()
@@ -4372,7 +4395,7 @@ class OrnsteinUhlenbeckIntegrator(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for the value to be integrated;  if it is a list or array, each element is independently
         integrated.
 
@@ -4444,7 +4467,7 @@ class OrnsteinUhlenbeckIntegrator(
         a list or array, initializer will be applied to each variable element. In the case of an initializer function,
         this means that the function will be executed separately for each variable element.
 
-    previous_value : 1d np.array : default variableClassDefault
+    previous_value : 1d np.array : default ClassDefaults.variable
         stores previous value with which `variable <OrnsteinUhlenbeckIntegrator.variable>` is integrated.
 
     owner : Mechanism
@@ -4459,13 +4482,14 @@ class OrnsteinUhlenbeckIntegrator(
 
     componentName = ORNSTEIN_UHLENBECK_INTEGRATOR_FUNCTION
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(Integrator.ClassDefaults):
+        variable = [[0]]
 
     multiplicative_param = RATE
     additive_param = OFFSET
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    # paramClassDefaults.update({INITIALIZER: variableClassDefault})
+    # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None
@@ -4482,7 +4506,7 @@ class OrnsteinUhlenbeckIntegrator(
                  offset: parameter_spec = 0.0,
                  time_step_size=1.0,
                  decay = 1.0,
-                 initializer=variableClassDefault,
+                 initializer=ClassDefaults.variable,
                  params: tc.optional(dict) = None,
                  owner=None,
                  prefs: is_pref_set = None,
@@ -4529,7 +4553,7 @@ class OrnsteinUhlenbeckIntegrator(
         Arguments
         ---------
 
-        variable : number, list or np.array : default variableClassDefault
+        variable : number, list or np.array : default ClassDefaults.variable
            a single value or array of values to be integrated.
 
         params : Optional[Dict[param keyword, param value]]
@@ -4546,7 +4570,7 @@ class OrnsteinUhlenbeckIntegrator(
         updated value of integral : 2d np.array
 
         """
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         rate = np.array(self.paramsCurrent[RATE]).astype(float)
         offset = self.paramsCurrent[OFFSET]
@@ -4562,7 +4586,7 @@ class OrnsteinUhlenbeckIntegrator(
         previous_value = self.previous_value
 
         previous_value = np.atleast_2d(previous_value)
-        new_value = self.variable
+        new_value = variable
 
         value = previous_value + decay * rate * new_value * time_step_size + np.sqrt(
             time_step_size * noise) * np.random.normal()
@@ -4601,7 +4625,7 @@ class AccumulatorIntegrator(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for the value to be integrated;  if it is a list or array, each element is independently
         integrated.
 
@@ -4690,7 +4714,7 @@ class AccumulatorIntegrator(
         a list or array, initializer will be applied to each variable element. In the case of an initializer function,
         this means that the function will be executed separately for each variable element.
 
-    previous_value : 1d np.array : default variableClassDefault
+    previous_value : 1d np.array : default ClassDefaults.variable
         stores previous value to which `rate <AccumulatorIntegrator.rate>` and `noise <AccumulatorIntegrator.noise>`
         will be added.
 
@@ -4706,10 +4730,11 @@ class AccumulatorIntegrator(
 
     componentName = ACCUMULATOR_INTEGRATOR_FUNCTION
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(Integrator.ClassDefaults):
+        variable = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    # paramClassDefaults.update({INITIALIZER: variableClassDefault})
+    # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None,
@@ -4727,7 +4752,7 @@ class AccumulatorIntegrator(
                  rate=None,
                  noise=0.0,
                  increment = None,
-                 initializer=variableClassDefault,
+                 initializer=ClassDefaults.variable,
                  params: tc.optional(dict) = None,
                  owner=None,
                  prefs: is_pref_set = None,
@@ -4747,11 +4772,12 @@ class AccumulatorIntegrator(
                          prefs=prefs,
                          context=context)
 
-        self.variable = self.initializer
+        self.previous_value = self.initializer
+        self.instance_defaults.variable = self.initializer
 
         self.auto_dependent = True
 
-    def _accumulator_check_args(self, params=None, target_set=None, context=None):
+    def _accumulator_check_args(self, variable=None, params=None, target_set=None, context=None):
         """validate params and assign any runtime params.
 
         Called by AccumulatorIntegrator to validate params
@@ -4831,9 +4857,10 @@ class AccumulatorIntegrator(
 
         # If parameter_validation is set and they have changed, then validate requested values and assign to target_set
         if self.prefs.paramValidationPref and params and not params is target_set:
-            self._validate_params(request_set=params, target_set=target_set, context=context)
-
-
+            try:
+                self._validate_params(variable=variable, request_set=params, target_set=target_set, context=context)
+            except TypeError:
+                self._validate_params(request_set=params, target_set=target_set, context=context)
 
     def function(self,
                  variable=None,
@@ -4861,7 +4888,7 @@ class AccumulatorIntegrator(
         updated value of integral : 2d np.array
 
         """
-        self._accumulator_check_args(params=params, context=context)
+        self._accumulator_check_args(variable, params=params, context=context)
 
         # rate = np.array(self.rate).astype(float)
         # increment = self.increment
@@ -4884,7 +4911,7 @@ class AccumulatorIntegrator(
         #     previous_value = params[INITIALIZER]
         # except (TypeError, KeyError):
 
-        previous_value = np.atleast_2d(self.variable)
+        previous_value = np.atleast_2d(self.previous_value)
 
         value = previous_value*rate + noise + increment
 
@@ -4892,7 +4919,7 @@ class AccumulatorIntegrator(
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if not context or not INITIALIZING in context:
-            self.variable = value
+            self.previous_value = value
         return value
 
 
@@ -4916,7 +4943,7 @@ class BogaczEtAl(
     IntegratorFunction):  # --------------------------------------------------------------------------------
     """
     BogaczEtAl(                                 \
-        default_variable=variableCLassDefault,  \
+        default_variable=ClassDefaults.variable,  \
         drift_rate=1.0,                         \
         threshold=1.0,                          \
         starting_point=0.0,                     \
@@ -4935,7 +4962,7 @@ class BogaczEtAl(
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for decision variable(s);  if it is list or array, a separate solution is computed
         independently for each element.
 
@@ -5015,7 +5042,8 @@ class BogaczEtAl(
 
     componentName = kwBogaczEtAl
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(IntegratorFunction.ClassDefaults):
+        variable = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -5025,7 +5053,7 @@ class BogaczEtAl(
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  drift_rate:parameter_spec = 1.0,
                  starting_point: parameter_spec = 0.0,
                  threshold: parameter_spec = 1.0,
@@ -5079,9 +5107,9 @@ class BogaczEtAl(
 
         """
 
-        self._check_args(variable=variable, params=params, context=context)
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
-        drift_rate = float(self.drift_rate) * float(self.variable)
+        drift_rate = float(self.drift_rate) * float(variable)
         threshold = float(self.threshold)
         starting_point = float(self.starting_point)
         noise = float(self.noise)
@@ -5211,7 +5239,7 @@ class NF_Results(AutoNumber):
 class NavarroAndFuss(IntegratorFunction):
     """
     NavarroAndFuss(                             \
-        default_variable=variableCLassDefault,  \
+        default_variable=ClassDefaults.variable,  \
         drift_rate=1.0,                         \
         threshold=1.0,                          \
         starting_point=0.0,                     \
@@ -5234,7 +5262,7 @@ class NavarroAndFuss(IntegratorFunction):
     Arguments
     ---------
 
-    default_variable : number, list or np.array : default variableClassDefault
+    default_variable : number, list or np.array : default ClassDefaults.variable
         specifies a template for decision variable(s);  if it is list or array, a separate solution is computed
         independently for each element.
 
@@ -5314,7 +5342,8 @@ class NavarroAndFuss(IntegratorFunction):
 
     componentName = kwNavarrosAndFuss
 
-    variableClassDefault = [[0]]
+    class ClassDefaults(IntegratorFunction.ClassDefaults):
+        variable = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -5324,7 +5353,7 @@ class NavarroAndFuss(IntegratorFunction):
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  drift_rate: parameter_spec = 1.0,
                  starting_point: parameter_spec = 0.0,
                  threshold: parameter_spec = 1.0,
@@ -5471,13 +5500,14 @@ class NormalDist(DistributionFunction):
 
     componentName = NORMAL_DIST_FUNCTION
 
-    variableClassDefault = [0]
+    class ClassDefaults(DistributionFunction.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  mean=0.0,
                  standard_dev=1.0,
                  params=None,
@@ -5502,8 +5532,8 @@ class NormalDist(DistributionFunction):
                  params=None,
                  time_scale=TimeScale.TRIAL,
                  context=None):
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         mean = self.paramsCurrent[DIST_MEAN]
         standard_dev = self.paramsCurrent[STANDARD_DEVIATION]
@@ -5567,13 +5597,14 @@ class ExponentialDist(DistributionFunction):
     """
     componentName = EXPONENTIAL_DIST_FUNCTION
 
-    variableClassDefault = [0]
+    class ClassDefaults(DistributionFunction.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  beta=1.0,
                  params=None,
                  owner=None,
@@ -5596,8 +5627,8 @@ class ExponentialDist(DistributionFunction):
                  params=None,
                  time_scale=TimeScale.TRIAL,
                  context=None):
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         beta = self.paramsCurrent[BETA]
 
@@ -5667,13 +5698,14 @@ class UniformDist(DistributionFunction):
     """
     componentName = UNIFORM_DIST_FUNCTION
 
-    variableClassDefault = [0]
+    class ClassDefaults(DistributionFunction.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  low=0.0,
                  high=1.0,
                  params=None,
@@ -5698,8 +5730,8 @@ class UniformDist(DistributionFunction):
                  params=None,
                  time_scale=TimeScale.TRIAL,
                  context=None):
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         low = self.paramsCurrent[LOW]
         high = self.paramsCurrent[HIGH]
@@ -5771,13 +5803,14 @@ class GammaDist(DistributionFunction):
 
     componentName = GAMMA_DIST_FUNCTION
 
-    variableClassDefault = [0]
+    class ClassDefaults(DistributionFunction.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  scale=1.0,
                  dist_shape=1.0,
                  params=None,
@@ -5802,8 +5835,8 @@ class GammaDist(DistributionFunction):
                  params=None,
                  time_scale=TimeScale.TRIAL,
                  context=None):
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         scale = self.paramsCurrent[SCALE]
         dist_shape = self.paramsCurrent[DIST_SHAPE]
@@ -5875,13 +5908,14 @@ class WaldDist(DistributionFunction):
 
     componentName = WALD_DIST_FUNCTION
 
-    variableClassDefault = [0]
+    class ClassDefaults(DistributionFunction.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  scale=1.0,
                  mean=1.0,
                  params=None,
@@ -5906,8 +5940,8 @@ class WaldDist(DistributionFunction):
                  params=None,
                  time_scale=TimeScale.TRIAL,
                  context=None):
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         scale = self.paramsCurrent[SCALE]
         mean = self.paramsCurrent[DIST_MEAN]
@@ -5931,7 +5965,7 @@ class ObjectiveFunction(Function_Base):
 class Stability(ObjectiveFunction):
     """
     Stability(                                  \
-        default_variable=variableCLassDefault,  \
+        default_variable=ClassDefaults.variable,  \
         matrix=HOLLOW_MATRIX,                   \
         metric=ENERGY                           \
         transfer_fct=None                       \
@@ -5952,7 +5986,7 @@ class Stability(ObjectiveFunction):
     Arguments
     ---------
 
-    variable : list of numbers or 1d np.array : Default variableClassDefault
+    variable : list of numbers or 1d np.array : Default ClassDefaults.variable
         the array for which stabilty is calculated.
 
     matrix : list, np.ndarray, np.matrix, function keyword, or MappingProjection : default HOLLOW_MATRIX
@@ -6020,13 +6054,14 @@ class Stability(ObjectiveFunction):
 
     componentName = STABILITY_FUNCTION
 
-    variableClassDefault = [0]
+    class ClassDefaults(ObjectiveFunction.ClassDefaults):
+        variable = [0]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  matrix:tc.any(is_matrix, MappingProjection, ParameterState)=HOLLOW_MATRIX,
                  # metric:is_distance_metric=ENERGY,
                  metric:tc.any(tc.enum(ENERGY, ENTROPY), is_distance_metric)=ENERGY,
@@ -6102,7 +6137,7 @@ class Stability(ObjectiveFunction):
                                     format(param_type_string, MATRIX, self.name, matrix))
             rows = matrix.shape[0]
             cols = matrix.shape[1]
-            size = len(np.squeeze(self.variable))
+            size = len(np.squeeze(self.instance_defaults.variable))
 
             if rows != size:
                 raise FunctionError("The value of the {} specified for the {} arg of {} is the wrong size;"
@@ -6125,7 +6160,7 @@ class Stability(ObjectiveFunction):
 
         """
 
-        size = len(np.squeeze(self.variable))
+        size = len(np.squeeze(self.instance_defaults.variable))
 
         from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
         from PsyNeuLink.Components.States.ParameterState import ParameterState
@@ -6163,8 +6198,8 @@ class Stability(ObjectiveFunction):
         stability : scalar
 
         """
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         from PsyNeuLink.Components.States.ParameterState import ParameterState
         if isinstance(self.matrix, ParameterState):
@@ -6172,11 +6207,11 @@ class Stability(ObjectiveFunction):
         else:
             matrix = self.matrix
 
-        current = self.variable
+        current = variable
         if self.transfer_fct is not None:
-            transformed = self.transfer_fct(np.dot(matrix * self._hollow_matrix, self.variable))
+            transformed = self.transfer_fct(np.dot(matrix * self._hollow_matrix, variable))
         else:
-            transformed = np.dot(matrix * self._hollow_matrix, self.variable)
+            transformed = np.dot(matrix * self._hollow_matrix, variable)
 
         if self.metric is ENERGY:
             result = -np.sum(current * transformed)
@@ -6184,7 +6219,7 @@ class Stability(ObjectiveFunction):
             result = self._metric_fct.function(variable=[current,transformed], context=context)
 
         if self.normalize:
-            result /= len(self.variable)
+            result /= len(variable)
 
         return result
 
@@ -6193,7 +6228,7 @@ class Stability(ObjectiveFunction):
 class Distance(ObjectiveFunction):
     """
     Distance(                                  \
-       default_variable=variableCLassDefault,  \
+       default_variable=ClassDefaults.variable,  \
        metric=EUCLIDEAN                        \
        normalize=False,                        \
        params=None,                            \
@@ -6208,7 +6243,7 @@ class Distance(ObjectiveFunction):
     Arguments
     ---------
 
-    variable : 2d np.array with two items : Default variableClassDefault
+    variable : 2d np.array with two items : Default ClassDefaults.variable
         the arrays between which the distance is calculated.
 
     metric : keyword in DISTANCE_METRICS : Default EUCLIDEAN
@@ -6257,13 +6292,14 @@ class Distance(ObjectiveFunction):
 
     componentName = DISTANCE_FUNCTION
 
-    variableClassDefault = [[0],[0]]
+    class ClassDefaults(ObjectiveFunction.ClassDefaults):
+        variable = [[0],[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  metric:tc.enum(EUCLIDEAN, DIFFERENCE, CROSS_ENTROPY, ANGLE)=DIFFERENCE,
                  normalize:bool=False,
                  params=None,
@@ -6283,18 +6319,18 @@ class Distance(ObjectiveFunction):
 
         self.functionOutputType = None
 
-    def _validate_params(self, request_set, target_set=None, context=None):
+    def _validate_params(self, request_set, target_set=None, variable=None, context=None):
         """Validate that variable had two items of equal length
 
         """
         super()._validate_params(request_set=request_set, target_set=target_set, context=context)
 
-        if len(self.variable) != 2:
-            raise FunctionError("variable for {} ({}) must have two items".format(self.name, self.variable))
+        if len(variable) != 2:
+            raise FunctionError("variable for {} ({}) must have two items".format(self.name, variable))
 
-        if len(self.variable[0]) != len(self.variable[1]):
+        if len(variable[0]) != len(variable[1]):
             raise FunctionError("The lengths of the items in the variable for {} ({},{}) must be equal".
-                format(self.name, len(self.variable[0]), len(self.variable[1])))
+                format(self.name, len(variable[0]), len(variable[1])))
 
     def function(self,
                  variable=None,
@@ -6309,11 +6345,11 @@ class Distance(ObjectiveFunction):
         distance : scalar
 
         """
-        # Validate variable and assign to self.variable, and validate params
-        self._check_args(variable=variable, params=params, context=context)
+        # Validate variable and validate params
+        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
-        v1 = self.variable[0]
-        v2 = self.variable[1]
+        v1 = variable[0]
+        v2 = variable[1]
 
         # Simple Hadamard difference of v1 and v2
         if self.metric is DIFFERENCE:
@@ -6348,7 +6384,7 @@ class Distance(ObjectiveFunction):
         if self.normalize:
             # if np.sum(denom):
             # result /= np.sum(x,y)
-            result /= len(self.variable)
+            result /= len(variable)
 
         return result
 
@@ -6396,7 +6432,7 @@ class Reinforcement(
     LearningFunction):  # -------------------------------------------------------------------------------
     """
     Reinforcement(                                       \
-        default_variable=variableClassDefault,           \
+        default_variable=ClassDefaults.variable,           \
         activation_function=SoftMax,                     \
         learning_rate=None,                              \
         params=None,                                     \
@@ -6410,7 +6446,7 @@ class Reinforcement(
         Reinforcement learning rule
           [matrix]         [scalar]        [col array]
         delta_weight =  learning rate   *     error
-          return     =  LEARNING_RATE  *  self.variable
+          return     =  LEARNING_RATE  *  variable
 
         Reinforcement.function:
             variable must be a 1D np.array with three items (standard for learning functions)
@@ -6429,7 +6465,7 @@ class Reinforcement(
     Arguments
     ---------
 
-    variable : List or 2d np.array [length 3] : default variableClassDefault
+    variable : List or 2d np.array [length 3] : default ClassDefaults.variable
        template for the three items provided as the variable in the call to the `function <Reinforcement.function>`
        (in order):
        `activation_input <Reinforcement.activation_input>` (1d np.array),
@@ -6440,7 +6476,7 @@ class Reinforcement(
         specifies the function of the Mechanism that generates `activation_output <Reinforcement.activation_output>`.
 
     learning_rate : float : default default_learning_rate
-        supersedes any specification for the `process <Process>` and/or `system <System>` to which the function's
+        supersedes any specification for the `Process` and/or `System` to which the function's
         `owner <Function.owner>` belongs (see `learning_rate <Reinforcement.learning_rate>` for details).
 
     params : Optional[Dict[param keyword, param value]]
@@ -6484,11 +6520,11 @@ class Reinforcement(
 
     learning_rate : float
         the learning rate used by the function.  If specified, it supersedes any learning_rate specified for the
-        `process <Process.learning_Rate>` and/or `system <System.learning_rate>` to which the function's  `owner
-        <Reinforcement.owner>` belongs.  If it is `None`, then the learning_rate specified for the process to
-        which the `owner <Reinforcement.owner>` belongs is used;  and, if that is `None`, then the learning_rate for the
-        system to which it belongs is used. If all are `None`, then the
-        `default_learning_rate <Reinforcement.default_learning_rate>` is used.
+        `Process <Process_Base_Learning>` and/or `System <System_Learning>` to which the function's
+        `owner <Reinforcement.owner>` belongs.  If it is `None`, then the `learning_rate <Process_Base.learning_rate>`
+        specified for the Process to which the `owner <Reinforcement.owner>` belongs is used;  and, if that is `None`,
+        then the `learning_rate <System_Base.learning_rate>` for the System to which it belongs is used. If all are
+        `None`, then the `default_learning_rate <Reinforcement.default_learning_rate>` is used.
 
     default_learning_rate : float
         the value used for the `learning_rate <Reinforcement.learning_rate>` if it is not otherwise specified.
@@ -6508,14 +6544,15 @@ class Reinforcement(
 
     componentName = RL_FUNCTION
 
-    variableClassDefault = [[0], [0], [0]]
+    class ClassDefaults(LearningFunction.ClassDefaults):
+        variable = [[0], [0], [0]]
 
     default_learning_rate = 0.05
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  activation_function: tc.any(SoftMax, tc.enum(SoftMax)) = SoftMax,  # Allow class or instance
                  learning_rate: tc.optional(parameter_spec) = None,
                  params=None,
@@ -6539,15 +6576,16 @@ class Reinforcement(
         self.functionOutputType = None
 
     def _validate_variable(self, variable, context=None):
-        super()._validate_variable(variable, context)
+        variable = self._update_variable(super()._validate_variable(variable, context))
 
-        if len(self.variable) != 3:
+        if len(variable) != 3:
             raise ComponentError("Variable for {} ({}) must have three items (input, output and error arrays)".
-                                 format(self.name, self.variable))
+                                 format(self.name, variable))
 
-        self.activation_input = self.variable[LEARNING_ACTIVATION_INPUT]
-        self.activation_output = self.variable[LEARNING_ACTIVATION_OUTPUT]
-        self.error_signal = self.variable[LEARNING_ERROR_OUTPUT]
+        # TODO: stateful - should these be stateful?
+        self.activation_input = variable[LEARNING_ACTIVATION_INPUT]
+        self.activation_output = variable[LEARNING_ACTIVATION_OUTPUT]
+        self.error_signal = variable[LEARNING_ERROR_OUTPUT]
 
         if len(self.error_signal) != 1:
             raise ComponentError("Error term for {} (the third item of its variable arg) must be an array with a "
@@ -6560,7 +6598,9 @@ class Reinforcement(
                 raise ComponentError("First item ({}) of variable for {} must be an array with a single non-zero value "
                                      "(if output Mechanism being trained uses softmax,"
                                      " its \'output\' arg may need to be set to to PROB)".
-                                     format(self.variable[LEARNING_ACTIVATION_OUTPUT], self.componentName))
+                                     format(variable[LEARNING_ACTIVATION_OUTPUT], self.componentName))
+
+        return variable
 
     def function(self,
                  variable=None,
@@ -6584,7 +6624,7 @@ class Reinforcement(
         Arguments
         ---------
 
-        variable : List or 2d np.array [length 3] : default variableClassDefault
+        variable : List or 2d np.array [length 3] : default ClassDefaults.variable
            must have three items that are the values for (in order):
            `activation_input <Reinforcement.activation_input>` (not used),
            `activation_output <Reinforcement.activation_output>` (1d np.array with a single non-zero value),
@@ -6651,7 +6691,7 @@ WT_MATRIX_RECEIVERS_DIM = 1
 class BackPropagation(LearningFunction):
     """
     BackPropagation(                                     \
-        default_variable=variableClassDefault,           \
+        default_variable=ClassDefaults.variable,           \
         activation_derivative_fct=Logistic().derivative, \
         error_derivative_fct=Logistic().derivative,      \
         error_matrix=None,                               \
@@ -6675,7 +6715,7 @@ class BackPropagation(LearningFunction):
     Arguments
     ---------
 
-    variable : List or 2d np.array [length 3] : default variableClassDefault
+    variable : List or 2d np.array [length 3] : default ClassDefaults.variable
        specifies a template for the three items provided as the variable in the call to the
        `function <BackPropagation.function>` (in order):
        `activation_input <BackPropagation.activation_input>` (1d np.array),
@@ -6697,7 +6737,7 @@ class BackPropagation(LearningFunction):
         MATRIX parameterState.
 
     learning_rate : float : default default_learning_rate
-        supersedes any specification for the `process <Process>` and/or `system <System>` to which the function's
+        supersedes any specification for the `Process` and/or `System` to which the function's
         `owner <Function.owner>` belongs (see `learning_rate <BackPropagation.learning_rate>` for details).
 
     params : Optional[Dict[param keyword, param value]]
@@ -6767,7 +6807,8 @@ class BackPropagation(LearningFunction):
 
     componentName = BACKPROPAGATION_FUNCTION
 
-    variableClassDefault = [[0], [0], [0]]
+    class ClassDefaults(LearningFunction.ClassDefaults):
+        variable = [[0], [0], [0]]
 
     default_learning_rate = 1.0
 
@@ -6775,7 +6816,7 @@ class BackPropagation(LearningFunction):
 
     @tc.typecheck
     def __init__(self,
-                 default_variable=variableClassDefault,
+                 default_variable=ClassDefaults.variable,
                  # default_variable:tc.any(list, np.ndarray),
                  activation_derivative_fct: tc.optional(tc.any(function_type, method_type)) = Logistic().derivative,
                  error_derivative_fct: tc.optional(tc.any(function_type, method_type)) = Logistic().derivative,
@@ -6804,16 +6845,19 @@ class BackPropagation(LearningFunction):
         self.functionOutputType = None
 
     def _validate_variable(self, variable, context=None):
-        super()._validate_variable(variable, context)
+        variable = self._update_variable(super()._validate_variable(variable, context))
 
-        if len(self.variable) != 3:
+        if len(variable) != 3:
             raise ComponentError("Variable for {} ({}) must have three items: "
                                  "activation_input, activation_output, and error_signal)".
-                                 format(self.name, self.variable))
+                                 format(self.name, variable))
 
-        self.activation_input = self.variable[LEARNING_ACTIVATION_INPUT]
-        self.activation_output = self.variable[LEARNING_ACTIVATION_OUTPUT]
-        self.error_signal = self.variable[LEARNING_ERROR_OUTPUT]
+        # TODO: stateful - should these be stateful?
+        self.activation_input = variable[LEARNING_ACTIVATION_INPUT]
+        self.activation_output = variable[LEARNING_ACTIVATION_OUTPUT]
+        self.error_signal = variable[LEARNING_ERROR_OUTPUT]
+
+        return variable
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate error_matrix param
@@ -6912,7 +6956,7 @@ class BackPropagation(LearningFunction):
         Arguments
         ---------
 
-        variable : List or 2d np.array [length 3] : default variableClassDefault
+        variable : List or 2d np.array [length 3] : default ClassDefaults.variable
            must have three items that are the values for (in order):
            `activation_input <BackPropagation.activation_input>` (1d np.array),
            `activation_output <BackPropagation.activation_output>` (1d np.array),

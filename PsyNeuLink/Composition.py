@@ -92,12 +92,12 @@ class MechanismRole(Enum):
     - TERMINAL
         A `ProcessingMechanism <ProcessingMechanism>` that is the last Mechanism of a `Process` and/or `System`, and
         that provides the output to the Process or System when it is `executed or run <Run>`.  A Process may
-        have only one `TERMINAL` mechanism, but a system may have many.  Note that the `TERMINAL`
-        mechanism of a process is not necessarily a `TERMINAL` mechanism of the system to which it belongs,
-        as it may send projections to other processes in the system.  The `TERMINAL` mechanisms of a process
-        or system are listed in its :keyword:`terminalMechanisms` attribute, and can be displayed using its
-        :keyword:`show` method.  For additional details about `TERMINAL` mechanisms in processes, see
-        `Process_Mechanisms` and `Process_Input_And_Output`; and for systems see `System_Mechanisms`.
+        have only one `TERMINAL` Mechanism, but a System may have many.  Note that the `TERMINAL`
+        Mechanism of a Process is not necessarily a `TERMINAL` Mechanism of the System to which it belongs,
+        as it may send Projections to other Processes in the System.  The `TERMINAL` Mechanisms of a Process
+        or System are listed in its :keyword:`terminalMechanisms` attribute, and can be displayed using its
+        :keyword:`show` method.  For additional details about `TERMINAL` Mechanisms in Processes, see
+        `Process_Mechanisms` and `Process_Input_And_Output`; and for Systems see `System_Mechanisms`.
 
     - SINGLETON
         A `ProcessingMechanism` that is the only Mechanism in a `Process` and/or `System`.  It can serve the
@@ -414,13 +414,13 @@ class Composition(object):
 
     def add_mechanism(self, mech):
         '''
-            Adds a mechanism to the Composition, if it is not already added
+            Adds a Mechanism to the Composition, if it is not already added
 
             Arguments
             ---------
 
             mech : Mechanism
-                the mechanism to add
+                the Mechanism to add
         '''
         if mech not in [vertex.component for vertex in self.graph.vertices]:  # Only add if it doesn't already exist in graph
             mech.is_processing = True
@@ -509,11 +509,11 @@ class Composition(object):
 
             if projection.sender.owner != sender:
                 raise CompositionError("{}'s sender assignment [{}] is incompatible with the positions of these "
-                                       "components in their composition.".format(projection, sender))
+                                       "Components in their Composition.".format(projection, sender))
 
             if projection.receiver.owner != receiver:
                 raise CompositionError("{}'s receiver assignment [{}] is incompatible with the positions of these "
-                                       "components in their composition.".format(projection, receiver))
+                                       "Components in their Composition.".format(projection, receiver))
         else:
             # sender and receiver were NOT passed directly to the Projection object
             # assign them based on the sender and receiver passed into add_projection()
@@ -523,10 +523,10 @@ class Composition(object):
 
         if projection.sender.owner != sender:
             raise CompositionError("{}'s sender assignment [{}] is incompatible with the positions of these "
-                                   "components in the composition.".format(projection, sender))
+                                   "Components in the Composition.".format(projection, sender))
         if projection.receiver.owner != receiver:
             raise CompositionError("{}'s receiver assignment [{}] is incompatible with the positions of these "
-                                   "components in the composition.".format(projection, receiver))
+                                   "Components in the Composition.".format(projection, receiver))
 
     def _analyze_graph(self, graph=None):
         ########
@@ -700,13 +700,13 @@ class Composition(object):
                 else:
                     article = "a"
                 # Throw an error informing the user that the mechanism was not found in the mech type list
-                raise ValueError("The mechanism \"{}\" is not {} {} of the composition".format(mech.name, article, mech_type))
+                raise ValueError("The Mechanism \"{}\" is not {} {} of the composition".format(mech.name, article, mech_type))
             for i, timestep in enumerate(feed_dict[mech]):  # If mechanism is correct type, iterate over timesteps
                 # Check if there are multiple input states specified
                 try:
                     timestep[0]
                 except TypeError:
-                    raise TypeError("The mechanism  \"{}\" is incorrectly formatted at time step {!s}. "
+                    raise TypeError("The Mechanism  \"{}\" is incorrectly formatted at time step {!s}. "
                                     "Likely missing set of brackets.".format(mech.name, i))
                 if not isinstance(timestep[0], Iterable) or isinstance(timestep[0], str):  # Iterable imported from collections
                     # If not, embellish the formatting to match the verbose case
@@ -714,15 +714,16 @@ class Composition(object):
                 # Then, check that each input_state is receiving the right size of input
                 for i, value in enumerate(timestep):
                     val_length = len(value)
-                    state_length = len(mech.input_state.variable)
+                    state_length = len(mech.input_state.instance_defaults.variable)
                     if val_length != state_length:
-                        raise ValueError("The value provided for input state {!s} of the mechanism \"{}\" has length {!s} \
-                            where the input state takes values of length {!s}".format(i, mech.name, val_length, state_length))
+                        raise ValueError("The value provided for InputState {!s} of the Mechanism \"{}\" has length "
+                                         "{!s} where the InputState takes values of length {!s}".
+                                         format(i, mech.name, val_length, state_length))
 
     def _create_input_mechanisms(self, inputs):
         '''
-            builds a dictionary of { Mechanism : InputMechanism } pairs where each origin mechanism has a corresponding
-            InputMechanism
+            builds a dictionary of { Mechanism : InputMechanism } pairs where each 'ORIGIN' Mechanism has a
+            corresponding InputMechanism
         '''
         is_origin = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
         has_input_mechanism = self.input_mechanisms.keys()
@@ -746,17 +747,17 @@ class Composition(object):
     def _assign_values_to_input_mechanisms(self, input_dict):
         '''
             loops over the input values in the inputs dictionary and assigns each value directly to the output state of
-            its corresponding input mechanism
+            its corresponding input Mechanism
         '''
         for mech in self.input_mechanisms.keys():
             if mech in input_dict.keys():
                 self.input_mechanisms[mech]._output_states[0].value = np.array(input_dict[mech])
             else:
-                self.input_mechanisms[mech]._output_states[0].value = np.array(mech.variable)
+                self.input_mechanisms[mech]._output_states[0].value = np.array(mech.instance_defaults.variable)
 
     def _assign_execution_ids(self, execution_id=None):
         '''
-            assigns the same uuid to each mechanism in the composition's processing graph as well as all input
+            assigns the same uuid to each Mechanism in the composition's processing graph as well as all input
             mechanisms for this composition. The uuid is either specified in the user's call to run(), or generated
             randomly at run time.
         '''
@@ -869,7 +870,7 @@ class Composition(object):
             ---------
 
             inputs: { `Mechanism` : list }
-                a dictionary containing a key-value pair for each mechanism in the composition that receives inputs from
+                a dictionary containing a key-value pair for each Mechanism in the composition that receives inputs from
                 the user. For each pair, the key is the Mechanism and the value is a list of inputs.
 
             scheduler_processing : Scheduler
@@ -898,7 +899,7 @@ class Composition(object):
             Returns
             ---------
 
-            output value of the final mechanism executed in the composition : various
+            output value of the final Mechanism executed in the Composition : various
         '''
 
         origin_mechanisms = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
@@ -1010,20 +1011,20 @@ class Composition(object):
             ---------
 
             inputs: { `Mechanism` : list }
-                a dictionary containing a key-value pair for each mechanism in the composition that receives inputs from
-                the user. For each pair, the key is the Mechanism and the value is a list of inputs. Each input in the list \
-                corresponds to a certain `TRIAL`
+                a dictionary containing a key-value pair for each Mechanism in the composition that receives inputs from
+                the user. For each pair, the key is the Mechanism and the value is a list of inputs. Each input in the
+                list corresponds to a certain `TRIAL`.
 
             scheduler_processing : Scheduler
-                the scheduler object which owns the conditions that will instruct the non-learning execution of this Composition. \
-                If not specified, the Composition will use its automatically generated scheduler
+                the scheduler object which owns the conditions that will instruct the non-learning execution of
+                this Composition. If not specified, the Composition will use its automatically generated scheduler.
 
             scheduler_learning : Scheduler
-                the scheduler object which owns the conditions that will instruct the Learning execution of this Composition. \
-                If not specified, the Composition will use its automatically generated scheduler
+                the scheduler object which owns the conditions that will instruct the Learning execution of
+                this Composition. If not specified, the Composition will use its automatically generated scheduler.
 
             execution_id : UUID
-                execution_id will typically be set to none and assigned randomly at runtime
+                execution_id will typically be set to none and assigned randomly at runtime.
 
             base_execution_id : UUID
                 if specified, will initialize the data for **execution_id** with the data currently present for **base_execution_id**
@@ -1034,27 +1035,27 @@ class Composition(object):
                 or use default inputs, and select a number of trials with num_trials.
 
             call_before_time_step : callable
-                will be called before each `TIME_STEP` is executed
+                will be called before each `TIME_STEP` is executed.
 
             call_after_time_step : callable
-                will be called after each `TIME_STEP` is executed
+                will be called after each `TIME_STEP` is executed.
 
             call_before_pass : callable
-                will be called before each `PASS` is executed
+                will be called before each `PASS` is executed.
 
             call_after_pass : callable
-                will be called after each `PASS` is executed
+                will be called after each `PASS` is executed.
 
             call_before_trial : callable
-                will be called before each `TRIAL` is executed
+                will be called before each `TRIAL` is executed.
 
             call_after_trial : callable
-                will be called after each `TRIAL` is executed
+                will be called after each `TRIAL` is executed.
 
             Returns
             ---------
 
-            output value of the final mechanism executed in the composition : various
+            output value of the final Mechanism executed in the composition : various
         '''
         reuse_inputs = False
 
@@ -1180,7 +1181,7 @@ class Pathway(Composition):
         else:
             # 'MappingProjection has no attribute _name' error is thrown when pathway[0] is passed to the error msg
             raise CompositionError("The first item in a linear processing pathway must be a "
-                                   "mechanism.")
+                                   "Mechanism.")
         # Then, add all of the remaining mechanisms in the pathway
         for c in range(1, len(pathway)):
             # if the current item is a mechanism, add it
@@ -1212,7 +1213,7 @@ class Pathway(Composition):
                 else:
                     raise CompositionError(
                         "{} is not between two mechanisms. A projection in a linear processing pathway must be preceded"
-                        " by a mechanism and followed by a mechanism".format(pathway[c]))
+                        " by a Mechanism and followed by a Mechanism".format(pathway[c]))
             else:
                 raise CompositionError("{} is not a projection or mechanism. A linear processing pathway must be made "
                                        "up of projections and mechanisms.".format(pathway[c]))

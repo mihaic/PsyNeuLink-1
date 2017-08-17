@@ -111,7 +111,7 @@ Allocation, Function and Intensity
 
 *Allocation (variable)*. A ControlSignal is assigned an `allocation <ControlSignal>` by the ControlMechanism to
 which it belongs. Some ControlMechanisms sample different allocation values for their ControlSignals to determine
-which to use (such as the `EVCMechanism <EVC_Calculation>`);  in those cases, they use each ControlSignal's
+which to use (such as the `EVCMechanism <EVC_Default_Configuration>`);  in those cases, they use each ControlSignal's
 `allocation_samples <ControlSignal.allocation_samples>` attribute (specified in the **allocation_samples** argument
 of the ControlSignal's constructor) to determine the allocation values to sample for that ControlSignal.  A
 ControlSignal's `allocation <ControlSignal>` attribute reflects value assigned to it by the ControlMechanism
@@ -184,7 +184,7 @@ executed.  When this occurs, the ControlMechanism provides the ControlSignal wit
 `intensity` for that `TRIAL`.  The `intensity` is used by the ControlSignal's `ControlProjections <ControlProjection>`
 to set the `value <ParameterState.value>` \(s) of the `ParameterState(s) <ParameterState>` to which the ControlSignal
 projects. Each ParameterState uses that value to modify the value(s) of the parameter(s) that the ControlSignal
-controls. See `ModulatorySignal_Modulation` for a more detailed descriptio of how modulation operates).  The
+controls. See `ModulatorySignal_Modulation` for a more detailed description of how modulation operates).  The
 ControlSignal's `intensity` is also used  by its `cost functions <ControlSignal_Costs>` to compute its
 `cost` attribute. That is used by some ControlMechanisms, along with the ControlSignal's `allocation_samples`
 attribute, to evaluate an `allocation_policy <ControlMechanism_Base.allocation_policy>`, and adjust the ControlSignal's
@@ -951,6 +951,10 @@ class ControlSignal(ModulatorySignal):
             self._allocation_samples = samples
             sample_range = samples
         elif samples == AUTO:
+
+            # (7/21/17 CW) Note that since the time of writing this "stub", the value of AUTO in Keywords.py has changed
+            # from True to "auto" due to the addition of "auto" as a parameter for RecurrentTransferMechanisms! Just FYI
+
             # THIS IS A STUB, TO BE REPLACED BY AN ACTUAL COMPUTATION OF THE ALLOCATION RANGE
             raise ControlSignalError("AUTO not yet supported for {} param of ControlProjection; default will be used".
                                      format(ALLOCATION_SAMPLES))

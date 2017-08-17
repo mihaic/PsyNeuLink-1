@@ -222,7 +222,7 @@ Targets
 ~~~~~~~
 
 If learning is specified for a `Process <Process_Learning>` or `System <System_Execution_Learning>`, then target values
-for each `TRIAL` must be provided for each `TARGET` mechanism in the Process or System being run.  These
+for each `TRIAL` must be provided for each `TARGET` Mechanism in the Process or System being run.  These
 are specified in the **targets** argument of the :keyword:`execute` or :keyword:`run` method, which can be in
 any of three formats.  The two formats used for **inputs** (`Sequence <Run_Inputs_Sequence_Format>` and
 `Mechanism <Run_Inputs_Mechanism_Format>` format) can also be used for targets.  However, the format of the lists or
@@ -265,7 +265,7 @@ other requirements are the same as the `Sequence format <Run_Inputs_Sequence_For
 
 Mechanism Format
 ^^^^^^^^^^^^^^^^
-*(Dict[mechanism, List[values] or ndarray]):* -- there must be one entry in the dictionary for each of the `TARGET`
+*(Dict[Mechanism, List[values] or ndarray]):* -- there must be one entry in the dictionary for each of the `TARGET`
 Mechanisms in the Process or System being run, though the entries can be specified in any order (making this format
 easier to use. The value of each entry is a list or ndarray of the target values for that Mechanism, one for each
 `TRIAL`.  There are at most two levels of nesting (or dimensions) required for each entry: one for the `TRIAL`,
@@ -350,7 +350,7 @@ def run(object,
         num_trials:tc.optional(int)=None,
         reset_clock:bool=True,
         initialize:bool=False,
-        intial_values:tc.optional(tc.any(list, np.ndarray))=None,
+        initial_values:tc.optional(tc.any(list, dict, np.ndarray))=None,
         targets:tc.optional(tc.any(list, dict, np.ndarray, function_type))=None,
         learning:tc.optional(bool)=None,
         call_before_trial:tc.optional(callable)=None,
@@ -362,9 +362,9 @@ def run(object,
         termination_processing=None,
         termination_learning=None,
         context=None):
-    """run(                         \
+    """run(                      \
     inputs,                      \
-    num_trials=None,         \
+    num_trials=None,             \
     reset_clock=True,            \
     initialize=False,            \
     intial_values=None,          \
@@ -377,7 +377,7 @@ def run(object,
     clock=CentralClock,          \
     time_scale=None)
 
-    Run a sequence of executions for a `process <Process>` or `system <System>`.
+    Run a sequence of executions for a `Process` or `System`.
 
     COMMENT:
         First, validate inputs (and targets, if learning is enabled).  Then, for each `TRIAL`:
@@ -390,7 +390,7 @@ def run(object,
         Return ``object.results``.
 
         The inputs argument must be a list or an np.ndarray array of the appropriate dimensionality:
-            * the inner-most dimension must equal the length of object.variable (i.e., the input to the object);
+            * the inner-most dimension must equal the length of object.instance_defaults.variable (i.e., the input to the object);
             * for Mechanism format, the length of the value of all entries must be equal (== number of executions);
             * the outer-most dimension is the number of input sets (num_input_sets) specified (one per execution)
                 Note: num_input_sets need not equal num_trials (the number of executions to actually run)
@@ -418,7 +418,7 @@ def run(object,
     initialize : bool default False
         calls the `initialize <System.System_Base.initialize>` method of the System prior to the first `TRIAL`.
 
-    initial_values : Dict[Mechanism, List[input] or np.ndarray(input)] : default None
+    initial_values : Dict[Mechanism:List[input]], List[input] or np.ndarray(input) : default None
         the initial values assigned to Mechanisms designated as `INITIALIZE_CYCLE`.
 
     targets : List[input] or np.ndarray(input) : default None
@@ -459,15 +459,15 @@ def run(object,
     if targets:
         targets = _construct_stimulus_sets(object, targets, is_target=True)
 
-    object_type = _get_obect_type(object)
+    object_type = _get_object_type(object)
 
     if object_type in {MECHANISM, PROCESS}:
         # Insure inputs is 3D to accommodate TIME_STEP dimension assumed by Function.run()
         inputs = np.array(inputs)
         if object_type is MECHANISM:
-            mech_len = np.size(object.variable)
+            mech_len = np.size(object.instance_defaults.variable)
         else:
-            mech_len = np.size(object.firstMechanism.variable)
+            mech_len = np.size(object.firstMechanism.instance_defaults.variable)
         # If input dimension is 1 and size is same as input for first mechanism,
         # there is only one input for one execution, so promote dimensionality to 3
         if inputs.ndim == 1 and np.size(inputs) == mech_len:
@@ -632,26 +632,26 @@ def run(object,
 
 @tc.typecheck
 def _construct_stimulus_sets(object, stimuli, is_target=False):
-    """Return an nparray of stimuli suitable for use as inputs arg for system.run()
+    """Return an nparray of stimuli suitable for use as inputs arg for System.run()
 
     If inputs is a list:
         - the first item in the list can be a header:
-            it must contain the names of the origin mechanisms of the system
+            it must contain the names of the origin mechanisms of the System
             in the order in which the inputs are specified in each subsequent item
-        - the length of each item must equal the number of origin mechanisms in the system
-        - each item should contain a sub-list of inputs for each origin mechanism in the system
+        - the length of each item must equal the number of origin mechanisms in the System
+        - each item should contain a sub-list of inputs for each `ORIGIN` Mechanism in the System
 
     If inputs is a dict, for each entry:
-        - the number of entries must equal the number of origin mechanisms in the system
-        - key must be the name of an origin mechanism in the system
-        - value must be a list of input values for the mechanism, one for each exeuction
+        - the number of entries must equal the number of `ORIGIN` Mechanisms in the System
+        - key must be the name of an origin Mechanism in the System
+        - value must be a list of input values for the Mechanism, one for each exeuction
         - the length of all value lists must be the same
 
-    Automatically assign input values to proper phases for mechanism, and assigns zero to other phases
+    Automatically assign input values to proper phases for Mechanism, and assigns zero to other phases
 
     For each trial,
        for each time_step
-           for each origin mechanism:
+           for each `ORIGIN` Mechanism:
                if phase (from mech tuple) is modulus of time step:
                    draw from each list; else pad with zero
     DIMENSIONS:
@@ -668,7 +668,7 @@ def _construct_stimulus_sets(object, stimuli, is_target=False):
 
     """
 
-    object_type = _get_obect_type(object)
+    object_type = _get_object_type(object)
 
     # Stimuli in Sequence format
     if isinstance(stimuli, (list, np.ndarray)):
@@ -693,7 +693,7 @@ def _construct_stimulus_sets(object, stimuli, is_target=False):
     return stim_list_array
 
 def _construct_from_stimulus_list(object, stimuli, is_target, context=None):
-    object_type = _get_obect_type(object)
+    object_type = _get_object_type(object)
 
     # Check for header
     headers = None
@@ -702,11 +702,11 @@ def _construct_from_stimulus_list(object, stimuli, is_target, context=None):
         del stimuli[0]
         for mech in object.origin_mechanisms:
             if not mech in headers:
-                raise RunError("Header is missing for origin mechanism {} in stimulus list".
+                raise RunError("Header is missing for ORIGIN Mechanism {} in stimulus list".
                                   format(mech.name, object.name))
         for mech in headers:
             if not mech in object.origin_mechanisms.mechanisms:
-                raise RunError("{} in header for stimulus list is not an origin mechanism in {}".
+                raise RunError("{} in header for stimulus list is not an ORIGIN Mechanism in {}".
                                   format(mech.name, object.name))
 
     inputs_array = np.array(stimuli)
@@ -753,7 +753,7 @@ def _construct_from_stimulus_list(object, stimuli, is_target, context=None):
             stimuli_in_phase = []
             for mech_num in range(num_mechs):
                 mech = list(object.origin_mechanisms.mechs)[mech_num]
-                mech_len = np.size(mechs[mech_num].variable)
+                mech_len = np.size(mechs[mech_num].instance_defaults.variable)
                 # Assign stimulus of appropriate size for mech and fill with 0's
                 stimulus = np.zeros(mech_len)
                 # Assign input elements to stimulus if phase is correct one for mech
@@ -774,7 +774,7 @@ def _construct_from_stimulus_list(object, stimuli, is_target, context=None):
 
 def _construct_from_stimulus_dict(object, stimuli, is_target):
 
-    object_type = _get_obect_type(object)
+    object_type = _get_object_type(object)
 
     # Stimuli are inputs:
     #    validate that there is a one-to-one mapping of input entries to origin mechanisms in the process or system.
@@ -787,7 +787,7 @@ def _construct_from_stimulus_dict(object, stimuli, is_target):
         # Check that all of the ORIGIN mechanisms in the object are represented by entries in the inputs dict
         for mech in object.origin_mechanisms:
             if not mech in stimuli:
-                raise RunError("ORIGIN mechanism {} is missing from the inputs dict for ".
+                raise RunError("ORIGIN Mechanism {} is missing from the inputs dict for ".
                                format(mech.name, object.name))
 
     # Note: no need to order entries for inputs (as with targets, below) as that only matters for systems,
@@ -820,7 +820,7 @@ def _construct_from_stimulus_dict(object, stimuli, is_target):
             if not any(target is projection.receiver.owner for
                        projection in mech.output_state.efferents
                        for target in object.target_mechanisms):
-                raise RunError("{} is not a target mechanism in {}".format(mech.name, object.name))
+                raise RunError("{} is not a target Mechanism in {}".format(mech.name, object.name))
             # Get target mech (comparator) for each entry in stimuli dict:
             terminal_to_target_mapping[mech] = mech.output_state.efferents[0]
 
@@ -835,7 +835,7 @@ def _construct_from_stimulus_dict(object, stimuli, is_target):
                                projection in target.input_states[TARGET].path_afferents if
                                isinstance(projection.sender, ProcessInputState))
             except StopIteration:
-                raise RunError("PROGRAM ERROR: No process found for target mechanism ({}) "
+                raise RunError("PROGRAM ERROR: No process found for TARGET Mechanism ({}) "
                                "supposed to be in target_mechanism for {}".
                                format(target.name, object.name))
             # Get stimuli specified for TERMINAL mechanism of process associated with TARGET mechanism
@@ -848,7 +848,7 @@ def _construct_from_stimulus_dict(object, stimuli, is_target):
         stimuli = ordered_targets
 
     # Convert all items to 2D arrays:
-    # - to match standard format of mech.variable
+    # - to match standard format of mech.instance_defaults.variable
     # - to deal with case in which the lists have only one stimulus, one more more has length > 1,
     #     and those are specified as lists or 1D arrays (which would be misinterpreted as > 1 stimulus)
 
@@ -857,13 +857,13 @@ def _construct_from_stimulus_dict(object, stimuli, is_target):
 
         # First entry in stimulus list is a single item (possibly an item in a simple list or 1D array)
         if not isinstance(stim_list[0], Iterable):
-            # If mech.variable is also of length 1
-            if np.size(mech.variable) == 1:
+            # If mech.instance_defaults.variable is also of length 1
+            if np.size(mech.instance_defaults.variable) == 1:
                 # Wrap each entry in a list
                 for i in range(len(stim_list)):
                     stimuli[mech][i] = [stim_list[i]]
-            # Length of mech.variable is > 1, so check if length of list matches it
-            elif len(stim_list) == np.size(mech.variable):
+            # Length of mech.instance_defaults.variable is > 1, so check if length of list matches it
+            elif len(stim_list) == np.size(mech.instance_defaults.variable):
                 # Assume that the list consists of a single stimulus, so wrap it in list
                 stimuli[mech] = [stim_list]
             else:
@@ -872,9 +872,16 @@ def _construct_from_stimulus_dict(object, stimuli, is_target):
                                   format(mech.name, object.name, stimuli[mech]))
 
         for stim in stimuli[mech]:
-            if not iscompatible(np.atleast_2d(stim), mech.variable):
-                raise RunError("Input stimululs ({}) for {} is incompatible with its variable ({})".
-                                  format(stim, mech.name, mech.variable))
+            if not iscompatible(np.atleast_2d(stim), mech.instance_defaults.variable):
+                err_msg = "Input stimulus ({}) for {} is incompatible with its variable ({}).".\
+                    format(stim, mech.name, mech.instance_defaults.variable)
+                # 8/3/17 CW: I admit the error message implementation here is very hacky; but it's at least not a hack
+                # for "functionality" but rather a hack for user clarity
+                if "KWTA" in str(type(mech)):
+                    err_msg = err_msg + " For KWTA mechanisms, remember to append an array of zeros (or other values)" \
+                                        " to represent the outside stimulus for the inhibition input state, and " \
+                                        "for systems, put your inputs"
+                raise RunError(err_msg)
 
     stim_lists = list(stimuli.values())
     num_input_sets = len(stim_lists[EXECUTION_SET_DIM])
@@ -921,7 +928,7 @@ def _construct_from_stimulus_dict(object, stimuli, is_target):
             stim_list.append(stimuli_in_execution)
 
     else:
-        raise RunError("PROGRAM ERROR: illegal type for run ({}); should have been caught by _get_obect_type ".
+        raise RunError("PROGRAM ERROR: illegal type for run ({}); should have been caught by _get_object_type ".
                        format(object_type))
 
     try:
@@ -949,13 +956,13 @@ def _validate_inputs(object, inputs=None, is_target=False, num_phases=None, cont
         inputs must be 3D (if inputs to each process are different lengths) or 4D (if they are homogenous):
             axis 0 (outer-most): inputs for each execution of the run (len == number of executions to be run)
                 (note: this is validated in super().run()
-            axis 1: inputs for each time step of a trial (len == _phaseSpecMax of system (no. of time_steps per trial)
-            axis 2: inputs to the system, one for each process (len == number of processes in system)
+            axis 1: inputs for each time step of a trial (len == _phaseSpecMax of System (no. of time_steps per trial)
+            axis 2: inputs to the System, one for each Process (len == number of Processes in System)
 
     returns number of input_sets (one per execution)
     """
 
-    object_type = _get_obect_type(object)
+    object_type = _get_object_type(object)
 
     if object_type is PROCESS:
 
@@ -970,7 +977,7 @@ def _validate_inputs(object, inputs=None, is_target=False, num_phases=None, cont
         # If inputs to process are homogeneous, inputs.ndim should be 2 if length of input == 1, else 3:
         if inputs.dtype in {np.dtype('int64'),np.dtype('float64')}:
             # Get a sample length (use first, since it is convenient and all are the same)
-            mech_len = len(object.firstMechanism.variable)
+            mech_len = len(object.firstMechanism.instance_defaults.variable)
             if not ((mech_len == 1 and inputs.ndim == 2) or inputs.ndim == 3):
                 raise RunError("inputs arg in call to {}.run() must be a 3d np.array or comparable list".
                                   format(object.name))
@@ -1035,7 +1042,7 @@ def _validate_inputs(object, inputs=None, is_target=False, num_phases=None, cont
 
         if np.size(inputs,PROCESSES_DIM) != len(object.origin_mechanisms):
             raise RunError("The number of inputs for each execution ({}) in the call to {}.run() "
-                              "does not match the number of processes in the system ({})".
+                              "does not match the number of Processes in the System ({})".
                               format(np.size(inputs,PROCESSES_DIM),
                                      object.name,
                                      len(object.origin_mechanisms)))
@@ -1082,7 +1089,7 @@ def _validate_targets(object, targets, num_input_sets, context=None):
     num_targets_sets = number sets of targets (one for each execution) in targets;  must match num_input_sets
     """
 
-    object_type = _get_obect_type(object)
+    object_type = _get_object_type(object)
     num_target_sets = None
 
     if isinstance(targets, function_type):
@@ -1098,7 +1105,7 @@ def _validate_targets(object, targets, num_input_sets, context=None):
         # Check that each target generated is compatible with the targetMechanism for which it is intended
         for target, targetMechanism in zip(generated_targets, object.target_mechanisms):
             target_len = np.size(target)
-            if target_len != np.size(targetMechanism.input_states[TARGET].variable):
+            if target_len != np.size(targetMechanism.input_states[TARGET].instance_defaults.variable):
                 if num_target_sets > 1:
                     plural = 's'
                 else:
@@ -1117,7 +1124,7 @@ def _validate_targets(object, targets, num_input_sets, context=None):
             target_len = np.size(target_array[0])
             num_target_sets = np.size(target_array, 0)
 
-            if target_len != np.size(object.target_mechanism.input_states[TARGET].variable):
+            if target_len != np.size(object.target_mechanism.input_states[TARGET].instance_defaults.variable):
                 if num_target_sets > 1:
                     plural = 's'
                 else:
@@ -1172,7 +1179,7 @@ def _validate_targets(object, targets, num_input_sets, context=None):
             # Check that number of target values in each execution equals the number of target mechanisms in the system
             if num_targets_per_set != len(object.target_mechanisms):
                 raise RunError("The number of target values for each execution ({}) in the call to {}.run() "
-                                  "does not match the number of processes in the system ({})".
+                                  "does not match the number of Processes in the System ({})".
                                   format(
                                          # np.size(targets,PROCESSES_DIM),
                                          num_targets_per_set,
@@ -1187,7 +1194,7 @@ def _validate_targets(object, targets, num_input_sets, context=None):
 
             for target, targetMechanism in zip(targets, object.target_mechanisms):
                 target_len = np.size(target)
-                if target_len != np.size(targetMechanism.input_states[TARGET].variable):
+                if target_len != np.size(targetMechanism.input_states[TARGET].instance_defaults.variable):
                     if num_targets_per_set > 1:
                         plural = 's'
                     else:
@@ -1195,7 +1202,7 @@ def _validate_targets(object, targets, num_input_sets, context=None):
                     raise RunError("Length ({}) of target{} specified for run of {}"
                                        " does not match expected target length of {}".
                                        format(target_len, plural, append_type_to_name(object),
-                                              np.size(targetMechanism.input_states[TARGET].variable)))
+                                              np.size(targetMechanism.input_states[TARGET].instance_defaults.variable)))
 
                 if any(np.size(target) != target_len for target in target_array):
                     raise RunError("Not all of the targets specified for {} are of the same length".
@@ -1212,7 +1219,7 @@ def _validate_targets(object, targets, num_input_sets, context=None):
 
     return num_target_sets
 
-def _get_obect_type(object):
+def _get_object_type(object):
     if isinstance(object, Mechanism):
         return MECHANISM
     elif isinstance(object, Process):

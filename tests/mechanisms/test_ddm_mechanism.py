@@ -30,7 +30,6 @@ def test_DDM_Integrator():
     T.function_object.initializer = 30.0
     val2 = float(T.execute(stim)[0])
     # assert [val, val2]  == [10, 30]
-test_DDM_Integrator()
 
 # ------------------------------------------------------------------------------------------------
 # TEST 2
@@ -427,7 +426,7 @@ def test_DDM_size_int_check_var():
         ),
         time_scale=TimeScale.TIME_STEP
     )
-    assert len(T.variable) == 1 and T.variable[0][0] == 0
+    assert len(T.instance_defaults.variable) == 1 and T.instance_defaults.variable[0][0] == 0
 
 # ------------------------------------------------------------------------------------------------
 # TEST 2

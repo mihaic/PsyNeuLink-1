@@ -14,7 +14,7 @@ Overview
 --------
 
 ParameterStates belong to either a `Mechanism` or a `MappingProjection` and are used to represent, and possibly modify
-the, values of all of the configurable parameters of a `Component` or its `function <Component.function>`. A
+the, values of all of the configurable parameters of the `Component` or its `function <Component.function>`. A
 ParameterState can receive one or more `ControlProjections <ControlProjection>` and/or
 `LearningProjections <LearningProjection>` that modify the value of the parameter. The Projections received by a
 ParameterState are listed in its `mod_afferents <ParameterState.mod_afferents>` attribute. The ParameterState's
@@ -60,18 +60,21 @@ Parameters can be specified in one of several places:
     ..
     * In the `assign_params <Component.assign_params>` method for the Component.
     ..
-    * In the **runtime_params** argument of a call to component's `execute <Mechanism.Mechanism_Base.execute>` method.
+    * In the **runtime_params** argument of a call to component's `execute <Mechanism_Base.execute>` method.
+
+.. _ParameterState_Value_Specification:
 
 The specification of the initial value of a parameter can take any of the following forms:
 
     .. _ParameterState_Value_Assignment:
 
-    * A **value** - this must be a valid value for the parameter. It creates a default ParameterState,
+    * **Value** -- this must be a valid value for the parameter. It creates a default ParameterState,
       assigns the parameter's default value as the ParameterState's `value <ParameterState.value>`,
       and assigns the parameter's name as the name of the ParameterState.
     ..
-    * A reference to an existing **ParameterState** object - its name must be the name of a parameter of the
-      owner or of its `function <Component.function>`, and its value must be a valid one for the parameter.
+    * **ParameterState reference** -- this must refer to an existing **ParameterState** object; its name must be the
+      name of a parameter of the owner or of the owner's `function <Component.function>`, and its value must be a valid
+      one for the parameter.
 
       .. note::
           This capability is provided for generality and potential
@@ -79,18 +82,20 @@ The specification of the initial value of a parameter can take any of the follow
     ..
     .. _ParameterState_Modulatory_Specification:
 
-    * A Modulatory specification -  this can be an existing `ControlSignal` or `ControlProjection`, a
-      `LearningSignal` or `LearningProjection`, a constructor or the class name for any of these, or the
-      keywords *CONTROL* or *LEARNING*.  Any of these create a default ParameterState, assign the parameter's default
-      value as the ParameterState's `value <ParameterState.value>`, and assign the parameter's name as the name of the
-      ParameterState.  They also create and/or assign the corresponding ModulatorySignal and ModulatoryProjection,
-      and assign the ParameterState as the ModulatoryProjection's `receiver <Projection.Projection.receiver>`.
-      If the ModulatorySignal and/or ModulatoryProjection already exist, their value(s) must be valid one(s) for the
-      parameter.  Note that only Control and Learning Modulatory components can be assigned to a ParameterState
-      (Gating components cannot be used -- they can only be assigned to `InputStates <InputState>`
-      and `OutputStates <OutputState>`).
+    * **Modulatory specification** -- this can be an existing `ControlSignal` or `ControlProjection`,
+      a `LearningSignal` or `LearningProjection`, a constructor or the class name for any of these, or the
+      keywords *CONTROL*, *CONTROL_PROJECTION*, *LEARNING*, or *LEARNING_PROJECTION.  Any of these create a default
+      ParameterState, assign the parameter's default value as the ParameterState's `value <ParameterState.value>`,
+      and assign the parameter's name as the name of the ParameterState.  They also create and/or assign the
+      corresponding ModulatorySignal and ModulatoryProjection, and assign the ParameterState as the
+      ModulatoryProjection's `receiver <Projection.Projection.receiver>`. If the ModulatorySignal and/or
+      ModulatoryProjection already exist, their value(s) must be valid one(s) for the parameter.  Note that only
+      Control and Learning Modulatory components can be assigned to a ParameterState (Gating components cannot be
+      used -- they can only be assigned to `InputStates <InputState>` and `OutputStates <OutputState>`).
     ..
-    * A 2-item (value, Modulatory specification) **tuple**.  This creates a default ParameterState, uses the value
+    .. _ParameterState_Tuple_Specification:
+
+    * **Tuple** (value, Modulatory specification) -- this creates a default ParameterState, uses the value
       (1st) item of the tuple as parameter's `value assignment <ParameterState_Value_Assignment>`, and assigns the
       parameter's name as the name of the ParameterState.  The Modulatory (2nd) item of the tuple is used as the
       ParameterState's `modulatory assignment <ParameterState_Modulatory_Specification>`, and the ParameterState
@@ -99,18 +104,17 @@ The specification of the initial value of a parameter can take any of the follow
       .. note::
           Currently, the `function <Component.function>` of a Component, although it can be specified as a
           parameter value, cannot be assigned a `ModulatorySignal` or modified in the **runtime_params** argument of
-          a call to a Mechanism's `execute <Mechanism.execute>` method. This may change in the future.
+          a call to a Mechanism's `execute <Mechanism_Base.execute>` method. This may change in the future.
 
 The value specified for a parameter (either explicitly or by default) is assigned to an attribute of the Component or
-of the Component's `function <Mechanism.function>` to which the parameter belongs.  The attribute has the same name as
-the parameter, and can be referenced using standard Python attribute ("dot") notation;  for example, the value of a
-parameter named *param* is assigned to an attribute named ``param`` that can be referenced as ``my_component.param``).
-The parameter's value is assigned as the **default value** for the ParameterState.
+of the Component's `function <Mechanism_Base.function>` to which the parameter belongs.  The attribute has the same
+name as the parameter, and can be referenced using standard Python attribute ("dot") notation;  for example,
+the value of a parameter named *param* is assigned to an attribute named ``param`` that can be referenced as``my_component.param``). The parameter's value is assigned as the **default value** for the ParameterState.
 
 .. note::
    If the value of a parameter is specified as `None`, `NotImplemented`, or any other non-numeric value that is not one
    of those listed above, then no ParameterState is created and the parameter cannot be modified by a `ModulatorySignal`
-   or in the **runtime_params** argument of a call to a Mechanism's `execute <Mechanism.execute>` method.
+   or in the **runtime_params** argument of a call to a Mechanism's `execute <Mechanism_Base.execute>` method.
 
 
 .. _ParameterState_Specification_Examples:
@@ -247,6 +251,7 @@ Class Reference
 import inspect
 
 import typecheck as tc
+import numpy as np
 
 from PsyNeuLink.Components.Component import Component, function_type, method_type, parameter_keywords
 from PsyNeuLink.Components.Functions.Function import Linear, get_param_value_for_keyword
@@ -360,13 +365,6 @@ class ParameterState(State_Base):
     owner : Mechanism or MappingProjection
         the `Mechanism` or `MappingProjection` to which the ParameterState belongs.
 
-    mod_afferents : List[GatingProjection]
-        a list of the `GatingProjections <GatingProjection>` received by the ParameterState.
-
-    variable : number, list or np.ndarray
-        the parameter's attribute value — that is, the value of the attribute of the
-        ParameterState's owner or its `function <Component.function>` assigned to the parameter.
-
     mod_afferents : Optional[List[Projection]]
         a list of the `ModulatoryProjection <ModulatoryProjection>` that project to the ParameterState (i.e.,
         for which it is a `receiver <Projection.Projection.receiver>`); these can be
@@ -374,6 +372,10 @@ class ParameterState(State_Base):
         but not `GatingProjection <GatingProjection>`.  The `value <ModulatoryProjection.value>` of each
         must match the format (number and types of elements) of the ParameterState's
         `variable <ParameterState.variable>`.
+
+    variable : number, list or np.ndarray
+        the parameter's attribute value — that is, the value of the attribute of the
+        ParameterState's owner or its `function <Component.function>` assigned to the parameter.
 
     function : Function : default Linear
         converts the parameter's attribute value (same as the ParameterState's `variable <ParameterState.variable>`)
@@ -667,6 +669,10 @@ def _instantiate_parameter_state(owner, param_name, param_value, context):
     # Exclude function (see docstring above)
     elif param_name is FUNCTION:
         return
+    # (7/19/17 CW) added this if statement below while adding `hetero` and `auto` and AutoAssociativeProjections: this
+    # allows `hetero` to be specified as a matrix, while still generating a ParameterState
+    elif isinstance(param_value, np.ndarray) or isinstance(param_value, np.matrix):
+        pass
     # Exclude all others
     else:
         return
