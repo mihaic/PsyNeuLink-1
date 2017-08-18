@@ -342,7 +342,7 @@ from PsyNeuLink.Globals.Keywords import COMMAND_LINE, COMPONENT_INIT, CONTEXT, C
 from PsyNeuLink.Globals.Log import Log
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import ComponentPreferenceSet, kpVerbosePref
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceEntry, PreferenceLevel, PreferenceSet
-from PsyNeuLink.Globals.Utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_to_np_array, is_same_function_spec, iscompatible, kwCompatibilityLength
+from PsyNeuLink.Globals.Utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_to_np_array, get_valid_enum_member_strings, is_same_function_spec, iscompatible, kwCompatibilityLength
 
 component_keywords = {NAME, VARIABLE, VALUE, FUNCTION, FUNCTION_PARAMS, PARAMS, PREFS_ARG, CONTEXT}
 
@@ -2887,7 +2887,7 @@ class Component(object):
         if value not in ExecutionStatus:
             raise ComponentError('Invalid assignment to execution_status: {0} (Valid options: {1}'.format(
                     value,
-                    ['ExecutionStatus.{0}'.format(x) for x in ExecutionStatus.__members__.keys()],
+                    get_valid_enum_member_strings(ExecutionStatus),
                 )
             )
         self._execution_status = value

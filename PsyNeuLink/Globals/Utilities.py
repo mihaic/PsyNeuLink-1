@@ -992,3 +992,7 @@ def prune_unused_args(func, args, kwargs):
             del kwargs_to_pass[kw]
 
     return args_to_pass, kwargs_to_pass
+
+
+def get_valid_enum_member_strings(cls):
+    return ['{0}.{1}'.format(cls.__name__, x) for x in cls.__members__.keys()]
