@@ -496,7 +496,6 @@ class Projection_Base(Projection):
         :param context: (str)
         :return: None
         """
-        from PsyNeuLink.Composition import Composition
         from PsyNeuLink.Components.States.ParameterState import ParameterState
         from PsyNeuLink.Components.States.State import State_Base
 
@@ -521,8 +520,6 @@ class Projection_Base(Projection):
                           registry=self._stateRegistry,
                           context=context)
 
-        self._default_composition = Composition()
-
         try:
             if self.init_status is InitStatus.DEFERRED_INITIALIZATION:
                 self.init_args = locals().copy()
@@ -532,7 +529,6 @@ class Projection_Base(Projection):
                 # remove local imports
                 del self.init_args['ParameterState']
                 del self.init_args['State_Base']
-                del self.init_args['Composition']
 
                 return
         except AttributeError:
@@ -592,7 +588,6 @@ class Projection_Base(Projection):
                                               prefs=prefs,
                                               context=context.__class__.__name__)
 
-        self.default_composition.add_projection(None, self, None)
         self.update_volatile_params()
 
     def _validate_params(self, request_set, target_set=None, context=None):

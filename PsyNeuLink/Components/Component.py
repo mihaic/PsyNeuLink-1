@@ -1927,15 +1927,13 @@ class Component(object):
 
         composition : Composition
             the Composition (or iterable of Compositions) to update
-            default : self.default_composition
 
         execution_id : UUID
             the execution id (or iterable of execution ids) corresponding to an execution instance of
             **composition** to update
-            default : self.default_composition._execution_id
         '''
         if composition is None:
-            comps = [self.default_composition]
+            return
         else:
             comps = [composition]
 
@@ -2873,28 +2871,26 @@ class Component(object):
                 owner = None
 
     @property
-    def default_composition(self):
-        try:
-            return self._default_composition
-        except AttributeError:
-            return self.owner._default_composition
-
-    # Params properties
-    @property
     def value(self):
-        return self.get_param_value(self.Params.value, composition=self.default_composition)
+        return self._value
 
     @value.setter
     def value(self, value):
-        self.set_param_value(self.Params.value, value, composition=self.default_composition)
+        self._value = value
 
     @property
     def execution_status(self):
-        return self.get_param_value(self.Params.execution_status, composition=self.default_composition)
+        return self._execution_status
 
     @execution_status.setter
     def execution_status(self, value):
-        self.set_param_value(self.Params.execution_status, value, composition=self.default_composition)
+        if value not in ExecutionStatus:
+            raise ComponentError('Invalid assignment to execution_status: {0} (Valid options: {1}'.format(
+                    value,
+                    ['ExecutionStatus.{0}'.format(x) for x in ExecutionStatus.__members__.keys()],
+                )
+            )
+        self._execution_status = value
 
     @property
     def _full_class_dict(self):
