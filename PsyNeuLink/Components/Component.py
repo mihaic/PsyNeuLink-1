@@ -2871,6 +2871,10 @@ class Component(object):
                 owner = None
 
     @property
+    def function_Params(self):
+        return self.function_object.Params
+
+    @property
     def value(self):
         return self._value
 
