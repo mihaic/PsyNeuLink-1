@@ -1015,9 +1015,7 @@ class TestPathway:
         with pytest.raises(CompositionError) as error_text:
             path.add_linear_processing_pathway([A, B_to_C, A_to_B, B, C])
 
-        assert "A projection in a linear processing pathway must be preceded by a Mechanism and followed by a " \
-               "Mechanism" \
-               in str(error_text.value)
+        assert "is not between two mechanisms" in str(error_text.value)
 
     def test_LPP_start_with_projection(self):
         path = Pathway()
@@ -1027,8 +1025,7 @@ class TestPathway:
         with pytest.raises(CompositionError) as error_text:
             path.add_linear_processing_pathway([Nonsense_Projection, A, B])
 
-        assert "The first item in a linear processing pathway must be a Mechanism." in str(
-            error_text.value)
+        assert "The first item in a linear processing pathway must be a mechanism." in str(error_text.value)
 
     def test_LPP_wrong_component(self):
         path = Pathway()
