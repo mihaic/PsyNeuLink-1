@@ -690,7 +690,7 @@ class Component(object):
     # Determines whether ClassDefaults.variable can be changed (to match an variable in __init__ method)
     variableClassDefault_locked = False
 
-    class Params:
+    class Params(object):
         '''
             An object storing the names stateful parameters/values associated with `Components <Component>`
             used in conjunction with `get_param_value` and `set_param_value`
