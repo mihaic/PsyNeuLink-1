@@ -107,7 +107,6 @@ from PsyNeuLink.Globals.Defaults import defaultControlAllocation
 from PsyNeuLink.Globals.Keywords import CONTROL, CONTROL_PROJECTION, PROJECTION_SENDER, PROJECTION_SENDER_VALUE
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
-from PsyNeuLink.Scheduling.TimeScale import CentralClock
 
 parameter_keywords.update({CONTROL_PROJECTION, CONTROL})
 projection_keywords.update({CONTROL_PROJECTION, CONTROL})
@@ -356,11 +355,6 @@ class ControlProjection(ModulatoryProjection_Base):
                                          format(self.name, self.sender.owner, self.receiver.name))
         # else:
         super(ControlProjection, self)._instantiate_receiver(context=context)
-
-    def execute(self, params=None, clock=CentralClock, time_scale=None, context=None, composition=None, execution_id=None):
-    # def execute(self, params=None, clock=CentralClock, time_scale=TimeScale.TRIAL, context=None):
-        self.value = self.function(variable=self.sender.value, params=params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
-        return self.value
 
     @property
     def control_signal(self):

@@ -81,6 +81,7 @@ Class Reference
 
 from PsyNeuLink.Components.Projections.Projection import Projection_Base
 from PsyNeuLink.Globals.Keywords import MODULATORY_PROJECTION
+from PsyNeuLink.Scheduling.TimeScale import CentralClock
 
 MODULATORY_SIGNAL_PARAMS = 'modulatory_signal_params'
 
@@ -164,3 +165,7 @@ class ModulatoryProjection_Base(Projection_Base):
                          name=name,
                          prefs=prefs,
                          context=context)
+
+    def execute(self, params=None, clock=CentralClock, time_scale=None, context=None, composition=None, execution_id=None):
+        self.value = self.function(variable=self.sender.value, params=params, time_scale=time_scale, context=context)
+        return self.value
