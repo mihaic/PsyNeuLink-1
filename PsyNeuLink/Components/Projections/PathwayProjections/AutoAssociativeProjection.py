@@ -323,10 +323,20 @@ class AutoAssociativeProjection(MappingProjection):
                                            " the sender is {}".
                                            format(self.__class__.__name__, self.name, self.sender))
         if AUTO in owner_mech._parameter_states and HETERO in owner_mech._parameter_states:
-            owner_mech._parameter_states[AUTO].update(params=runtime_params, time_scale=time_scale,
-                                                      context=context + INITIALIZING, composition=composition, execution_id=execution_id)
-            owner_mech._parameter_states[HETERO].update(params=runtime_params, time_scale=time_scale,
-                                                        context=context + INITIALIZING, composition=composition, execution_id=execution_id)
+            owner_mech._parameter_states[AUTO].update(
+                params=runtime_params,
+                time_scale=time_scale,
+                context=context + INITIALIZING,
+                composition=composition,
+                execution_id=execution_id
+            )
+            owner_mech._parameter_states[HETERO].update(
+                params=runtime_params,
+                time_scale=time_scale,
+                context=context + INITIALIZING,
+                composition=composition,
+                execution_id=execution_id
+            )
 
 
     # NOTE 7/25/17 CW: Originally, this override was written because if the user set the 'auto' parameter on the
