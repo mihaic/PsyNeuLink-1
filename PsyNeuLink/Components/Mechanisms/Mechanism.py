@@ -1921,7 +1921,7 @@ class Mechanism_Base(Mechanism):
 
         return np.array(self.input_values)
 
-    def _update_input_states(self, runtime_params=None, time_scale=None, context=None):
+    def _update_input_states(self, runtime_params=None, time_scale=None, context=None, composition=None, execution_id=None):
         """ Update value for each InputState in self.input_states:
 
         Call execute method for all (MappingProjection) Projections in InputState.path_afferents
@@ -1930,21 +1930,21 @@ class Mechanism_Base(Mechanism):
         """
         for i in range(len(self.input_states)):
             state = self.input_states[i]
-            state.update(params=runtime_params, time_scale=time_scale, context=context)
+            state.update(params=runtime_params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
         return np.array(self.input_values)
 
-    def _update_parameter_states(self, runtime_params=None, time_scale=None, context=None):
+    def _update_parameter_states(self, runtime_params=None, time_scale=None, context=None, composition=None, execution_id=None):
 
         for state in self._parameter_states:
 
-            state.update(params=runtime_params, time_scale=time_scale, context=context)
+            state.update(params=runtime_params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
 
-    def _update_output_states(self, runtime_params=None, time_scale=None, context=None):
+    def _update_output_states(self, runtime_params=None, time_scale=None, context=None, composition=None, execution_id=None):
         """Execute function for each OutputState and assign result of each to corresponding item of self.output_values
 
         """
         for state in self.output_states:
-            state.update(params=runtime_params, time_scale=time_scale, context=context)
+            state.update(params=runtime_params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
 
     def initialize(self, value):
         """Assign an initial value to the Mechanism's `value <Mechanism_Base.value>` attribute and update its

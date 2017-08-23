@@ -685,13 +685,13 @@ class RecurrentTransferMechanism(TransferMechanism):
             execution_id=execution_id,
         )
 
-    def _update_parameter_states(self, runtime_params=None, time_scale=None, context=None):
+    def _update_parameter_states(self, runtime_params=None, time_scale=None, context=None, composition=None, execution_id=None):
         for state in self._parameter_states:
             # (8/2/17 CW) because the auto and hetero params are solely used by the AutoAssociativeProjection
             # (the RecurrentTransferMechanism doesn't use them), the auto and hetero param states are updated in the
             # projection's _update_parameter_states, and accordingly are not updated here
             if state.name != AUTO or state.name != HETERO:
-                state.update(params=runtime_params, time_scale=time_scale, context=context)
+                state.update(params=runtime_params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
 
     # 8/2/17 CW: this property is not optimal for performance: if we want to optimize performance we should create a
     # single flag to check whether to get matrix from auto and hetero?
