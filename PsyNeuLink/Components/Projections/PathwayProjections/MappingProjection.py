@@ -563,7 +563,7 @@ class MappingProjection(PathwayProjection_Base):
             #       format(self.__class__.__name__.upper(), self.name, CentralClock.trial, self.matrix))
 
 
-        return self.function(self.sender.value, params=params, context=context)
+        return self.function(self.sender.value, params=params, context=context, composition=composition, execution_id=execution_id)
 
     @property
     def matrix(self):

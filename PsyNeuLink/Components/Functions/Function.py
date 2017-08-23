@@ -578,7 +578,7 @@ class Function_Base(Function):
                          context=context)
 
     def execute(self, variable=None, params=None, context=None, composition=None, execution_id=None):
-        return self.function(variable=variable, params=params, context=context)
+        return self.function(variable=variable, params=params, context=context, composition=composition, execution_id=execution_id)
 
     @property
     def functionOutputType(self):
@@ -857,7 +857,10 @@ class ArgumentTherapy(Function_Base):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Returns a boolean that is (or tends to be) the same as or opposite the one passed in.
 
@@ -1211,7 +1214,10 @@ class Reduce(CombinationFunction):  # ------------------------------------------
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Calculate sum or product of the elements for each array in `variable <Reduce.variable>`,
         apply `scale <Reduce.scale>` and/or `offset <Reduce.offset>`, and return array of resulting values.
@@ -1599,7 +1605,10 @@ class LinearCombination(CombinationFunction):  # -------------------------------
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Apply `weights <LinearCombination.weights>` and/or `exponents <LinearCombinations.weights>` to the
         arrays in `variable <LinearCombination.variable>`, then take their sum or product (as specified by
@@ -1921,7 +1930,10 @@ class Linear(TransferFunction):  # ---------------------------------------------
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: `slope <Linear.slope>` * `variable <Linear.variable>` + `intercept <Linear.intercept>`.
 
@@ -2122,7 +2134,10 @@ class Exponential(TransferFunction):  # ----------------------------------------
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: `scale <Exponential.scale>` * e**(`rate <Exponential.rate>` * `variable <Linear.variable>`).
 
@@ -2279,7 +2294,10 @@ class Logistic(TransferFunction):  # -------------------------------------------
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: 1 / (1 + e**( (`gain <Logistic.gain>` * `variable <Logistic.variable>`) + `bias <Logistic.bias>`))
 
@@ -2447,7 +2465,10 @@ class SoftMax(TransferFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: e**(`gain <SoftMax.gain>` * `variable <SoftMax.variable>`) /
         sum(e**(`gain <SoftMax.gain>` * `variable <SoftMax.variable>`)),
@@ -2536,7 +2557,7 @@ class SoftMax(TransferFunction):
 
         output_type = self.params[OUTPUT_TYPE]
         size = len(output)
-        sm = self.function(output, params={OUTPUT_TYPE: ALL})
+        sm = self.function(output, params={OUTPUT_TYPE: ALL}, composition=composition, execution_id=execution_id)
 
         if output_type is ALL:
             # Return full Jacobian matrix of derivatives
@@ -2944,7 +2965,10 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: `variable <LinearMatrix.variable>` • `matrix <LinearMatrix.matrix>`
 
@@ -3579,7 +3603,10 @@ class SimpleIntegrator(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: `variable <Linear.slope>` combined with `previous_value <SimpleIntegrator.previous_value>`
         according to `previous_value <SimpleIntegrator.previous_value>` + `rate <SimpleIntegrator.rate>` *`variable
@@ -3816,7 +3843,10 @@ class ConstantIntegrator(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: `previous_value <ConstantIntegrator.previous_value>` combined with `rate <ConstantIntegrator.rate>` and
         `noise <ConstantIntegrator.noise>`.
@@ -4096,7 +4126,10 @@ class AdaptiveIntegrator(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: some fraction of `variable <AdaptiveIntegrator.variable>` combined with some fraction of `previous_value
         <AdaptiveIntegrator.previous_value>`.
@@ -4318,7 +4351,10 @@ class DriftDiffusionIntegrator(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: some fraction of `variable <DriftDiffusionIntegrator.variable>` combined with some fraction of
         `previous_value <DriftDiffusionIntegrator.previous_value>`.
@@ -4545,7 +4581,10 @@ class OrnsteinUhlenbeckIntegrator(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: some fraction of `variable <OrnsteinUhenbeckIntegrator.variable>` combined with some fraction of
         `previous_value <OrnsteinUhenbeckIntegrator.previous_value>`
@@ -4866,7 +4905,10 @@ class AccumulatorIntegrator(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: `previous_value <ConstantIntegrator.previous_value>` combined with `rate <ConstantIntegrator.rate>` and
         `noise <ConstantIntegrator.noise>`.
@@ -5082,7 +5124,10 @@ class BogaczEtAl(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: terminal value of decision variable (equal to threshold), mean accuracy (error rate; ER) and mean
         response time (RT)
@@ -5388,7 +5433,10 @@ class NavarroAndFuss(IntegratorFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """
         Return: terminal value of decision variable, mean accuracy (error rate; ER), mean response time (RT),
         correct RT mean, correct RT variance and correct RT skew.  **Requires that the MatLab engine is installed.**
@@ -5530,7 +5578,10 @@ class NormalDist(DistributionFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5625,7 +5676,10 @@ class ExponentialDist(DistributionFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5728,7 +5782,10 @@ class UniformDist(DistributionFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5833,7 +5890,10 @@ class GammaDist(DistributionFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5938,7 +5998,10 @@ class WaldDist(DistributionFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -6183,7 +6246,10 @@ class Stability(ObjectiveFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """Calculate the stability of `variable <Stability.variable>`.
 
         Compare the value of `variable <Stability.variable>` with its value after transformation by
@@ -6335,7 +6401,10 @@ class Distance(ObjectiveFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """Calculate the distance between the two arrays in `variable <Stability.variable>`.
 
         Returns
@@ -6605,7 +6674,10 @@ class Reinforcement(
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """Calculate a matrix of weight changes from a single (scalar) error term
 
         COMMENT:
@@ -6949,7 +7021,10 @@ class BackPropagation(LearningFunction):
                  variable=None,
                  params=None,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """Calculate and return a matrix of weight changes from arrays of inputs, outputs and error terms
 
         Arguments
@@ -7007,7 +7082,7 @@ class BackPropagation(LearningFunction):
         dE_dA = np.dot(error_matrix, self.error_signal)
 
         # Derivative of the output activity
-        dA_dW = self.activation_derivative_fct(input=self.activation_input, output=self.activation_output)
+        dA_dW = self.activation_derivative_fct(input=self.activation_input, output=self.activation_output, composition=composition, execution_id=execution_id)
 
         # Chain rule to get the derivative of the error with respect to the weights
         dE_dW = dE_dA * dA_dW

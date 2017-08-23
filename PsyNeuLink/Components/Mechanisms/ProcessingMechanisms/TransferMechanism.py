@@ -699,7 +699,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         self.previous_input = current_input
 
         # Apply TransferMechanism function
-        output_vector = self.function(variable=current_input, params=runtime_params)
+        output_vector = self.function(variable=current_input, params=runtime_params, composition=composition, execution_id=execution_id)
 
         # # MODIFIED  OLD:
         # if list(range):

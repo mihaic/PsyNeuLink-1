@@ -1702,7 +1702,7 @@ class State_Base(State):
         self.value = self._execute(function_params=function_params, context=context, composition=composition, execution_id=execution_id)
 
     def execute(self, input=None, time_scale=None, params=None, context=None, composition=None, execution_id=None):
-        return self.function(variable=input, params=params, time_scale=time_scale, context=context)
+        return self.function(variable=input, params=params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
 
     @property
     def owner(self):

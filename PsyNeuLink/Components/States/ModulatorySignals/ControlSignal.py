@@ -840,7 +840,7 @@ class ControlSignal(ModulatorySignal):
             # self.set_intensity(self.allocation)
             self.intensity = self.allocation
         else:
-            self.intensity = self.function(self.allocation, params)
+            self.intensity = self.function(self.allocation, params, composition=composition, execution_id=execution_id)
         intensity_change = self.intensity-self.last_intensity
 
         if self.prefs.verbosePref:

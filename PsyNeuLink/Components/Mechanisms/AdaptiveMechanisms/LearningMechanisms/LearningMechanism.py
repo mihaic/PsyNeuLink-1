@@ -1284,7 +1284,10 @@ class LearningMechanism(AdaptiveMechanism_Base):
         # COMPUTE LEARNING SIGNAL (dE/dW):
         self.learning_signal, self.error_signal = self.function(variable=variable,
                                                                 params=runtime_params,
-                                                                context=context)
+                                                                context=context,
+                                                                composition=composition,
+                                                                execution_id=execution_id,
+                                                                )
 
         if not INITIALIZING in context and self.reportOutputPref:
             print("\n{} weight change matrix: \n{}\n".format(self.name, self.learning_signal))

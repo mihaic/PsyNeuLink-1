@@ -549,7 +549,10 @@ class LearningProjection(ModulatoryProjection_Base):
 
         self.weight_change_matrix = self.function(variable=self.sender.value,
                                                   params=params,
-                                                  context=context)
+                                                  context=context,
+                                                  composition=composition,
+                                                  execution_id=execution_id,
+                                                  )
 
         if self.learning_rate is not None:
             self.weight_change_matrix *= self.learning_rate

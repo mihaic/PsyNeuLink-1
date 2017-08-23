@@ -1979,7 +1979,7 @@ class Mechanism_Base(Mechanism):
         composition=None,
         execution_id=None,
     ):
-        return self.function(variable=variable, params=runtime_params, time_scale=time_scale, context=context)
+        return self.function(variable=variable, params=runtime_params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
 
     def _report_mechanism_execution(self, input_val=None, params=None, output=None):
 

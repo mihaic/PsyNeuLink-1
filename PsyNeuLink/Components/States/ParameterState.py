@@ -546,7 +546,10 @@ class ParameterState(State_Base):
 
         value = self.function(variable=param_value,
                               params=function_params,
-                              context=context)
+                              context=context,
+                              composition=composition,
+                              execution_id=execution_id,
+                              )
 
         # TEST PRINT
         # TEST DEBUG MULTILAYER

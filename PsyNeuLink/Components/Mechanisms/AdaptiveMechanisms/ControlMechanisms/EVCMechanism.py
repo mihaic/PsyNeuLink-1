@@ -1346,7 +1346,10 @@ class EVCMechanism(ControlMechanism_Base):
                                           variable=variable,
                                           runtime_params=runtime_params,
                                           time_scale=time_scale,
-                                          context=context)
+                                          context=context,
+                                          composition=composition,
+                                          execution_id=execution_id,
+                                          )
         # IMPLEMENTATION NOTE:
         # self.system._restore_system_state()
 

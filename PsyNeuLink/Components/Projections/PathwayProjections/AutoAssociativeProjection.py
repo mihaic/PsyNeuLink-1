@@ -310,7 +310,7 @@ class AutoAssociativeProjection(MappingProjection):
             owner_mech.hetero = self.matrix.copy()
             np.fill_diagonal(owner_mech.hetero, 0)
 
-        return self.function(self.sender.value, params=params, context=context)
+        return self.function(self.sender.value, params=params, context=context, composition=composition, execution_id=execution_id)
 
     def _update_auto_and_hetero(self, owner_mech=None, runtime_params=None, time_scale=TimeScale.TRIAL, context=None):
         if owner_mech is None:

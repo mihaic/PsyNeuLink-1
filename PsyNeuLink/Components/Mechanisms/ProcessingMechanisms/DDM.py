@@ -858,7 +858,7 @@ class DDM(ProcessingMechanism_Base):
         # EXECUTE INTEGRATOR SOLUTION (TIME_STEP TIME SCALE) -----------------------------------------------------
         if self.timeScale == TimeScale.TIME_STEP:
 
-            result = self.function(variable, context=context)
+            result = self.function(variable, context=context, composition=composition, execution_id=execution_id)
             if INITIALIZING not in context:
                 logger.info('{0} {1} is at {2}'.format(type(self).__name__, self.name, result))
             if abs(result) >= self.threshold:
@@ -873,7 +873,10 @@ class DDM(ProcessingMechanism_Base):
 
             result = self.function(variable=variable,
                                    params=runtime_params,
-                                   context=context)
+                                   context=context,
+                                   composition=composition,
+                                   execution_id=execution_id,
+                                   )
 
             if isinstance(self.function.__self__, BogaczEtAl):
                 return_value = np.array([[0.0], [0.0], [0.0], [0.0]])
