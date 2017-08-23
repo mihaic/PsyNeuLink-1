@@ -1511,7 +1511,7 @@ class State_Base(State):
                 return (None, "not a Projection subclass")#
 
 
-    def update(self, params=None, time_scale=TimeScale.TRIAL, context=None):
+    def update(self, params=None, time_scale=TimeScale.TRIAL, context=None, composition=None, execution_id=None):
         """Update each projection, combine them, and assign return result
 
         Call update for each projection in self.path_afferents (passing specified params)
@@ -1634,7 +1634,10 @@ class State_Base(State):
             else:
                 projection_value = projection.execute(params=projection_params,
                                                       time_scale=time_scale,
-                                                      context=context)
+                                                      context=context,
+                                                      composition=composition,
+                                                      execution_id=execution_id,
+                                                      )
 
             # If this is initialization run and projection initialization has been deferred, pass
             if INITIALIZING in context and projection.init_status is InitStatus.DEFERRED_INITIALIZATION:
@@ -1696,9 +1699,9 @@ class State_Base(State):
             function_params = self.stateParams[FUNCTION_PARAMS]
         except (KeyError, TypeError):
             function_params = None
-        self.value = self._execute(function_params=function_params, context=context)
+        self.value = self._execute(function_params=function_params, context=context, composition=composition, execution_id=execution_id)
 
-    def execute(self, input=None, time_scale=None, params=None, context=None):
+    def execute(self, input=None, time_scale=None, params=None, context=None, composition=None, execution_id=None):
         return self.function(variable=input, params=params, time_scale=time_scale, context=context)
 
     @property

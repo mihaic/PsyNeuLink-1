@@ -435,8 +435,8 @@ class GatingSignal(ModulatorySignal):
                          prefs=prefs,
                          context=self)
 
-    def _execute(self, function_params, context):
-        return float(super()._execute(function_params=function_params, context=context))
+    def _execute(self, function_params, context=None, composition=None, execution_id=None):
+        return float(super()._execute(function_params=function_params, context=context, composition=composition, execution_id=execution_id))
 
     @property
     def gating_signal(self):

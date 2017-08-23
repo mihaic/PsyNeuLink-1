@@ -2682,7 +2682,7 @@ class Component(object):
     def initialize(self):
         raise ComponentError("{} class does not support initialize() method".format(self.__class__.__name__))
 
-    def execute(self, input=None, params=None, time_scale=None, context=None):
+    def execute(self, input=None, params=None, time_scale=None, context=None, composition=None, execution_id=None):
         raise ComponentError("{} class must implement execute".format(self.__class__.__name__))
 
     def _update_value(self, context=None):

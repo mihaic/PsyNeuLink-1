@@ -727,7 +727,7 @@ class OutputState(State_Base):
                                                     receiver=proj,
                                                     context=context)
 
-    def _execute(self, function_params, context):
+    def _execute(self, function_params, context=None, composition=None, execution_id=None):
         """Call self.function with owner's value as variable
         """
 

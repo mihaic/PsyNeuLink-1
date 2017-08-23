@@ -577,7 +577,7 @@ class Function_Base(Function):
                          prefs=prefs,
                          context=context)
 
-    def execute(self, variable=None, params=None, context=None):
+    def execute(self, variable=None, params=None, context=None, composition=None, execution_id=None):
         return self.function(variable=variable, params=params, context=context)
 
     @property

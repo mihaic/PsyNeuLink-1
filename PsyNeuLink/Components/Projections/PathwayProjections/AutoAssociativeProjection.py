@@ -240,7 +240,7 @@ class AutoAssociativeProjection(MappingProjection):
                          prefs=prefs,
                          context=context)
 
-    def execute(self, input=None, clock=CentralClock, time_scale=None, params=None, context=None):
+    def execute(self, input=None, clock=CentralClock, time_scale=None, params=None, context=None, composition=None, execution_id=None):
         """
         Based heavily on the execute() method for MappingProjection.
 

@@ -34,19 +34,19 @@ COMMENT
 """
 
 import numpy as np
-import typecheck as tc
 import numpy as np
+import typecheck as tc
 
 from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanisms.ControlMechanism import ControlMechanismError, ControlMechanism_Base
 from PsyNeuLink.Components.States.InputState import InputState
 
+from PsyNeuLink.Components.States.ParameterState import ParameterState
 from PsyNeuLink.Globals.Defaults import defaultControlAllocation
 from PsyNeuLink.Globals.Keywords import CONTROL, FUNCTION, FUNCTION_PARAMS, INPUT_STATES, INTERCEPT, MODULATION, MONITOR_FOR_CONTROL, NAME, SLOPE
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Utilities import ContentAddressableList
 from PsyNeuLink.Scheduling.TimeScale import CentralClock, TimeScale
-from PsyNeuLink.Components.States.ParameterState import ParameterState
 
 
 class DefaultControlMechanismError(Exception):
@@ -127,7 +127,10 @@ class DefaultControlMechanism(ControlMechanism_Base):
                     runtime_params=None,
                     clock=CentralClock,
                     time_scale=TimeScale.TRIAL,
-                    context=None):
+                    context=None,
+                    composition=None,
+                    execution_id=None,
+                ):
 
         return self.input_values or [defaultControlAllocation]
 

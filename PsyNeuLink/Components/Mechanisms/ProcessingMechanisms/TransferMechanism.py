@@ -600,7 +600,10 @@ class TransferMechanism(ProcessingMechanism_Base):
                  runtime_params=None,
                  clock=CentralClock,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """Execute TransferMechanism function and return transform of input
 
         Execute TransferMechanism function on input, and assign to output_values:

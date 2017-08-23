@@ -809,7 +809,10 @@ class DDM(ProcessingMechanism_Base):
                  runtime_params=None,
                  clock=CentralClock,
                  time_scale=TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """Execute DDM function (currently only trial-level, analytic solution)
         Execute DDM and estimate outcome or calculate trajectory of decision variable
         Currently implements only trial-level DDM (analytic solution) and returns:

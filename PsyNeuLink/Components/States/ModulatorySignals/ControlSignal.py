@@ -800,7 +800,7 @@ class ControlSignal(ModulatorySignal):
         self.intensity = self.function(self.allocation)
         self.last_intensity = self.intensity
 
-    def update(self, params=None, time_scale=TimeScale.TRIAL, context=None):
+    def update(self, params=None, time_scale=TimeScale.TRIAL, context=None, composition=None, execution_id=None):
         """Adjust the control signal, based on the allocation value passed to it
 
         Computes new intensity and cost attributes from allocation
@@ -822,7 +822,7 @@ class ControlSignal(ModulatorySignal):
         # MODIFIED 4/15/17 OLD: [NOT SURE WHY, BUT THIS SKIPPED OutputState.update() WHICH CALLS self.calculate()
         # super(OutputState, self).update(params=params, time_scale=time_scale, context=context)
         # MODIFIED 4/15/17 NEW: [THIS GOES THROUGH OutputState.update() WHICH CALLS self.calculate()
-        super().update(params=params, time_scale=time_scale, context=context)
+        super().update(params=params, time_scale=time_scale, context=context, composition=composition, execution_id=execution_id)
         # MODIFIED 4/15/17 END
 
         # store previous state

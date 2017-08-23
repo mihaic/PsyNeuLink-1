@@ -1271,7 +1271,10 @@ class LearningMechanism(AdaptiveMechanism_Base):
                 runtime_params=None,
                 clock=CentralClock,
                 time_scale = TimeScale.TRIAL,
-                context=None):
+                context=None,
+                composition=None,
+                execution_id=None,
+                 ):
         """Execute LearningMechanism function and return learning_signal
 
         :return: (2D np.array) self.learning_signal

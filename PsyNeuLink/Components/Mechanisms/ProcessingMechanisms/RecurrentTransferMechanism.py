@@ -103,8 +103,7 @@ import typecheck as tc
 from PsyNeuLink.Components.Functions.Function import Linear, Stability, get_matrix
 from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism_Base
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
-from PsyNeuLink.Components.Projections.PathwayProjections.AutoAssociativeProjection import AutoAssociativeProjection, \
-    get_auto_matrix, get_hetero_matrix
+from PsyNeuLink.Components.Projections.PathwayProjections.AutoAssociativeProjection import AutoAssociativeProjection, get_auto_matrix, get_hetero_matrix
 from PsyNeuLink.Components.States.OutputState import PRIMARY_OUTPUT_STATE, StandardOutputStates
 from PsyNeuLink.Components.States.ParameterState import ParameterState
 from PsyNeuLink.Components.States.State import _instantiate_state
@@ -665,7 +664,10 @@ class RecurrentTransferMechanism(TransferMechanism):
                  runtime_params=None,
                  clock=CentralClock,
                  time_scale = TimeScale.TRIAL,
-                 context=None):
+                 context=None,
+                 composition=None,
+                 execution_id=None,
+                 ):
         """Implement decay
         """
         if context is None or (INITIALIZING not in context):
@@ -676,7 +678,10 @@ class RecurrentTransferMechanism(TransferMechanism):
                                 runtime_params=runtime_params,
                                 clock=CentralClock,
                                 time_scale=time_scale,
-                                context=context)
+                                context=context,
+                                composition=composition,
+                                execution_id=execution_id,
+                                )
 
     def _update_parameter_states(self, runtime_params=None, time_scale=None, context=None):
         for state in self._parameter_states:

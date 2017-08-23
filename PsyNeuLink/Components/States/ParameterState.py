@@ -250,8 +250,8 @@ Class Reference
 
 import inspect
 
-import typecheck as tc
 import numpy as np
+import typecheck as tc
 
 from PsyNeuLink.Components.Component import Component, function_type, method_type, parameter_keywords
 from PsyNeuLink.Components.Functions.Function import Linear, get_param_value_for_keyword
@@ -527,7 +527,7 @@ class ParameterState(State_Base):
 
         self._instantiate_projections_to_state(projections=projections, context=context)
 
-    def _execute(self, function_params, context):
+    def _execute(self, function_params, context=None, composition=None, execution_id=None):
         """Call self.function with current parameter value as the variable
 
         Get backingfield ("base") value of param of function of Mechanism to which the ParameterState belongs.

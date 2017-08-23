@@ -1300,7 +1300,10 @@ class EVCMechanism(ControlMechanism_Base):
                     runtime_params=None,
                     clock=CentralClock,
                     time_scale=TimeScale.TRIAL,
-                    context=None):
+                    context=None,
+                    composition=None,
+                    execution_id=None,
+                ):
         """Determine `allocation_policy <EVCMechanism.allocation_policy>` for next run of System
 
         Update prediction mechanisms

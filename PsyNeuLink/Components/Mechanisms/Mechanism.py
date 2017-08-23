@@ -1663,6 +1663,8 @@ class Mechanism_Base(Mechanism):
                     clock=clock,
                     time_scale=time_scale,
                     context=context,
+                    composition=composition,
+                    execution_id=execution_id,
                 )
 
                 # # # MODIFIED 3/3/17 OLD:
@@ -1699,6 +1701,8 @@ class Mechanism_Base(Mechanism):
                     params=runtime_params,
                     time_scale=time_scale,
                     context=context,
+                    composition=composition,
+                    execution_id=execution_id,
                 )
                 return np.atleast_2d(return_value)
 
@@ -1766,6 +1770,8 @@ class Mechanism_Base(Mechanism):
             clock=clock,
             time_scale=time_scale,
             context=context,
+            composition=composition,
+            execution_id=execution_id,
         )
 
         # IMPLEMENTATION NOTE:  THIS IS HERE BECAUSE IF return_value IS A LIST, AND THE LENGTH OF ALL OF ITS
@@ -1968,7 +1974,10 @@ class Mechanism_Base(Mechanism):
                     runtime_params=None,
                     clock=CentralClock,
                     time_scale=None,
-                    context=None):
+                    context=None,
+                    composition=None,
+                    execution_id=None,
+                    ):
         return self.function(variable=variable, params=runtime_params, time_scale=time_scale, context=context)
 
     def _report_mechanism_execution(self, input_val=None, params=None, output=None):

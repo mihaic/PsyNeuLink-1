@@ -558,7 +558,10 @@ class GatingMechanism(AdaptiveMechanism_Base):
                     runtime_params=None,
                     clock=CentralClock,
                     time_scale=TimeScale.TRIAL,
-                    context=None):
+                    context=None,
+                    composition=None,
+                    execution_id=None,
+                ):
         """Updates GatingSignals based on inputs
         """
 
@@ -569,7 +572,10 @@ class GatingMechanism(AdaptiveMechanism_Base):
                                 runtime_params=runtime_params,
                                 clock=clock,
                                 time_scale=time_scale,
-                                context=context)
+                                context=context,
+                                composition=composition,
+                                execution_id=execution_id,
+                                )
         # gating_policy = self.function(variable=variable,
         #                               function_params=function_params,
         #                               time_scale=time_scale,

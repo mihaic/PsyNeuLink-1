@@ -825,7 +825,10 @@ class ControlMechanism_Base(AdaptiveMechanism_Base):
                     runtime_params=None,
                     clock=CentralClock,
                     time_scale=TimeScale.TRIAL,
-                    context=None):
+                    context=None,
+                    composition=None,
+                    execution_id=None,
+                ):
         """Updates ControlSignals based on inputs
 
         Must be overriden by subclass
