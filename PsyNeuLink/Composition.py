@@ -728,8 +728,9 @@ class Composition(object):
                 if input_state not in set(self.composition_interface_output_states.keys()):
                     interface_output_state = OutputState(owner=self.composition_interface_mechanism,
                                                          variable=input_state.variable,
+                                                         reference_value= input_state.variable,
                                                          name="Interface to " + mech.name + " for " + input_state.name)
-                    self.composition_interface_mechanism.add_states(interface_output_state)
+                    # self.composition_interface_mechanism.add_states(interface_output_state)
                     self.composition_interface_output_states[input_state] = interface_output_state
                     MappingProjection(sender=interface_output_state, receiver=input_state)
 
@@ -750,6 +751,8 @@ class Composition(object):
         for mech in list(inputs.keys()):
             if type(inputs[mech]) == list:
                 for i in range(len(inputs[mech])):
+                    print("INPUTS[MECH] = ", inputs[mech])
+                    print("self.composition_interface_output_states = ", self.composition_interface_output_states)
                     self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
             else:
                 self.composition_interface_output_states[mech.input_state].value = inputs[mech]
