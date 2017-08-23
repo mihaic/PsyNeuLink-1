@@ -2000,7 +2000,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
 
         return result
 
-    def derivative(self, input=None, output=None):
+    def derivative(self, input=None, output=None, composition=None, execution_id=None):
         """
         derivative()
 
@@ -2155,7 +2155,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
 
         return scale * np.exp(rate * variable)
 
-    def derivative(self, input, output=None):
+    def derivative(self, input, output=None, composition=None, execution_id=None):
         """
         derivative(input)
 
@@ -2316,7 +2316,7 @@ class Logistic(TransferFunction):  # -------------------------------------------
 
         return return_val
 
-    def derivative(self, output, input=None):
+    def derivative(self, output, input=None, composition=None, execution_id=None):
         """
         derivative(output)
 
@@ -2511,7 +2511,7 @@ class SoftMax(TransferFunction):
 
         return sm
 
-    def derivative(self, output, input=None):
+    def derivative(self, output, input=None, composition=None, execution_id=None):
         """
         derivative(output)
 
@@ -5169,8 +5169,7 @@ class BogaczEtAl(
 
         return rt, er
 
-
-    def derivative(self, output=None, input=None):
+    def derivative(self, output=None, input=None, composition=None, execution_id=None):
         """
         derivative(output, input)
 
