@@ -742,17 +742,17 @@ class Composition(object):
                     # remove the corresponding projection from the ORIGIN mechanism's path afferents
                     input_state.path_afferents.remove(projection)
                     projection = None
-            # remove the output state from the CIM
-            self.composition_interface_mechanism.output_states.remove(self.composition_interface_output_states[input_state])
+
+            # remove the output state associated with this input state (this iteration) from the CIM output states
+            # self.composition_interface_mechanism.output_states.remove(self.composition_interface_output_states[input_state])
+
             # and from the dictionary of CIM output state/input state pairs
             del self.composition_interface_output_states[input_state]
 
     def _assign_values_to_interface_output_states(self, inputs):
         for mech in list(inputs.keys()):
-
             if type(inputs[mech]) == list:
                 for i in range(len(inputs[mech])):
-
                     self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
             else:
                 self.composition_interface_output_states[mech.input_state].value = inputs[mech]
