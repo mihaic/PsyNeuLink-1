@@ -595,15 +595,16 @@ class TransferMechanism(ProcessingMechanism_Base):
         if self.initial_value is None:
             self.initial_value = self.instance_defaults.variable
 
-    def _execute(self,
-                 variable=None,
-                 runtime_params=None,
-                 clock=CentralClock,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Execute TransferMechanism function and return transform of input
 
         Execute TransferMechanism function on input, and assign to output_values:

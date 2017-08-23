@@ -553,29 +553,31 @@ class GatingMechanism(AdaptiveMechanism_Base):
     # IMPLEMENTATION NOTE: This is needed if GatingMechanism is added to a System but does not have any afferents
     #                      (including from ProcessInputState or SystemInputState)
     #                      and therefore variable = None
-    def _execute(self,
-                    variable=None,
-                    runtime_params=None,
-                    clock=CentralClock,
-                    time_scale=TimeScale.TRIAL,
-                    context=None,
-                    composition=None,
-                    execution_id=None,
-                ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Updates GatingSignals based on inputs
         """
 
         if variable is None or variable[0] is None:
             variable = self._update_variable(self.ClassDefaults.variable)
 
-        return super()._execute(variable=variable,
-                                runtime_params=runtime_params,
-                                clock=clock,
-                                time_scale=time_scale,
-                                context=context,
-                                composition=composition,
-                                execution_id=execution_id,
-                                )
+        return super()._execute(
+            variable=variable,
+            runtime_params=runtime_params,
+            clock=clock,
+            time_scale=time_scale,
+            context=context,
+            composition=composition,
+            execution_id=execution_id,
+        )
         # gating_policy = self.function(variable=variable,
         #                               function_params=function_params,
         #                               time_scale=time_scale,

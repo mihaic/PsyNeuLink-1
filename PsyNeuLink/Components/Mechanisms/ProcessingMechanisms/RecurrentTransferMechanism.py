@@ -659,29 +659,31 @@ class RecurrentTransferMechanism(TransferMechanism):
             else:
                 del self.output_states[ENTROPY]
 
-    def _execute(self,
-                 variable=None,
-                 runtime_params=None,
-                 clock=CentralClock,
-                 time_scale = TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Implement decay
         """
         if context is None or (INITIALIZING not in context):
             if self.decay is not None and self.decay != 1.0:
                 self.previous_input = self.previous_input * float(self.decay)
 
-        return super()._execute(variable=variable,
-                                runtime_params=runtime_params,
-                                clock=CentralClock,
-                                time_scale=time_scale,
-                                context=context,
-                                composition=composition,
-                                execution_id=execution_id,
-                                )
+        return super()._execute(
+            variable=variable,
+            runtime_params=runtime_params,
+            clock=CentralClock,
+            time_scale=time_scale,
+            context=context,
+            composition=composition,
+            execution_id=execution_id,
+        )
 
     def _update_parameter_states(self, runtime_params=None, time_scale=None, context=None):
         for state in self._parameter_states:

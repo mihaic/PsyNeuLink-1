@@ -1266,15 +1266,16 @@ class LearningMechanism(AdaptiveMechanism_Base):
 
         super()._instantiate_attributes_after_function(context=context)
 
-    def _execute(self,
-                variable=None,
-                runtime_params=None,
-                clock=CentralClock,
-                time_scale = TimeScale.TRIAL,
-                context=None,
-                composition=None,
-                execution_id=None,
-                 ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Execute LearningMechanism function and return learning_signal
 
         :return: (2D np.array) self.learning_signal

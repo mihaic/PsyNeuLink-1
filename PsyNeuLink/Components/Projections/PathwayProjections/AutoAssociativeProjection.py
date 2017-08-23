@@ -82,11 +82,11 @@ Class Reference
 
 """
 
-from PsyNeuLink.Globals.Keywords import AUTO_ASSOCIATIVE_PROJECTION, DEFAULT_MATRIX, AUTO, HETERO, CHANGED
-from PsyNeuLink.Components.Projections.Projection import *
-from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Functions.Function import *
+from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
+from PsyNeuLink.Components.Projections.Projection import *
 from PsyNeuLink.Components.States.OutputState import OutputState
+from PsyNeuLink.Globals.Keywords import AUTO, AUTO_ASSOCIATIVE_PROJECTION, CHANGED, DEFAULT_MATRIX, HETERO
 from PsyNeuLink.Scheduling.TimeScale import CentralClock
 
 parameter_keywords.update({AUTO_ASSOCIATIVE_PROJECTION})

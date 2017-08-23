@@ -820,15 +820,16 @@ class ControlMechanism_Base(AdaptiveMechanism_Base):
                         control_signal_specs.update({CONTROL_SIGNAL_SPECS: [projection]})
                         self._instantiate_control_signal(control_signal_specs, context=context)
 
-    def _execute(self,
-                    variable=None,
-                    runtime_params=None,
-                    clock=CentralClock,
-                    time_scale=TimeScale.TRIAL,
-                    context=None,
-                    composition=None,
-                    execution_id=None,
-                ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Updates ControlSignals based on inputs
 
         Must be overriden by subclass

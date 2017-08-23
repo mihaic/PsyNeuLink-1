@@ -533,7 +533,6 @@ class LearningProjection(ModulatoryProjection_Base):
         learned_projection.learning_mechanism = learning_mechanism
         learned_projection.has_learning_projection = True
 
-
     def execute(self, input=None, clock=CentralClock, time_scale=None, params=None, context=None, composition=None, execution_id=None):
         """
         :return: (2D np.array) self.weight_change_matrix

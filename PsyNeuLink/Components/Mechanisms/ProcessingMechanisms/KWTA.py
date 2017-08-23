@@ -565,26 +565,28 @@ class KWTA(RecurrentTransferMechanism):
             context=context
         )
 
-    def _execute(self,
-                variable=None,
-                runtime_params=None,
-                clock=CentralClock,
-                time_scale = TimeScale.TRIAL,
-                context=None,
-                composition=None,
-                execution_id=None,
-                 ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
 
         variable = self._update_variable(self._kwta_scale(variable, context=context))
 
-        return super()._execute(variable=variable,
-                       runtime_params=runtime_params,
-                       clock=clock,
-                       time_scale=time_scale,
-                       context=context,
-                       composition=composition,
-                       execution_id=execution_id,
-                                )
+        return super()._execute(
+            variable=variable,
+            runtime_params=runtime_params,
+            clock=clock,
+            time_scale=time_scale,
+            context=context,
+            composition=composition,
+            execution_id=execution_id,
+        )
 
         # NOTE 7/10/17 CW: this version of KWTA executes scaling _before_ noise or integration is applied. This can be
         # changed, but I think it requires overriding the whole _execute function (as below),

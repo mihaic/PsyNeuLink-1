@@ -1969,15 +1969,16 @@ class Mechanism_Base(Mechanism):
         self.value[0] = value
         self._update_output_states()
 
-    def _execute(self,
-                    variable=None,
-                    runtime_params=None,
-                    clock=CentralClock,
-                    time_scale=None,
-                    context=None,
-                    composition=None,
-                    execution_id=None,
-                    ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=None,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         return self.function(variable=variable, params=runtime_params, time_scale=time_scale, context=context)
 
     def _report_mechanism_execution(self, input_val=None, params=None, output=None):

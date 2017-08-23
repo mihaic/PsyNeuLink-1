@@ -1295,15 +1295,16 @@ class EVCMechanism(ControlMechanism_Base):
                                           self.name,
                                           num_control_projections))
 
-    def _execute(self,
-                    variable=None,
-                    runtime_params=None,
-                    clock=CentralClock,
-                    time_scale=TimeScale.TRIAL,
-                    context=None,
-                    composition=None,
-                    execution_id=None,
-                ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Determine `allocation_policy <EVCMechanism.allocation_policy>` for next run of System
 
         Update prediction mechanisms

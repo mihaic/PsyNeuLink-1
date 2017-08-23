@@ -122,15 +122,16 @@ class DefaultControlMechanism(ControlMechanism_Base):
                                                     prefs=prefs,
                                                     context=self)
 
-    def _execute(self,
-                    variable=None,
-                    runtime_params=None,
-                    clock=CentralClock,
-                    time_scale=TimeScale.TRIAL,
-                    context=None,
-                    composition=None,
-                    execution_id=None,
-                ):
+    def _execute(
+        self,
+        variable=None,
+        runtime_params=None,
+        clock=CentralClock,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
 
         return self.input_values or [defaultControlAllocation]
 
