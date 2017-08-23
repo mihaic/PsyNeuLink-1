@@ -749,10 +749,10 @@ class Composition(object):
 
     def _assign_values_to_interface_output_states(self, inputs):
         for mech in list(inputs.keys()):
+
             if type(inputs[mech]) == list:
                 for i in range(len(inputs[mech])):
-                    print("INPUTS[MECH] = ", inputs[mech])
-                    print("self.composition_interface_output_states = ", self.composition_interface_output_states)
+
                     self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
             else:
                 self.composition_interface_output_states[mech.input_state].value = inputs[mech]
