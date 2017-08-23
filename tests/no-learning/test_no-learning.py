@@ -83,7 +83,7 @@ class TestNoLearning:
 
         s.reportOutputPref = True
 
-        stim_list = {Input_Layer: [[-1, 30]]}
+        stim_list = {Input_Layer: [[[-1, 30]]]}
 
         s.run(
             num_trials=10,
