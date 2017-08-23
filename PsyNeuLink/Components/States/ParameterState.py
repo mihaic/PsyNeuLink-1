@@ -544,12 +544,13 @@ class ParameterState(State_Base):
             # param_value = self.owner.params[self.name]
             param_value = getattr(self.owner, '_'+ self.name)
 
-        value = self.function(variable=param_value,
-                              params=function_params,
-                              context=context,
-                              composition=composition,
-                              execution_id=execution_id,
-                              )
+        value = self.function(
+            variable=param_value,
+            params=function_params,
+            context=context,
+            composition=composition,
+            execution_id=execution_id,
+        )
 
         # TEST PRINT
         # TEST DEBUG MULTILAYER

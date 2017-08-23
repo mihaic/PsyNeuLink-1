@@ -578,10 +578,12 @@ class GatingMechanism(AdaptiveMechanism_Base):
             composition=composition,
             execution_id=execution_id,
         )
-        # gating_policy = self.function(variable=variable,
-        #                               function_params=function_params,
-        #                               time_scale=time_scale,
-        #                               context=context)
+        # gating_policy = self.function(
+        #     variable=variable,
+        #     function_params=function_params,
+        #     time_scale=time_scale,
+        #     context=context,
+        # )
         # return gating_policy
 
     def show(self):

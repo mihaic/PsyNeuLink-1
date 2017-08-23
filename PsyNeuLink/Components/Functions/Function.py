@@ -853,14 +853,15 @@ class ArgumentTherapy(Function_Base):
 
         super()._validate_params(request_set, target_set, context)
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Returns a boolean that is (or tends to be) the same as or opposite the one passed in.
 
@@ -1210,14 +1211,15 @@ class Reduce(CombinationFunction):  # ------------------------------------------
                                 format(self.__class__.__name__))
         return variable
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Calculate sum or product of the elements for each array in `variable <Reduce.variable>`,
         apply `scale <Reduce.scale>` and/or `offset <Reduce.offset>`, and return array of resulting values.
@@ -1600,15 +1602,15 @@ class LinearCombination(CombinationFunction):  # -------------------------------
             #     raise FunctionError("Operation param ({0}) must be Operation.SUM or Operation.PRODUCT".
             #     format(operation))
 
-
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Apply `weights <LinearCombination.weights>` and/or `exponents <LinearCombinations.weights>` to the
         arrays in `variable <LinearCombination.variable>`, then take their sum or product (as specified by
@@ -1926,14 +1928,15 @@ class Linear(TransferFunction):  # ---------------------------------------------
 
         # self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: `slope <Linear.slope>` * `variable <Linear.variable>` + `intercept <Linear.intercept>`.
 
@@ -2130,14 +2133,15 @@ class Exponential(TransferFunction):  # ----------------------------------------
                          prefs=prefs,
                          context=context)
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: `scale <Exponential.scale>` * e**(`rate <Exponential.rate>` * `variable <Linear.variable>`).
 
@@ -2290,14 +2294,15 @@ class Logistic(TransferFunction):  # -------------------------------------------
                          prefs=prefs,
                          context=context)
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: 1 / (1 + e**( (`gain <Logistic.gain>` * `variable <Logistic.variable>`) + `bias <Logistic.bias>`))
 
@@ -2461,14 +2466,15 @@ class SoftMax(TransferFunction):
                          prefs=prefs,
                          context=context)
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: e**(`gain <SoftMax.gain>` * `variable <SoftMax.variable>`) /
         sum(e**(`gain <SoftMax.gain>` * `variable <SoftMax.variable>`)),
@@ -2961,14 +2967,15 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         else:
             return matrix
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: `variable <LinearMatrix.variable>` • `matrix <LinearMatrix.matrix>`
 
@@ -3599,14 +3606,15 @@ class SimpleIntegrator(
         self.previous_value = self.initializer
         self.auto_dependent = True
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: `variable <Linear.slope>` combined with `previous_value <SimpleIntegrator.previous_value>`
         according to `previous_value <SimpleIntegrator.previous_value>` + `rate <SimpleIntegrator.rate>` *`variable
@@ -3839,14 +3847,15 @@ class ConstantIntegrator(
 
         self.auto_dependent = True
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: `previous_value <ConstantIntegrator.previous_value>` combined with `rate <ConstantIntegrator.rate>` and
         `noise <ConstantIntegrator.noise>`.
@@ -4121,15 +4130,15 @@ class AdaptiveIntegrator(
         # if INITIALIZER in target_set:
         #     self._validate_initializer(target_set[INITIALIZER])
 
-
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: some fraction of `variable <AdaptiveIntegrator.variable>` combined with some fraction of `previous_value
         <AdaptiveIntegrator.previous_value>`.
@@ -4347,14 +4356,15 @@ class DriftDiffusionIntegrator(
                 "Invalid noise parameter for {}. DriftDiffusionIntegrator requires noise parameter to be a float. Noise"
                 " parameter is used to construct the standard DDM noise distribution".format(self.name))
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: some fraction of `variable <DriftDiffusionIntegrator.variable>` combined with some fraction of
         `previous_value <DriftDiffusionIntegrator.previous_value>`.
@@ -4577,14 +4587,15 @@ class OrnsteinUhlenbeckIntegrator(
                 "Invalid noise parameter for {}. OrnsteinUhlenbeckIntegrator requires noise parameter to be a float. "
                 "Noise parameter is used to construct the standard DDM noise distribution".format(self.name))
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: some fraction of `variable <OrnsteinUhenbeckIntegrator.variable>` combined with some fraction of
         `previous_value <OrnsteinUhenbeckIntegrator.previous_value>`
@@ -4901,14 +4912,15 @@ class AccumulatorIntegrator(
             except TypeError:
                 self._validate_params(request_set=params, target_set=target_set, context=context)
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: `previous_value <ConstantIntegrator.previous_value>` combined with `rate <ConstantIntegrator.rate>` and
         `noise <ConstantIntegrator.noise>`.
@@ -5120,14 +5132,15 @@ class BogaczEtAl(
                          prefs=prefs,
                          context=context)
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: terminal value of decision variable (equal to threshold), mean accuracy (error rate; ER) and mean
         response time (RT)
@@ -5429,14 +5442,15 @@ class NavarroAndFuss(IntegratorFunction):
 
         super()._instantiate_function(context=context)
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """
         Return: terminal value of decision variable, mean accuracy (error rate; ER), mean response time (RT),
         correct RT mean, correct RT variance and correct RT skew.  **Requires that the MatLab engine is installed.**
@@ -5574,14 +5588,15 @@ class NormalDist(DistributionFunction):
 
         self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5672,14 +5687,15 @@ class ExponentialDist(DistributionFunction):
 
         self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5778,14 +5794,15 @@ class UniformDist(DistributionFunction):
 
         self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5886,14 +5903,15 @@ class GammaDist(DistributionFunction):
 
         self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -5994,14 +6012,15 @@ class WaldDist(DistributionFunction):
 
         self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         # Validate variable and validate params
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
@@ -6241,15 +6260,15 @@ class Stability(ObjectiveFunction):
         elif self.metric in DISTANCE_METRICS:
             self._metric_fct = Distance(metric=self.metric)
 
-
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Calculate the stability of `variable <Stability.variable>`.
 
         Compare the value of `variable <Stability.variable>` with its value after transformation by
@@ -6397,14 +6416,15 @@ class Distance(ObjectiveFunction):
             raise FunctionError("The lengths of the items in the variable for {} ({},{}) must be equal".
                 format(self.name, len(variable[0]), len(variable[1])))
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Calculate the distance between the two arrays in `variable <Stability.variable>`.
 
         Returns
@@ -6670,14 +6690,15 @@ class Reinforcement(
 
         return variable
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Calculate a matrix of weight changes from a single (scalar) error term
 
         COMMENT:
@@ -7017,14 +7038,15 @@ class BackPropagation(LearningFunction):
                                     "length of the output {} of the activity vector being monitored ({})".
                                     format(rows, MATRIX, self.name, activity_output_len))
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None,
-                 composition=None,
-                 execution_id=None,
-                 ):
+    def function(
+        self,
+        variable=None,
+        params=None,
+        time_scale=TimeScale.TRIAL,
+        context=None,
+        composition=None,
+        execution_id=None,
+    ):
         """Calculate and return a matrix of weight changes from arrays of inputs, outputs and error terms
 
         Arguments

@@ -733,12 +733,13 @@ class OutputState(State_Base):
 
         # IMPLEMENTATION NOTE: OutputStates don't current receive TransmissiveProjections,
         #                      so there is no need to use their value (as do InputStates)
-        value = self.function(variable=self.owner.value[self.index],
-                                params=function_params,
-                                context=context,
-                                composition=composition,
-                                execution_id=execution_id,
-                                )
+        value = self.function(
+            variable=self.owner.value[self.index],
+            params=function_params,
+            context=context,
+            composition=composition,
+            execution_id=execution_id,
+        )
 
         return type_match(self.calculate(self.owner.value[self.index]), type(value))
 

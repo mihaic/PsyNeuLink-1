@@ -871,12 +871,13 @@ class DDM(ProcessingMechanism_Base):
         # EXECUTE ANALYTIC SOLUTION (TRIAL TIME SCALE) -----------------------------------------------------------
         elif self.timeScale == TimeScale.TRIAL:
 
-            result = self.function(variable=variable,
-                                   params=runtime_params,
-                                   context=context,
-                                   composition=composition,
-                                   execution_id=execution_id,
-                                   )
+            result = self.function(
+                variable=variable,
+                params=runtime_params,
+                context=context,
+                composition=composition,
+                execution_id=execution_id,
+            )
 
             if isinstance(self.function.__self__, BogaczEtAl):
                 return_value = np.array([[0.0], [0.0], [0.0], [0.0]])

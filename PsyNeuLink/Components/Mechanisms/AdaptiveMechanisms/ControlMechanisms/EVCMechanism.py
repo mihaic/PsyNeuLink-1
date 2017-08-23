@@ -1342,14 +1342,15 @@ class EVCMechanism(ControlMechanism_Base):
         # IMPLEMENTATION NOTE:
         # self.system._store_system_state()
 
-        allocation_policy = self.function(controller=self,
-                                          variable=variable,
-                                          runtime_params=runtime_params,
-                                          time_scale=time_scale,
-                                          context=context,
-                                          composition=composition,
-                                          execution_id=execution_id,
-                                          )
+        allocation_policy = self.function(
+            controller=self,
+            variable=variable,
+            runtime_params=runtime_params,
+            time_scale=time_scale,
+            context=context,
+            composition=composition,
+            execution_id=execution_id,
+        )
         # IMPLEMENTATION NOTE:
         # self.system._restore_system_state()
 

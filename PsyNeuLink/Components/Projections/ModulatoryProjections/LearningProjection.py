@@ -547,12 +547,13 @@ class LearningProjection(ModulatoryProjection_Base):
         # if self.learning_rate:
         #     params.update({SLOPE:self.learning_rate})
 
-        self.weight_change_matrix = self.function(variable=self.sender.value,
-                                                  params=params,
-                                                  context=context,
-                                                  composition=composition,
-                                                  execution_id=execution_id,
-                                                  )
+        self.weight_change_matrix = self.function(
+            variable=self.sender.value,
+            params=params,
+            context=context,
+            composition=composition,
+            execution_id=execution_id,
+        )
 
         if self.learning_rate is not None:
             self.weight_change_matrix *= self.learning_rate

@@ -583,12 +583,13 @@ class InputState(State_Base):
         if self._path_proj_values:
             # Combine Projection values
             # TODO: stateful - this seems dangerous with statefulness, maybe safe when self.value is only passed or stateful
-            combined_values = self.function(variable=self._path_proj_values,
-                                            params=function_params,
-                                            context=context,
-                                            composition=composition,
-                                            execution_id=execution_id,
-                                            )
+            combined_values = self.function(
+                variable=self._path_proj_values,
+                params=function_params,
+                context=context,
+                composition=composition,
+                execution_id=execution_id,
+            )
             return combined_values
 
         # There were no Projections
