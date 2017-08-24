@@ -175,7 +175,7 @@ from PsyNeuLink.Globals.Keywords import ACCUMULATOR_INTEGRATOR_FUNCTION, ADAPTIV
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import is_pref_set, kpReportOutputPref, kpRuntimeParamStickyAssignmentPref
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceEntry, PreferenceLevel
 from PsyNeuLink.Globals.Registry import register_category
-from PsyNeuLink.Globals.Utilities import AutoNumber, is_distance_metric, is_matrix, is_numeric, iscompatible, np_array_less_than_2d, parameter_spec
+from PsyNeuLink.Globals.Utilities import AutoNumber, get_valid_enum_member_strings, is_distance_metric, is_matrix, is_numeric, iscompatible, np_array_less_than_2d, parameter_spec
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
 EPSILON = np.finfo(float).eps
@@ -650,7 +650,11 @@ class Function_Base(Function):
     @execution_status.setter
     def execution_status(self, value):
         if value not in ExecutionStatus:
-            raise FunctionError('Attempt to assign invalid execution status {0} ({1})'.format(value, e))
+            raise FunctionError('Invalid assignment to execution_status: {0} (Valid options: {1}'.format(
+                    value,
+                    get_valid_enum_member_strings(ExecutionStatus),
+                )
+            )
         self._execution_status = value
 
 
