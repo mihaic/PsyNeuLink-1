@@ -533,14 +533,6 @@ class Function_Base(Function):
         FUNCTION_OUTPUT_TYPE:None                # Default is to not convert
     })
 
-    # add TransferMechanism params to superclassed Params (defined in Component currently)
-    class Params(Function.Params):
-        # optionally include these - they ought to be overriden in subclasses like so:
-        # self.gain = 'multiplicative'
-        # self.bias = 'additive'
-        additive = 'additive'
-        multiplicative = 'multiplicative'
-
     def __init__(self,
                  default_variable,
                  params,
