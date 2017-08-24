@@ -846,9 +846,17 @@ class Composition(object):
 
         for mech in self.mechanisms:
             update_single(mech)
+            try:
+                update_single(mech.function_object)
+            except AttributeError:
+                pass
 
         for proj in self.projections:
             update_single(proj)
+            try:
+                update_single(proj.function_object)
+            except AttributeError:
+                pass
 
     def execute(
         self,
