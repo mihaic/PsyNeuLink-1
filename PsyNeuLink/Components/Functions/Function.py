@@ -1954,8 +1954,8 @@ class Linear(TransferFunction):  # ---------------------------------------------
         """
 
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
-        slope = self.paramsCurrent[SLOPE]
-        intercept = self.paramsCurrent[INTERCEPT]
+        slope = self.get_param_value(self.Params.slope, composition=composition, execution_id=execution_id)
+        intercept = self.get_param_value(self.Params.intercept, composition=composition, execution_id=execution_id)
         outputType = self.functionOutputType
 
         # By default, result should be returned as np.ndarray with same dimensionality as input
