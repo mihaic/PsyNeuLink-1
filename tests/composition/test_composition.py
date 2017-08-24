@@ -935,22 +935,6 @@ class TestRun:
         )
         assert 75 == output[0][0]
 
-    def test_execute_composition(self):
-        comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp._analyze_graph()
-        inputs_dict = {A: 3}
-        sched = Scheduler(composition=comp)
-        output = comp.execute(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
-        assert 75 == output[0][0]
-
 
 class TestPathway:
 
@@ -966,7 +950,7 @@ class TestPathway:
         path._analyze_graph()
         inputs_dict = {A: [[1]]}
         sched = Scheduler(composition=path)
-        output = path.execute(
+        output = path.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
@@ -985,7 +969,7 @@ class TestPathway:
         path._analyze_graph()
         inputs_dict = {A: [[1]]}
         sched = Scheduler(composition=path)
-        output = path.execute(
+        output = path.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
@@ -1714,7 +1698,7 @@ class TestOldSyntax:
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
@@ -1735,7 +1719,7 @@ class TestOldSyntax:
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = myPath.execute(
+        output = myPath.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
@@ -1758,7 +1742,7 @@ class TestOldSyntax:
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
@@ -1799,7 +1783,7 @@ class TestOldSyntax:
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
@@ -1842,7 +1826,7 @@ class TestOldSyntax:
                     myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
@@ -1871,7 +1855,7 @@ class TestNestedCompositions:
 
         # execute path (just for comparison)
         print("EXECUTING PATH: ")
-        myPath.execute(inputs=stimulus)
+        myPath.run(inputs=stimulus)
 
         # create a Systemm | blank slate for composition
         sys = Systemm()
@@ -1880,7 +1864,7 @@ class TestNestedCompositions:
         sys.add_pathway(myPath)
 
         # execute the Systemm
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
         )
         assert 8 == output[0][0]
@@ -1922,7 +1906,7 @@ class TestNestedCompositions:
         stimulus = {myMech1: [[1]], myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
@@ -1967,7 +1951,7 @@ class TestNestedCompositions:
         stimulus = {myMech1: [[1]]}
         sys._analyze_graph()
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
@@ -1999,7 +1983,7 @@ class TestNestedCompositions:
         myPathScheduler = Scheduler(composition=myPath)
         myPathScheduler.add_condition(myMech2, AfterNCalls(myMech1, 2))
 
-        myPath.execute(inputs={myMech1: 1}, scheduler_processing=myPathScheduler)
+        myPath.run(inputs={myMech1: 1}, scheduler_processing=myPathScheduler)
         myPath.run(inputs={myMech1: [[1]]}, scheduler_processing=myPathScheduler)
         myPath2 = Pathway()
         myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
@@ -2014,7 +1998,7 @@ class TestNestedCompositions:
         stimulus = {myMech1: [[1]], myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
+        output = sys.run(
             inputs=stimulus,
             # scheduler_processing=schedule
         )
