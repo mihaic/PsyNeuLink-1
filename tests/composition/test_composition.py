@@ -2,6 +2,7 @@ import functools
 import logging
 import numpy as np
 import pytest
+import uuid
 
 from timeit import timeit
 
@@ -2634,17 +2635,16 @@ class TestParamsDict:
 
     def test_run_integrator_two_contexts_with_base(self):
         comp1 = Composition()
-        comp2 = Composition()
         A = IntegratorMechanism(default_variable=1.0)
         comp1.add_mechanism(A)
-        comp2.add_mechanism(A)
         inputs_dict = {A: [[5], [5], [5]]}
         output1 = comp1.run(
             inputs=inputs_dict,
         )
-        output2 = comp2.run(
+        output2 = comp1.run(
             inputs=inputs_dict,
-            base_execution_id=comp1._execution_id,
+            execution_id=uuid.uuid4(),
+            base_execution_id=comp1.default_execution_id,
         )
         assert 4.375 == output1[0][0]
         assert 4.921875 == output2[0][0]
