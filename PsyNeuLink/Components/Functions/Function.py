@@ -527,6 +527,10 @@ class Function_Base(Function):
     # Note: the following enforce encoding as 1D np.ndarrays (one array per variable)
     variableEncodingDim = 1
 
+    class ClassDefaults(Function.ClassDefaults):
+        function_output_type = None
+        function_output_type_conversion = False
+
     paramClassDefaults = Component.paramClassDefaults.copy()
     paramClassDefaults.update({
         FUNCTION_OUTPUT_TYPE_CONVERSION: False,  # Enable/disable output type conversion
@@ -725,6 +729,8 @@ class ArgumentTherapy(Function_Base):
 
     class ClassDefaults(Function_Base.ClassDefaults):
         variable = 0
+        function_output_type_conversion = True
+        parameter_state_params = None
 
     classPreferences = {
         kwPreferenceSetName: 'ExampleClassPreferences',
@@ -982,6 +988,7 @@ class UserDefinedFunction(Function_Base):
 
     class ClassDefaults(Function_Base.ClassDefaults):
         variable = [0]
+        parameter_state_params = None
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -1886,6 +1893,12 @@ class Linear(TransferFunction):  # ---------------------------------------------
 
     class ClassDefaults(TransferFunction.ClassDefaults):
         variable = [0]
+        function_output_type_conversion = True
+        parameter_state_params = None
+
+        # Params
+        slope = 1
+        intercept = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -3223,6 +3236,9 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
     componentName = INTEGRATOR_FUNCTION
     class ClassDefaults(IntegratorFunction.ClassDefaults):
         variable = [[0]]
+        noise = None
+        rate = None
+        previous_value = [[0]]
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
@@ -3234,6 +3250,7 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
     class Params(IntegratorFunction.Params):
         rate = 'rate'
         noise = 'noise'
+        previous_value = 'previous_value'
 
     @tc.typecheck
     def __init__(self,
@@ -3787,6 +3804,10 @@ class ConstantIntegrator(
 
     class ClassDefaults(Integrator.ClassDefaults):
         variable = [[0]]
+
+        # Params
+        offset = None
+        scale = None
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
@@ -4774,6 +4795,7 @@ class AccumulatorIntegrator(
 
     class ClassDefaults(Integrator.ClassDefaults):
         variable = [[0]]
+        increment = None
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
