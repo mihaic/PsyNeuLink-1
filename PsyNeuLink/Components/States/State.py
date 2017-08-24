@@ -1732,6 +1732,7 @@ class State_Base(State):
         if self.prefs:
             log_pref = self.prefs.logPref
 
+        # kmantel (8/11/18): this is some dangerous looking code
         # Get context
         try:
             curr_frame = inspect.currentframe()

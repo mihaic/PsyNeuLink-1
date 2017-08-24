@@ -5,8 +5,6 @@ import pytest
 
 from timeit import timeit
 
-import pytest
-
 from PsyNeuLink.Components.Functions.Function import Linear, SimpleIntegrator
 from PsyNeuLink.Components.Mechanisms.Mechanism import mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.IntegratorMechanism import IntegratorMechanism
@@ -14,12 +12,14 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.RecurrentTransferMech
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Process import process
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
+from PsyNeuLink.Components.States.InputState import InputState
 from PsyNeuLink.Components.System import system
 from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, Pathway, Systemm
-from PsyNeuLink.Globals.Keywords import HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
-from PsyNeuLink.Scheduling.Condition import AfterCall, AfterNCalls, Any, EveryNCalls, EveryNPasses
+from PsyNeuLink.Globals.Keywords import HARD_CLAMP, INPUT_STATE, NAME, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
+from PsyNeuLink.Scheduling.Condition import AfterNCalls, EveryNCalls, EveryNPasses
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
-from PsyNeuLink.Scheduling.TimeScale import CentralClock, CurrentTime, TimeScale
+from PsyNeuLink.Scheduling.TimeScale import TimeScale
+
 logger = logging.getLogger(__name__)
 
 # All tests are set to run. If you need to skip certain tests,
@@ -39,7 +39,7 @@ class TestConstructor:
         assert isinstance(comp, Composition)
 
         comp_2 = Composition()
-        assert isinstance(comp, Composition)
+        assert isinstance(comp_2, Composition)
 
     @pytest.mark.stress
     @pytest.mark.parametrize(
@@ -92,6 +92,8 @@ comp = Composition()
                     format(count, t, 's' if count != 1 else ''))
 
 # Unit tests for Composition.add_projection
+
+
 class TestAddProjection:
 
     def test_add_once(self):
@@ -223,238 +225,238 @@ class TestAnalyzeGraph:
         assert C in comp.get_mechanisms_by_role(MechanismRole.RECURRENT_INIT)
 
 
-class TestValidateFeedDict:
-
-    def test_empty_feed_dicts(self):
-        comp = Composition()
-        A = TransferMechanism(name='A')
-        B = TransferMechanism(name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {}
-        feed_dict_terminal = {}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_origin_and_terminal_with_mapping(self):
-        comp = Composition()
-        A = TransferMechanism(name='A')
-        B = TransferMechanism(name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0]]}
-        feed_dict_terminal = {B: [[0]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_origin_and_terminal_with_swapped_feed_dicts_1(self):
-        comp = Composition()
-        A = TransferMechanism(name='A')
-        B = TransferMechanism(name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {B: [[0]]}
-        feed_dict_terminal = {A: [[0]]}
-        with pytest.raises(ValueError):
-            comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-
-    def test_origin_and_terminal_with_swapped_feed_dicts_2(self):
-        comp = Composition()
-        A = TransferMechanism(name='A')
-        B = TransferMechanism(name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {B: [[0]]}
-        feed_dict_terminal = {A: [[0]]}
-        with pytest.raises(ValueError):
-            comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_multiple_origin_mechs(self):
-        comp = Composition()
-        A = TransferMechanism(name='A')
-        B = TransferMechanism(name='B')
-        C = TransferMechanism(name='C')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(), C)
-        comp.add_projection(B, MappingProjection(), C)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0]], B: [[0]]}
-        feed_dict_terminal = {C: [[0]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_multiple_origin_mechs_only_one_in_feed_dict(self):
-        comp = Composition()
-        A = TransferMechanism(name='A')
-        B = TransferMechanism(name='B')
-        C = TransferMechanism(name='C')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_projection(A, MappingProjection(), C)
-        comp.add_projection(B, MappingProjection(), C)
-        comp._analyze_graph()
-        feed_dict_origin = {B: [[0]]}
-        feed_dict_terminal = {C: [[0]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_input_state_len_3(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0, 1, 2], name='A')
-        B = TransferMechanism(default_variable=[0, 1, 2], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0, 1, 2]]}
-        feed_dict_terminal = {B: [[0, 1, 2]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_input_state_len_3_feed_dict_len_2(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0, 1, 2], name='A')
-        B = TransferMechanism(default_variable=[0, 1, 2], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0, 1]]}
-        feed_dict_terminal = {B: [[0]]}
-        with pytest.raises(ValueError):
-            comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-
-    def test_input_state_len_2_feed_dict_len_3(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0, 1], name='A')
-        B = TransferMechanism(default_variable=[0, 1], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0, 1, 2]]}
-        feed_dict_terminal = {B: [[0]]}
-        with pytest.raises(ValueError):
-            comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-
-    def test_feed_dict_includes_mechs_of_correct_and_incorrect_types(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0], name='A')
-        B = TransferMechanism(default_variable=[0], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0]], B: [[0]]}
-        with pytest.raises(ValueError):
-            comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-
-    def test_input_state_len_3_brackets_extra_1(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0, 1, 2], name='A')
-        B = TransferMechanism(default_variable=[0, 1, 2], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[[0, 1, 2]]]}
-        feed_dict_terminal = {B: [[[0, 1, 2]]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_input_state_len_3_brackets_missing_1(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0, 1, 2], name='A')
-        B = TransferMechanism(default_variable=[0, 1, 2], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A:  [0, 1, 2]}
-        feed_dict_terminal = {B: [[0]]}
-        with pytest.raises(TypeError):
-            comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-
-    def test_empty_feed_dict_for_empty_type(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0], name='A')
-        B = TransferMechanism(default_variable=[0], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0]]}
-        feed_dict_monitored = {}
-        comp._validate_feed_dict(feed_dict_monitored, comp.get_mechanisms_by_role(MechanismRole.MONITORED), "monitored")
-
-    def test_mech_in_feed_dict_for_empty_type(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0])
-        B = TransferMechanism(name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0]]}
-        feed_dict_monitored = {B: [[0]]}
-        with pytest.raises(ValueError):
-            comp._validate_feed_dict(feed_dict_monitored, comp.get_mechanisms_by_role(MechanismRole.MONITORED), "monitored")
-
-    def test_one_mech_1(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0])
-        comp.add_mechanism(A)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0]]}
-        feed_dict_terminal = {A: [[0]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-
-    def test_one_mech_2(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[0])
-        comp.add_mechanism(A)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0]]}
-        feed_dict_terminal = {A: [[0]]}
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_multiple_time_steps_1(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[[0, 1, 2]], name='A')
-        B = TransferMechanism(default_variable=[[0, 1, 2]], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[0, 1, 2], [0, 1, 2]]}
-        feed_dict_terminal = {B: [[0, 1, 2]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
-    def test_multiple_time_steps_2(self):
-        comp = Composition()
-        A = TransferMechanism(default_variable=[[0, 1, 2]], name='A')
-        B = TransferMechanism(default_variable=[[0, 1, 2]], name='B')
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(), B)
-        comp._analyze_graph()
-        feed_dict_origin = {A: [[[0, 1, 2]], [[0, 1, 2]]]}
-        feed_dict_terminal = {B: [[0, 1, 2]]}
-        comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
-        comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
-
+# class TestValidateFeedDict:
+#
+#     def test_empty_feed_dicts(self):
+#         comp = Composition()
+#         A = TransferMechanism(name='A')
+#         B = TransferMechanism(name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {}
+#         feed_dict_terminal = {}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_origin_and_terminal_with_mapping(self):
+#         comp = Composition()
+#         A = TransferMechanism(name='A')
+#         B = TransferMechanism(name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0]]}
+#         feed_dict_terminal = {B: [[0]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_origin_and_terminal_with_swapped_feed_dicts_1(self):
+#         comp = Composition()
+#         A = TransferMechanism(name='A')
+#         B = TransferMechanism(name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {B: [[0]]}
+#         feed_dict_terminal = {A: [[0]]}
+#         with pytest.raises(ValueError):
+#             comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#
+#     def test_origin_and_terminal_with_swapped_feed_dicts_2(self):
+#         comp = Composition()
+#         A = TransferMechanism(name='A')
+#         B = TransferMechanism(name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {B: [[0]]}
+#         feed_dict_terminal = {A: [[0]]}
+#         with pytest.raises(ValueError):
+#             comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_multiple_origin_mechs(self):
+#         comp = Composition()
+#         A = TransferMechanism(name='A')
+#         B = TransferMechanism(name='B')
+#         C = TransferMechanism(name='C')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_mechanism(C)
+#         comp.add_projection(A, MappingProjection(), C)
+#         comp.add_projection(B, MappingProjection(), C)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0]], B: [[0]]}
+#         feed_dict_terminal = {C: [[0]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_multiple_origin_mechs_only_one_in_feed_dict(self):
+#         comp = Composition()
+#         A = TransferMechanism(name='A')
+#         B = TransferMechanism(name='B')
+#         C = TransferMechanism(name='C')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_mechanism(C)
+#         comp.add_projection(A, MappingProjection(), C)
+#         comp.add_projection(B, MappingProjection(), C)
+#         comp._analyze_graph()
+#         feed_dict_origin = {B: [[0]]}
+#         feed_dict_terminal = {C: [[0]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_input_state_len_3(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0, 1, 2], name='A')
+#         B = TransferMechanism(default_variable=[0, 1, 2], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0, 1, 2]]}
+#         feed_dict_terminal = {B: [[0, 1, 2]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_input_state_len_3_feed_dict_len_2(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0, 1, 2], name='A')
+#         B = TransferMechanism(default_variable=[0, 1, 2], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0, 1]]}
+#         feed_dict_terminal = {B: [[0]]}
+#         with pytest.raises(ValueError):
+#             comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#
+#     def test_input_state_len_2_feed_dict_len_3(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0, 1], name='A')
+#         B = TransferMechanism(default_variable=[0, 1], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0, 1, 2]]}
+#         feed_dict_terminal = {B: [[0]]}
+#         with pytest.raises(ValueError):
+#             comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#
+#     def test_feed_dict_includes_mechs_of_correct_and_incorrect_types(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0], name='A')
+#         B = TransferMechanism(default_variable=[0], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0]], B: [[0]]}
+#         with pytest.raises(ValueError):
+#             comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#
+#     def test_input_state_len_3_brackets_extra_1(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0, 1, 2], name='A')
+#         B = TransferMechanism(default_variable=[0, 1, 2], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[[0, 1, 2]]]}
+#         feed_dict_terminal = {B: [[[0, 1, 2]]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_input_state_len_3_brackets_missing_1(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0, 1, 2], name='A')
+#         B = TransferMechanism(default_variable=[0, 1, 2], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A:  [0, 1, 2]}
+#         feed_dict_terminal = {B: [[0]]}
+#         with pytest.raises(TypeError):
+#             comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#
+#     def test_empty_feed_dict_for_empty_type(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0], name='A')
+#         B = TransferMechanism(default_variable=[0], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0]]}
+#         feed_dict_monitored = {}
+#         comp._validate_feed_dict(feed_dict_monitored, comp.get_mechanisms_by_role(MechanismRole.MONITORED), "monitored")
+#
+#     def test_mech_in_feed_dict_for_empty_type(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0])
+#         B = TransferMechanism(name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0]]}
+#         feed_dict_monitored = {B: [[0]]}
+#         with pytest.raises(ValueError):
+#             comp._validate_feed_dict(feed_dict_monitored, comp.get_mechanisms_by_role(MechanismRole.MONITORED), "monitored")
+#
+#     def test_one_mech_1(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0])
+#         comp.add_mechanism(A)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0]]}
+#         feed_dict_terminal = {A: [[0]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#
+#     def test_one_mech_2(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[0])
+#         comp.add_mechanism(A)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0]]}
+#         feed_dict_terminal = {A: [[0]]}
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_multiple_time_steps_1(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[[0, 1, 2]], name='A')
+#         B = TransferMechanism(default_variable=[[0, 1, 2]], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[0, 1, 2], [0, 1, 2]]}
+#         feed_dict_terminal = {B: [[0, 1, 2]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
+#     def test_multiple_time_steps_2(self):
+#         comp = Composition()
+#         A = TransferMechanism(default_variable=[[0, 1, 2]], name='A')
+#         B = TransferMechanism(default_variable=[[0, 1, 2]], name='B')
+#         comp.add_mechanism(A)
+#         comp.add_mechanism(B)
+#         comp.add_projection(A, MappingProjection(), B)
+#         comp._analyze_graph()
+#         feed_dict_origin = {A: [[[0, 1, 2]], [[0, 1, 2]]]}
+#         feed_dict_terminal = {B: [[0, 1, 2]]}
+#         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
+#         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
+#
 
 class TestGetMechanismsByRole:
 
@@ -792,8 +794,10 @@ class TestRun:
         comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
+        inputs_dict = {
+            A: [5],
+            B: [5]
+        }
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
@@ -932,24 +936,9 @@ class TestRun:
         )
         assert 75 == output[0][0]
 
-    def test_execute_composition(self):
-        comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp._analyze_graph()
-        inputs_dict = {A: 3}
-        sched = Scheduler(composition=comp)
-        output = comp.execute(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
-        assert 75 == output[0][0]
-
 
 class TestPathway:
+
     def test_LPP(self):
 
         path = Pathway()
@@ -962,7 +951,7 @@ class TestPathway:
         path._analyze_graph()
         inputs_dict = {A: [[1]]}
         sched = Scheduler(composition=path)
-        output = path.execute(
+        output = path.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
@@ -981,7 +970,7 @@ class TestPathway:
         path._analyze_graph()
         inputs_dict = {A: [[1]]}
         sched = Scheduler(composition=path)
-        output = path.execute(
+        output = path.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
@@ -1011,9 +1000,7 @@ class TestPathway:
         with pytest.raises(CompositionError) as error_text:
             path.add_linear_processing_pathway([A, B_to_C, A_to_B, B, C])
 
-        assert "A projection in a linear processing pathway must be preceded by a Mechanism and followed by a " \
-               "Mechanism" \
-               in str(error_text.value)
+        assert "is not between two mechanisms" in str(error_text.value)
 
     def test_LPP_start_with_projection(self):
         path = Pathway()
@@ -1023,8 +1010,7 @@ class TestPathway:
         with pytest.raises(CompositionError) as error_text:
             path.add_linear_processing_pathway([Nonsense_Projection, A, B])
 
-        assert "The first item in a linear processing pathway must be a Mechanism." in str(
-            error_text.value)
+        assert "The first item in a linear processing pathway must be a Mechanism." in str(error_text.value)
 
     def test_LPP_wrong_component(self):
         path = Pathway()
@@ -1055,8 +1041,10 @@ class TestPathway:
         path.add_linear_processing_pathway([A, C, E])
         path.add_linear_processing_pathway([B, D, E])
         path._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
+        inputs_dict = {
+            A: [5],
+            B: [5]
+        }
         sched = Scheduler(composition=path)
         output = path.run(
             inputs=inputs_dict,
@@ -1064,10 +1052,11 @@ class TestPathway:
         )
         assert 250 == output[0][0]
 
+
 class TestClampInput:
 
     def test_run_5_mechanisms_2_origins_1_terminal_hard_clamp(self):
-        # HARD_CLAMP TBI
+        # HARD_CLAMP
 
         # recurrent projection ignored on the second execution of A
         #          __
@@ -1097,8 +1086,10 @@ class TestClampInput:
         comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
+        inputs_dict = {
+            A: [5],
+            B: [5]
+        }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
         sched.add_condition(B, EveryNCalls(A, 2))
@@ -1142,8 +1133,10 @@ class TestClampInput:
         comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
+        inputs_dict = {
+            A: [[[5.]]],
+            B: [[[5.]]]
+        }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
         sched.add_condition(B, EveryNCalls(A, 2))
@@ -1187,8 +1180,10 @@ class TestClampInput:
         comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
+        inputs_dict = {
+            A: [5],
+            B: [5]
+        }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
         sched.add_condition(B, EveryNCalls(A, 2))
@@ -1212,7 +1207,6 @@ class TestClampInput:
         #                       ==> E
         # 5 ----> B ----> D --
 
-
         #         v Recurrent
         # 5 * 1 = (5 + 5) x 1 = 10
         # 5 x 1 = 5 ---->      10 x 5 = 50 --
@@ -1235,8 +1229,10 @@ class TestClampInput:
         comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
-        inputs_dict = {A: [5],
-                       B: [5]}
+        inputs_dict = {
+            A: [5],
+            B: [5]
+        }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
         sched.add_condition(B, EveryNPasses(1))
@@ -1262,7 +1258,6 @@ class TestClampInput:
         #                       ==> E
         # 0 ----> B ----> D --
 
-
         # 1 * 2 + 1 = 3
         # 0 x 2 + 1 = 1 ----> 4 x 5 = 20 --
         #                                   20 + 5 = 25  ==> 25 * 5 = 125
@@ -1284,8 +1279,10 @@ class TestClampInput:
         comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
-        inputs_dict = {A: [1],
-                       B: [1]}
+        inputs_dict = {
+            A: [1],
+            B: [1]
+        }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
         sched.add_condition(B, EveryNCalls(A, 2))
@@ -1299,6 +1296,7 @@ class TestClampInput:
             clamp_input=NO_CLAMP
         )
         assert 125 == output[0][0]
+
 
 class TestCallBeforeAfterTimescale:
 
@@ -1353,7 +1351,9 @@ class TestCallBeforeAfterTimescale:
         assert trial_array == [0, 1, 2, 3]
         assert pass_array == [0, 1, 2, 3]
 
+
 class TestSystemm:
+
     def test_run_2_mechanisms_default_input_1(self):
         sys = Systemm()
         A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
@@ -1383,6 +1383,7 @@ class TestSystemm:
             scheduler_processing=sched
         )
         assert 125 == output[0][0]
+
     def test_call_beforeafter_values_onepass(self):
 
         def record_values(d, time_scale, *mechs):
@@ -1671,8 +1672,11 @@ class TestSystemm:
     #     expected_Output_Layer_output = [np.array([0.97988347, 0.97988347, 0.97988347])]
     #
     #     np.testing.assert_allclose(expected_Output_Layer_output, Output_Layer.output_values)
+
+
 class TestOldSyntax:
 
+    # new syntax pathway, old syntax system
     def test_one_pathway_inside_one_system_old_syntax(self):
         # create a Pathway | blank slate for composition
         myPath = Pathway()
@@ -1689,18 +1693,19 @@ class TestOldSyntax:
         myPath._analyze_graph()
 
         # Create a system using the old factory method syntax
-        sys = system(processes = [myPath])
+        sys = system(processes=[myPath])
 
         # assign input to origin mech
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 8 == output[0][0]
 
+    # old syntax pathway (process)
     def test_one_process_old_syntax(self):
 
         # create mechanisms to add to myPath
@@ -1709,18 +1714,19 @@ class TestOldSyntax:
         myMech3 = TransferMechanism(function=Linear(slope=2.0))  # 4 x 2 = 8
 
         # create a Pathway | blank slate for composition
-        myPath = process(pathway = [myMech1, myMech2, myMech3])
+        myPath = process(pathway=[myMech1, myMech2, myMech3])
 
         # assign input to origin mech
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = myPath.execute(
-            inputs= stimulus,
+        output = myPath.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 8 == output[0][0]
 
+    # old syntax pathway (process), old syntax system
     def test_one_process_inside_one_system_old_syntax(self):
         # create mechanisms to add to myPath
         myMech1 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
@@ -1731,18 +1737,19 @@ class TestOldSyntax:
         myPath = process(pathway=[myMech1, myMech2, myMech3])
 
         # Create a system using the old factory method syntax
-        sys = system(processes = [myPath])
+        sys = system(processes=[myPath])
 
         # assign input to origin mech
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 8 == output[0][0]
 
+    # old syntax pathway (process), old syntax system; 2 processes in series
     def test_two_processes_in_series_in_system_old_syntax(self):
 
         # create mechanisms to add to myPath
@@ -1766,24 +1773,24 @@ class TestOldSyntax:
         # analyze graph (assign roles)
         myPath2._analyze_graph()
 
-
         # Create a system using the old factory method syntax
-        sys = system(processes = [myPath, myPath2])
+        sys = system(processes=[myPath, myPath2])
 
         # connect the two pathways in series
-        sys.add_projection(sender = myMech3,
-                           projection = MappingProjection(sender=myMech3, receiver=myMech4),
-                           receiver  = myMech4)
+        sys.add_projection(sender=myMech3,
+                           projection=MappingProjection(sender=myMech3, receiver=myMech4),
+                           receiver=myMech4)
         # assign input to origin mech
         stimulus = {myMech1: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 64 == output[0][0]
 
+    # old syntax pathway (process), old syntax system; 2 processes converge
     def test_two_processes_converge_in_system_old_syntax(self):
         # create a Pathway | blank slate for composition
         myPath = Pathway()
@@ -1813,20 +1820,22 @@ class TestOldSyntax:
         myPath2._analyze_graph()
 
         # Create a system using the old factory method syntax
-        sys = system(processes = [myPath, myPath2])
+        sys = system(processes=[myPath, myPath2])
 
         # assign input to origin mech
         stimulus = {myMech1: [[1]],
                     myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 16 == output[0][0]
 
+
 class TestNestedCompositions:
+
     def test_one_pathway_inside_one_system(self):
         # create a Pathway | blank slate for composition
         myPath = Pathway()
@@ -1847,7 +1856,7 @@ class TestNestedCompositions:
 
         # execute path (just for comparison)
         print("EXECUTING PATH: ")
-        myPath.execute(inputs=stimulus)
+        myPath.run(inputs=stimulus)
 
         # create a Systemm | blank slate for composition
         sys = Systemm()
@@ -1856,8 +1865,8 @@ class TestNestedCompositions:
         sys.add_pathway(myPath)
 
         # execute the Systemm
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
         )
         assert 8 == output[0][0]
 
@@ -1898,12 +1907,11 @@ class TestNestedCompositions:
         stimulus = {myMech1: [[1]], myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 16 == output[0][0]
-
 
     def test_two_paths_in_series_one_system(self):
 
@@ -1938,14 +1946,14 @@ class TestNestedCompositions:
         sys.add_pathway(myPath)
         sys.add_pathway(myPath2)
         sys.add_projection(sender=myMech3, projection=MappingProjection(sender=myMech3,
-                                                                        receiver=myMech4),receiver=myMech4 )
+                                                                        receiver=myMech4), receiver=myMech4)
         # assign input to origin mechs
         # myMech4 ignores its input from the outside world because it is no longer considered an origin!
-        stimulus = {myMech1: [[1]], myMech4: [[1]]}
+        stimulus = {myMech1: [[1]]}
         sys._analyze_graph()
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 64 == output[0][0]
@@ -1976,8 +1984,8 @@ class TestNestedCompositions:
         myPathScheduler = Scheduler(composition=myPath)
         myPathScheduler.add_condition(myMech2, AfterNCalls(myMech1, 2))
 
-        myPath.execute(inputs={myMech1: 1}, scheduler_processing = myPathScheduler)
-        myPath.run(inputs={myMech1: [[1]]}, scheduler_processing = myPathScheduler)
+        myPath.run(inputs={myMech1: 1}, scheduler_processing=myPathScheduler)
+        myPath.run(inputs={myMech1: [[1]]}, scheduler_processing=myPathScheduler)
         myPath2 = Pathway()
         myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
         myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
@@ -1991,11 +1999,597 @@ class TestNestedCompositions:
         stimulus = {myMech1: [[1]], myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.execute(
-            inputs= stimulus,
+        output = sys.run(
+            inputs=stimulus,
             # scheduler_processing=schedule
         )
         assert 16 == output[0][0]
+
+
+class TestCompositionInterface:
+
+    def test_one_input_state_per_origin_two_origins(self):
+
+        # 5 -#1-> A --^ --> C --
+        #                       ==> E
+        # 5 ----> B ------> D --
+
+        # 5 x 1 = 5 ----> 5 x 5 = 25 --
+        #                                25 + 25 = 50  ==> 50 * 5 = 250
+        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        comp = Composition()
+        A = TransferMechanism(name="A",
+                              function=Linear(slope=1.0)
+                              )
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {
+            A: [[[5.]]],
+            # two trials of one input state each
+            #        TRIAL 1     TRIAL 2
+            # A : [ [ [0,0] ] , [ [0, 0] ]  ]
+
+            # two trials of multiple input states each
+            #        TRIAL 1     TRIAL 2
+
+            #       TRIAL1 IS1      IS2      IS3     TRIAL2    IS1      IS2
+            # A : [ [     [0,0], [0,0,0], [0,0,0,0] ] ,     [ [0, 0],   [0] ]  ]
+            B: [[[5.]]]
+        }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        assert 250 == output[0][0]
+
+    def test_updating_input_values_for_second_execution(self):
+        # 5 -#1-> A --^ --> C --
+        #                       ==> E
+        # 5 ----> B ------> D --
+
+        # 5 x 1 = 5 ----> 5 x 5 = 25 --
+        #                                25 + 25 = 50  ==> 50 * 5 = 250
+        # 5 * 1 = 5 ----> 5 x 5 = 25 --
+
+        comp = Composition()
+        A = TransferMechanism(name="A",
+                              function=Linear(slope=1.0)
+                              )
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {
+            A: [[[5.]]],
+            B: [[[5.]]]
+        }
+        sched = Scheduler(composition=comp)
+
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        inputs_dict2 = {
+            A: [[[2.]]],
+            B: [[[2.]]]
+        }
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+
+        assert 250 == output[0][0]
+        assert 100 == output2[0][0]
+
+    def test_adding_origin_for_second_execution(self):
+
+        comp = Composition()
+        A = TransferMechanism(name="A",
+                              function=Linear(slope=1.0)
+                              )
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_mechanism(E)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
+        comp._analyze_graph()
+        inputs_dict = {
+            A: [[[5.]]],
+            # two trials of one input state each
+            #        TRIAL 1     TRIAL 2
+            # A : [ [ [0,0] ] , [ [0, 0] ]  ]
+
+            # two trials of multiple input states each
+            #        TRIAL 1     TRIAL 2
+
+            #       TRIAL1 IS1      IS2      IS3     TRIAL2    IS1      IS2
+            # A : [ [     [0,0], [0,0,0], [0,0,0,0] ] ,     [ [0, 0],   [0] ]  ]
+            B: [[[5.]]]
+        }
+        sched = Scheduler(composition=comp)
+
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        # add a new branch to the composition
+        F = TransferMechanism(name="F", function=Linear(slope=2.0))
+        G = TransferMechanism(name="G", function=Linear(slope=2.0))
+        comp.add_mechanism(F)
+        comp.add_mechanism(G)
+        comp.add_projection(sender=F, projection=MappingProjection(sender=F, receiver=G), receiver=G)
+        comp.add_projection(sender=G, projection=MappingProjection(sender=G, receiver=E), receiver=E)
+
+        # reassign roles
+        comp._analyze_graph()
+
+        # execute the updated composition
+        inputs_dict2 = {
+            A: [[[1.]]],
+            B: [[[2.]]],
+            F: [[[3.]]]
+        }
+
+        sched = Scheduler(composition=comp)
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+
+        assert 250 == output[0][0]
+        assert 135 == output2[0][0]
+
+    def test_changing_origin_for_second_execution(self):
+
+        comp = Composition()
+        A = TransferMechanism(name="A",
+                              function=Linear(slope=1.0)
+                              )
+
+        B = TransferMechanism(name="B", function=Linear(slope=1.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.]]]}
+        sched = Scheduler(composition=comp)
+
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        assert 25 == output[0][0]
+
+        # add a new origin to the composition
+        F = TransferMechanism(name="F", function=Linear(slope=2.0))
+        comp.add_mechanism(F)
+        comp.add_projection(sender=F, projection=MappingProjection(sender=F, receiver=A), receiver=A)
+
+        # reassign roles
+        comp._analyze_graph()
+
+        # execute the updated composition
+        inputs_dict2 = {F: [[[3.]]]}
+
+        sched = Scheduler(composition=comp)
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+
+        projections_to_A = []
+        expected_projections_to_A = [("(OutputState RESULT)", "(InputState Default_InputStat)")]
+        for input_state in A.input_states:
+            for p_a in input_state.path_afferents:
+                projections_to_A.append((str(p_a.sender), str(p_a.receiver)))
+
+        assert projections_to_A == expected_projections_to_A
+        assert 30 == output2[0][0]
+
+    def test_two_input_states_new_inputs_second_trial(self):
+
+        comp = Composition()
+        my_fun = Linear(
+            # default_variable=[[0], [0]],
+            # ^ setting default_variable on the function actually does not matter -- does the mechanism update it?
+            slope=1.0)
+        A = TransferMechanism(name="A",
+                              default_variable=[[0], [0]],
+                              input_states=[{NAME: "Input State 1",
+                                             },
+                                            {NAME: "Input State 2",
+                                             }],
+                              function=my_fun
+                              )
+        comp.add_mechanism(A)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.], [5.]]], }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        inputs_dict2 = {A: [[[2.], [4.]]], }
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+        assert 5 == output[0][0]
+        assert 2 == output2[0][0]
+
+    def test_two_input_states_new_origin_second_trial(self):
+
+        # A --> B --> C
+
+        comp = Composition()
+        my_fun = Linear(
+            # default_variable=[[0], [0]],
+            # ^ setting default_variable on the function actually does not matter -- does the mechanism update it?
+            slope=1.0)
+        A = TransferMechanism(
+            name="A",
+            default_variable=[[0], [0]],
+            input_states=[
+                {NAME: "Input State 1", },
+                {NAME: "Input State 2", }
+            ],
+            function=my_fun
+        )
+
+        B = TransferMechanism(name="B", function=Linear(slope=2.0))
+        C = TransferMechanism(name="C", function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[5.], [5.]]],
+                       }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+        assert 5. == A.input_states[0].value
+        assert 5. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 5. == A.variable[0]
+        assert 5. == A.variable[1]
+        assert 50 == output[0][0]
+
+        # A --> B --> C
+        #     ^
+        # D __|
+
+        D = TransferMechanism(
+            name="D",
+            default_variable=[[0], [0]],
+            input_states=[
+                {NAME: "Input State 1", },
+                {NAME: "Input State 2", }
+            ],
+            function=my_fun
+        )
+        comp.add_mechanism(D)
+        comp.add_projection(D, MappingProjection(sender=D, receiver=B), B)
+        # Need to analyze graph again (identify D as an origin so that we can assign input) AND create the scheduler
+        # again (sched, even though it is tied to comp, will not update according to changes in comp)
+        comp._analyze_graph()
+        sched = Scheduler(composition=comp)
+        inputs_dict2 = {
+            A: [[[2.], [4.]]],
+            D: [[[2.], [4.]]]
+        }
+        output2 = comp.run(
+            inputs=inputs_dict2,
+            scheduler_processing=sched
+        )
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+        assert 2. == D.input_states[0].value
+        assert 4. == D.input_states[1].value
+        assert "Input State 1" == D.input_states[0].name
+        assert "Input State 2" == D.input_states[1].name
+        assert 2. == D.variable[0]
+        assert 4. == D.variable[1]
+        assert 40 == output2[0][0]
+
+
+class TestInputStateSpecifications:
+
+    def test_two_input_states_created_with_dicionaries(self):
+
+        comp = Composition()
+        A = TransferMechanism(
+            name="A",
+            default_variable=[[0], [0]],
+            input_states=[
+                {NAME: "Input State 1", },
+                {NAME: "Input State 2", }
+            ],
+            function=Linear(slope=1.0)
+            # specifying default_variable on the function doesn't seem to matter?
+        )
+
+        comp.add_mechanism(A)
+
+        comp._analyze_graph()
+        inputs_dict = {A: [[[2.], [4.]]],
+                       }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    # def test_two_input_states_one_origin_different_shapes(self):
+    #
+    #     comp = Composition()
+    #     A = TransferMechanism(name="A",
+    #                           default_variable=[[0], [0,0,0]],
+    #                           input_states=[{NAME: "Input State 1",
+    #                                          },
+    #                                         {NAME: "Input State 2",
+    #                                          }],
+    #                           function=Linear(slope=1.0, default_variable=[[0], [0,0,0]])
+    #                           # specifying default_variable on the function doesn't seem to matter?
+    #                           )
+    #
+    #     comp.add_mechanism(A)
+    #
+    #     comp._analyze_graph()
+    #     inputs_dict = {A: [[[2.], [4., 5., 6.]]],
+    #                   }
+    #     sched = Scheduler(composition=comp)
+    #     output = comp.run(
+    #         inputs=inputs_dict,
+    #         scheduler_processing=sched
+    #         )
+    #
+    #     assert 2. == A.input_states[0].value
+    #     assert [4.,5.,6.] == A.input_states[1].value
+    #     assert "Input State 1" == A.input_states[0].name
+    #     assert "Input State 2" == A.input_states[1].name
+    #     assert 2. == A.variable[0]
+    #     assert [4.,5.,6.] == A.variable[1]
+    #
+    #     assert 2 == output[0][0]
+
+    def test_two_input_states_created_first_with_deferred_init(self):
+        comp = Composition()
+
+        # create mechanism A
+        I1 = InputState(
+            name="Input State 1",
+            reference_value=[0]
+        )
+        I2 = InputState(
+            name="Input State 2",
+            reference_value=[0]
+        )
+        A = TransferMechanism(
+            name="A",
+            default_variable=[[0], [0]],
+            input_states=[I1, I2],
+            function=Linear(slope=1.0)
+        )
+
+        # add mech A to composition
+        comp.add_mechanism(A)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[2.], [4.]]],
+                       }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_created_with_keyword(self):
+        comp = Composition()
+
+        # create mechanism A
+
+        A = TransferMechanism(
+            name="A",
+            default_variable=[[0], [0]],
+            input_states=[INPUT_STATE, INPUT_STATE],
+            function=Linear(slope=1.0)
+        )
+
+        # add mech A to composition
+        comp.add_mechanism(A)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[2.], [4.]]],
+                       }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "InputState" == A.input_states[0].name
+        assert "InputState-1" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_created_with_strings(self):
+        comp = Composition()
+
+        # create mechanism A
+
+        A = TransferMechanism(
+            name="A",
+            default_variable=[[0], [0]],
+            input_states=["Input State 1", "Input State 2"],
+            function=Linear(slope=1.0)
+        )
+
+        # add mech A to composition
+        comp.add_mechanism(A)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[2.], [4.]]], }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Input State 1" == A.input_states[0].name
+        assert "Input State 2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_created_with_values(self):
+        comp = Composition()
+
+        # create mechanism A
+
+        A = TransferMechanism(
+            name="A",
+            default_variable=[[0], [0]],
+            input_states=[[0.], [0.]],
+            function=Linear(slope=1.0)
+        )
+
+        # add mech A to composition
+        comp.add_mechanism(A)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[2.], [4.]]], }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Default_InputStat-1" == A.input_states[0].name
+        assert "Default_InputStat-2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
+
+    def test_two_input_states_implied_by_default_variable(self):
+        comp = Composition()
+
+        # create mechanism A
+
+        A = TransferMechanism(
+            name="A",
+            default_variable=[[0], [0]],
+            function=Linear(slope=1.0)
+        )
+
+        # add mech A to composition
+        comp.add_mechanism(A)
+
+        # get comp ready to run (identify roles, create sched, assign inputs)
+        comp._analyze_graph()
+        inputs_dict = {A: [[[2.], [4.]]], }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+
+        assert 2. == A.input_states[0].value
+        assert 4. == A.input_states[1].value
+        assert "Default_InputStat-1" == A.input_states[0].name
+        assert "Default_InputStat-2" == A.input_states[1].name
+        assert 2. == A.variable[0]
+        assert 4. == A.variable[1]
+
+        assert 2 == output[0][0]
 
 
 class TestParamsDict:

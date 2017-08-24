@@ -51,6 +51,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceM
     import CompositionInterfaceMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import Projection
+from PsyNeuLink.Components.States.OutputState import OutputState
 from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
@@ -316,8 +317,9 @@ class Composition(object):
         # core attributes
         self.graph = Graph()  # Graph of the Composition
         self._graph_processing = None
-
-        self.input_mechanisms = {}
+        self.composition_interface_output_states = {}
+        self.composition_interface_mechanism = CompositionInterfaceMechanism()
+        # self.input_mechanisms = {}
         self.execution_ids = []
 
         self._scheduler_processing = None
@@ -599,6 +601,7 @@ class Composition(object):
                         elif child not in visited:
                             next_visit_stack.append(child)
 
+        self._create_composition_interface_output_states()
         self.needs_update_graph = False
 
     def _update_processing_graph(self):
@@ -668,6 +671,12 @@ class Composition(object):
         except KeyError as e:
             raise CompositionError('Mechanism not assigned to role in mechanisms_to_roles: {0}'.format(e))
 
+    def get_roles_by_mechanism(self, mechanism):
+        try:
+            return self.mechanisms_to_roles[mechanism]
+        except KeyError:
+            raise CompositionError('Mechanism {0} not found in {1}.mechanisms_to_roles'.format(mechanism, self))
+
     def _set_mechanism_roles(self, mech, roles):
         self.clear_mechanism_role(mech)
         for role in roles:
@@ -719,40 +728,60 @@ class Composition(object):
                                          "{!s} where the InputState takes values of length {!s}".
                                          format(i, mech.name, val_length, state_length))
 
-    def _create_input_mechanisms(self, inputs):
+    def _create_composition_interface_output_states(self):
         '''
-            builds a dictionary of { Mechanism : InputMechanism } pairs where each 'ORIGIN' Mechanism has a
-            corresponding InputMechanism
+            builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
+            corresponding OutputState on the CompositionInterfaceMechanism
         '''
-        is_origin = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
-        has_input_mechanism = self.input_mechanisms.keys()
 
-        # consider all of the mechanisms that are only origins OR have input mechanisms
-        for mech in is_origin.difference(has_input_mechanism):
+        # loop over all origin mechanisms
+        current_input_states = set()
+        for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
 
-            # If mech IS AN ORIGIN mechanism but it doesn't have an input mechanism, ADD input mechanism
-            if mech not in has_input_mechanism:
-                if mech in inputs.keys():
-                    new_input_mech = CompositionInterfaceMechanism(default_input_value=inputs[mech])
-                else:
-                    new_input_mech = CompositionInterfaceMechanism()
-                self.input_mechanisms[mech] = new_input_mech
-                MappingProjection(sender=new_input_mech, receiver=mech)
+            for input_state in mech.input_states:
+                # add it to our set of current input states
+                current_input_states.add(input_state)
 
-            # If mech HAS AN INPUT mechanism but isn't an origin, REMOVE the input mechanism
+                # if there is not a corresponding CIM output state, add one
+                if input_state not in set(self.composition_interface_output_states.keys()):
+                    interface_output_state = OutputState(owner=self.composition_interface_mechanism,
+                                                         variable=input_state.variable,
+                                                         reference_value= input_state.variable,
+                                                         name="Interface to " + mech.name + " for " + input_state.name)
+                    # self.composition_interface_mechanism.add_states(interface_output_state)
+                    self.composition_interface_output_states[input_state] = interface_output_state
+                    MappingProjection(sender=interface_output_state, receiver=input_state)
+
+        sends_to_input_states = set(self.composition_interface_output_states.keys())
+        # For any output state still registered on the CIM that does not map to a corresponding ORIGIN mech I.S.:
+        for input_state in sends_to_input_states.difference(current_input_states):
+            for projection in input_state.path_afferents:
+                if projection.sender == self.composition_interface_output_states[input_state]:
+                    # remove the corresponding projection from the ORIGIN mechanism's path afferents
+                    input_state.path_afferents.remove(projection)
+                    projection = None
+
+            # remove the output state associated with this input state (this iteration) from the CIM output states
+            # self.composition_interface_mechanism.output_states.remove(self.composition_interface_output_states[input_state])
+
+            # and from the dictionary of CIM output state/input state pairs
+            del self.composition_interface_output_states[input_state]
+
+    def _assign_values_to_interface_output_states(self, inputs):
+        for mech in list(inputs.keys()):
+            if type(inputs[mech]) == list:
+                for i in range(len(inputs[mech])):
+                    self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
             else:
-                del self.input_mechanisms[mech]
+                self.composition_interface_output_states[mech.input_state].value = inputs[mech]
 
-    def _assign_values_to_input_mechanisms(self, input_dict):
-        '''
-            loops over the input values in the inputs dictionary and assigns each value directly to the output state of
-            its corresponding input Mechanism
-        '''
-        for mech in self.input_mechanisms.keys():
-            if mech in input_dict.keys():
-                self.input_mechanisms[mech]._output_states[0].value = np.array(input_dict[mech])
-            else:
-                self.input_mechanisms[mech]._output_states[0].value = np.array(mech.instance_defaults.variable)
+        origins = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
+
+        # NOTE: This may need to change from default_variable to wherever a default value of the mechanism's variable
+        # is stored -- the point is that if an input is not supplied for an origin mechanism, the mechanism should use
+        # its default variable value
+        for mech in origins.difference(set(inputs.keys())):
+            self.composition_interface_output_states[mech.input_state].value = mech.instance_defaults.variable
 
     def _assign_execution_ids(self, execution_id=None):
         '''
@@ -778,11 +807,10 @@ class Composition(object):
                 self.params_by_execution_id[execution_id][v.component] = {}
 
         # Assign the uuid to all input mechanisms
-        for k in self.input_mechanisms.keys():
-            self.input_mechanisms[k]._execution_id = execution_id
+        # for k in self.input_mechanisms.keys():
+        #     self.input_mechanisms[k]._execution_id = execution_id
 
-            if self.input_mechanisms[k] not in self.params_by_execution_id[execution_id]:
-                self.params_by_execution_id[execution_id][self.input_mechanisms[k]] = {}
+        self.composition_interface_mechanism._execution_id = execution_id
 
         self._execution_id = execution_id
         return execution_id
@@ -858,6 +886,15 @@ class Composition(object):
             except AttributeError:
                 pass
 
+    # def _validate_inputs(self, inputs):
+    #
+    #     # 1.0 --> one trial, one input state
+    #     # [1.0] --> one trial, one input state
+    #     # [[1.0]] --> one trial, one input state
+    #     # [[[1.0]]] --> one trial, one input state
+    #
+    #     # [[1.0], [1.0]]
+
     def execute(
         self,
         inputs,
@@ -909,7 +946,7 @@ class Composition(object):
 
             output value of the final Mechanism executed in the Composition : various
         '''
-
+        execution_id = self._assign_execution_ids(execution_id)
         origin_mechanisms = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
 
         if scheduler_processing is None:
@@ -918,9 +955,11 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
-        self._create_input_mechanisms(inputs)
-        self._assign_values_to_input_mechanisms(inputs)
-        execution_id = self._assign_execution_ids(execution_id)
+        # self._create_input_mechanisms(inputs)
+        # self._assign_values_to_input_mechanisms(inputs)
+
+        self._assign_values_to_interface_output_states(inputs)
+
         next_pass_before = 1
         next_pass_after = 1
         if clamp_input:
@@ -966,9 +1005,13 @@ class Composition(object):
                             if hasattr(mechanism, "recurrent_projection"):
                                 mechanism.recurrent_projection.sender.value = [0.0]
                         elif mechanism in no_clamp_inputs:
-                            self.input_mechanisms[mechanism]._output_states[0].value = 0.0
+                            for input_state in mechanism.input_states:
+                                self.composition_interface_output_states[input_state].value = 0.0
+                            # self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
+                    for proj in mechanism.input_states[0].path_afferents:
+                        proj.execute(context=EXECUTING + "composition")
                     num = mechanism.execute(
                         context=EXECUTING + "composition",
                         composition=self,
@@ -976,14 +1019,14 @@ class Composition(object):
                     )
                     print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
                     print("result = ", num)
-                    print()
-                    print()
 
                 if mechanism in origin_mechanisms:
                     if clamp_input:
                         if mechanism in pulse_clamp_inputs:
+                            for input_state in mechanism.input_states:
                             # clamp = None --> "turn off" input mechanism
-                            self.input_mechanisms[mechanism]._output_states[0].value = 0
+                            # self.input_mechanisms[mechanism]._output_states[0].value = 0
+                                self.composition_interface_output_states[input_state].value = 0
 
             if call_after_time_step:
                 call_after_time_step()
@@ -1072,6 +1115,8 @@ class Composition(object):
 
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
+
+        self._analyze_graph()
 
         execution_id = self._assign_execution_ids(execution_id)
         self._init_param_values(execution_id)

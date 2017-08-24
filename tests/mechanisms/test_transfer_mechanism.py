@@ -454,6 +454,11 @@ class TestTransferMechanismSize:
         assert len(T.instance_defaults.variable) == 1 and (T.instance_defaults.variable[0] == [0., 0., 0., 0.]).all()
         assert len(T.size) == 1 and T.size[0] == 4 and type(T.size[0]) == np.int64
 
+    # ------------------------------------------------------------------------------------------------
+    # TEST 2
+    # size = int, variable = list of ints
+
+
     def test_transfer_mech_size_int_inputs_ints(self):
         T = TransferMechanism(
             name='T',
@@ -559,7 +564,7 @@ class TestTransferMechanismSize:
         assert len(T.instance_defaults.variable) == 3 and len(T.instance_defaults.variable[0]) == 2 and len(T.instance_defaults.variable[1]) == 3 and len(T.instance_defaults.variable[2]) == 4
 
     # note that this output under the Linear function is useless/odd, but the purpose of allowing this configuration
-    # is for possible user-defined functionsthat do use unusual shapes.
+    # is for possible user-defined functions that do use unusual shapes.
 
     def test_transfer_mech_size_var_both_lists(self):
         T = TransferMechanism(
@@ -637,7 +642,8 @@ class TestTransferMechanismSize:
     # TEST 17
     # size = array, variable = incompatible array, check variable
 
-    def test_transfer_mech_size_var_incompatible1(self):
+
+    def test_transfer_mech_size_var_incompatible2(self):
         T = TransferMechanism(
             name='T',
             size=[2, 2],
