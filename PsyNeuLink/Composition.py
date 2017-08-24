@@ -855,8 +855,13 @@ class Composition(object):
                 except KeyError as e:
                     raise CompositionError('base_execution_id specified but failed to get param values: {0}'.format(e))
             else:
-                # need complex expression to get the value of property named param
-                base_vals = {param: component._full_class_dict[param].fget(component) for param in component.Params.values()}
+                base_vals = {}
+                for param in component.Params.values():
+                    try:
+                        # need complex expression to get the value of property named param
+                        base_vals[param] = component._full_class_dict[param].fget(component)
+                    except KeyError:
+                        base_vals[param] = getattr(component.instance_defaults, param)
 
             if component not in self.params_by_execution_id[execution_id]:
                 self.params_by_execution_id[execution_id][component] = {}
