@@ -792,7 +792,7 @@ class Composition(object):
 
         # Traverse processing graph and assign one uuid to all of its mechanisms
         if execution_id is None:
-            execution_id = self._execution_id
+            execution_id = self.default_execution_id
 
         if execution_id not in self.execution_ids:
             self.execution_ids.append(execution_id)
@@ -1124,7 +1124,7 @@ class Composition(object):
         self._analyze_graph()
 
         execution_id = self._assign_execution_ids(execution_id)
-        self._init_param_values(execution_id)
+        self._init_param_values(execution_id, base_execution_id=base_execution_id)
 
         scheduler_processing._init_counts(execution_id=execution_id)
         scheduler_learning._init_counts(execution_id=execution_id)
