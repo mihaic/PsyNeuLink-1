@@ -2514,7 +2514,7 @@ class SoftMax(TransferFunction):
 
         # Assign the params and return the result
         output_type = self.params[OUTPUT_TYPE]
-        gain = self.params[GAIN]
+        gain = self.get_param_value(self.Params.gain, composition=composition, execution_id=execution_id)
 
         # Modulate variable by gain
         v = gain * variable
