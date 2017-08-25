@@ -2337,8 +2337,8 @@ class Logistic(TransferFunction):  # -------------------------------------------
         """
 
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
-        gain = self.paramsCurrent[GAIN]
-        bias = self.paramsCurrent[BIAS]
+        gain = self.get_param_value(self.Params.gain, composition=composition, execution_id=execution_id)
+        bias = self.get_param_value(self.Params.bias, composition=composition, execution_id=execution_id)
 
         try:
             return_val = 1 / (1 + np.exp(-(gain * variable) + bias))
