@@ -690,27 +690,29 @@ class Component(object):
     # Determines whether ClassDefaults.variable can be changed (to match an variable in __init__ method)
     variableClassDefault_locked = False
 
-    class Params(object):
-        '''
-            An object storing the names stateful parameters/values associated with `Components <Component>`
-            used in conjunction with `get_param_value` and `set_param_value`
-
-            Attributes
-            ----------
-
-                execution_status
-                variable
-                value
-        '''
-        execution_status = 'execution_status'
-        value = 'value'
-
+    class StatefulObject(object):
         @classmethod
         def values(cls):
             '''
-                Return a list of the valid `Params` associated with this object
+                Return a list of the valid Params or StatefulValues associated with this object
             '''
             return [x for x in dir(cls) if x[:2]+x[-2:] != '____' and not callable(getattr(cls, x))]
+
+    class Params(StatefulObject):
+        '''
+            An object storing the names of stateful parameters associated with `Components <Component>`
+            used in conjunction with `get_param_value` and `set_param_value`
+            Intended for user interaction
+        '''
+
+    class StatefulValues(StatefulObject):
+        '''
+            An object storing the names of stateful values associated with `Components <Component>`
+            used in conjunction with `get_value` and `set_value`
+            Not intended for user interaction
+        '''
+        execution_status = 'execution_status'
+        value = 'value'
 
     # Names and types of params required to be implemented in all subclass paramClassDefaults:
     # Notes:
