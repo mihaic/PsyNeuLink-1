@@ -871,9 +871,6 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
-        # self._create_input_mechanisms(inputs)
-        # self._assign_values_to_input_mechanisms(inputs)
-
         self._assign_values_to_interface_output_states(inputs)
 
         next_pass_before = 1
@@ -910,11 +907,15 @@ class Composition(object):
             for mechanism in next_execution_set:
 
                 if mechanism in origin_mechanisms:
-                    if (
-                        scheduler_processing.times[execution_id][TimeScale.TRIAL][TimeScale.TIME_STEP] == 0
-                        and hasattr(mechanism, "recurrent_projection")
-                    ):
-                        mechanism.recurrent_projection.sender.value = [0.0]
+                    # KAM 8/28 commenting out the below code because it's not necessarily how we want to handle
+                    # a recurrent projection on the first time step (meaning, before its mechanism has executed)
+                    # FIX: determine the correct behavior for this case & document it
+
+                    # if (
+                    #     scheduler_processing.times[execution_id][TimeScale.TRIAL][TimeScale.TIME_STEP] == 0
+                    #     and hasattr(mechanism, "recurrent_projection")
+                    # ):
+                    #     mechanism.recurrent_projection.sender.value = [0.0]
                     if clamp_input:
                         if mechanism in hard_clamp_inputs:
                             # clamp = HARD_CLAMP --> "turn off" recurrent projection
