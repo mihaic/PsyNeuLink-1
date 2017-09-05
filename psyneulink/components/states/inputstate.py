@@ -704,7 +704,7 @@ class InputState(State_Base):
                  reference_value=None,
                  variable=None,
                  size=None,
-                 function=LinearCombination(operation=SUM),
+                 function=None,
                  projections=None,
                  weight=None,
                  exponent=None,
@@ -755,7 +755,9 @@ class InputState(State_Base):
                                          params=params,
                                          name=name,
                                          prefs=prefs,
-                                         context=context)
+                                         context=context,
+                                         function=function,
+                                         )
 
         if self.name is self.componentName or self.componentName + '-' in self.name:
             self._assign_default_state_name(context=context)

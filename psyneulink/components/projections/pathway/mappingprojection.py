@@ -469,7 +469,9 @@ class MappingProjection(PathwayProjection_Base):
                  params=None,
                  name=None,
                  prefs:is_pref_set=None,
-                 context=None):
+                 context=None,
+                 function=None,
+                 ):
 
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
         # Assign matrix to function_params for use as matrix param of MappingProjection.function
@@ -489,14 +491,17 @@ class MappingProjection(PathwayProjection_Base):
             self.init_status = InitStatus.DEFERRED_INITIALIZATION
 
         # Validate sender (as variable) and params, and assign to variable and paramInstanceDefaults
-        super().__init__(sender=sender,
-                         receiver=receiver,
-                         weight=weight,
-                         exponent=exponent,
-                         params=params,
-                         name=name,
-                         prefs=prefs,
-                         context=self)
+        super().__init__(
+            sender=sender,
+            receiver=receiver,
+            weight=weight,
+            exponent=exponent,
+            params=params,
+            name=name,
+            prefs=prefs,
+            context=self,
+            function=function,
+        )
 
     def _instantiate_parameter_states(self, context=None):
 

@@ -720,7 +720,9 @@ class ControlSignal(ModulatorySignal):
                          params=params,
                          name=name,
                          prefs=prefs,
-                         context=context)
+                         context=context,
+                         function=function,
+                         )
 
         # Default cost params
         if self.init_status is not InitStatus.DEFERRED_INITIALIZATION:

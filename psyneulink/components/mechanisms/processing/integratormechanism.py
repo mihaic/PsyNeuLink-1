@@ -196,7 +196,7 @@ class IntegratorMechanism(ProcessingMechanism_Base):
                  default_variable=None,
                  size=None,
                  input_states:tc.optional(tc.any(list, dict))=None,
-                 function=AdaptiveIntegrator(rate=0.5),
+                 function=None,
                  params=None,
                  name=None,
                  prefs:is_pref_set=None,
@@ -219,7 +219,9 @@ class IntegratorMechanism(ProcessingMechanism_Base):
                                                   params=params,
                                                   name=name,
                                                   prefs=prefs,
-                                                  context=self)
+                                                  context=self,
+                                                  function=function,
+                                                  )
 
         # IMPLEMENT: INITIALIZE LOG ENTRIES, NOW THAT ALL PARTS OF THE MECHANISM HAVE BEEN INSTANTIATED
 

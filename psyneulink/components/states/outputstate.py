@@ -789,7 +789,7 @@ class OutputState(State_Base):
                  reference_value=None,
                  variable=None,
                  size=None,
-                 function=Linear(),
+                 function=None,
                  index=PRIMARY,
                  calculate:is_function_type=Linear,
                  projections=None,
@@ -845,7 +845,9 @@ class OutputState(State_Base):
                          params=params,
                          name=name,
                          prefs=prefs,
-                         context=context)
+                         context=context,
+                         function=function,
+                         )
 
     def _validate_variable(self, variable, context=None):
         """Insure variable is compatible with output component of owner.function relevant to this State

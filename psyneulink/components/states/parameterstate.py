@@ -356,7 +356,7 @@ import numpy as np
 import typecheck as tc
 
 from psyneulink.components.component import Component, InitStatus, function_type, method_type, parameter_keywords
-from psyneulink.components.functions.function import Linear, get_param_value_for_keyword
+from psyneulink.components.functions.function import get_param_value_for_keyword
 from psyneulink.components.shellclasses import Mechanism, Projection
 from psyneulink.components.states.modulatorysignals.modulatorysignal import ModulatorySignal
 from psyneulink.components.states.state import StateError, State_Base, _instantiate_state, state_type_keywords
@@ -544,7 +544,7 @@ class ParameterState(State_Base):
                  reference_value=None,
                  variable=None,
                  size=None,
-                 function=Linear(),
+                 function=None,
                  projections=None,
                  params=None,
                  name=None,
@@ -571,7 +571,9 @@ class ParameterState(State_Base):
                                              params=params,
                                              name=name,
                                              prefs=prefs,
-                                             context=self)
+                                             context=self,
+                                             function=function,
+                                             )
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Insure that ParameterState (as identified by its name) is for a valid parameter of the owner

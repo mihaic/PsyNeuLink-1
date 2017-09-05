@@ -824,7 +824,9 @@ class Component(object):
                  size=NotImplemented,  # 7/5/17 CW: this is a hack to check whether the user has passed in a size arg
                  name=None,
                  prefs=None,
-                 context=None):
+                 context=None,
+                 function=None,
+                 ):
         """Assign default preferences; enforce required params; validate and instantiate params and execute method
 
         Initialization arguments:
@@ -1148,14 +1150,6 @@ class Component(object):
             self.init_status = InitStatus.INITIALIZING
 
             del self.init_args['self']
-
-            # Delete function since super doesn't take it as an arg;
-            #   the value is stored in paramClassDefaults in assign_ags_to_params_dicts,
-            #   and will be restored in _instantiate_function
-            try:
-                del self.init_args[FUNCTION]
-            except KeyError:
-                pass
 
             try:
                 del self.init_args['__class__']

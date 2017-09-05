@@ -593,7 +593,9 @@ class Projection_Base(Projection):
                  params=None,
                  name=None,
                  prefs=None,
-                 context=None):
+                 context=None,
+                 function=None,
+                 ):
         """Assign sender, receiver, and execute method and register Mechanism with ProjectionRegistry
 
         This is an abstract class, and can only be called from a subclass;
@@ -717,7 +719,9 @@ class Projection_Base(Projection):
                                               param_defaults=params,
                                               name=self.name,
                                               prefs=prefs,
-                                              context=context.__class__.__name__)
+                                              context=context.__class__.__name__,
+                                              function=function,
+                                              )
 
         self._assign_default_projection_name()
 

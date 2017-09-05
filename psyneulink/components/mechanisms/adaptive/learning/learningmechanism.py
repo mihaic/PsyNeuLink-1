@@ -899,7 +899,7 @@ class LearningMechanism(AdaptiveMechanism_Base):
                  default_variable:tc.any(list, np.ndarray),
                  size=None,
                  error_sources:tc.optional(tc.any(Mechanism, list))=None,
-                 function:is_function_type=BackPropagation,
+                 function=None,
                  learning_signals:tc.optional(list) = None,
                  modulation:tc.optional(_is_modulation_param)=ModulationParam.ADDITIVE,
                  learning_rate:tc.optional(parameter_spec)=None,
@@ -935,7 +935,9 @@ class LearningMechanism(AdaptiveMechanism_Base):
                          params=params,
                          name=name,
                          prefs=prefs,
-                         context=self)
+                         context=self,
+                         function=function,
+                         )
 
     def _parse_function_variable(self, variable):
         function_variable = np.zeros_like(

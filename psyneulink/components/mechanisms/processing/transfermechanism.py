@@ -699,6 +699,7 @@ class TransferMechanism(ProcessingMechanism_Base):
             prefs=prefs,
             context=self,
             input_states=input_states,
+            function=function,
         )
 
     def _parse_arg_initial_value(self, initial_value):
