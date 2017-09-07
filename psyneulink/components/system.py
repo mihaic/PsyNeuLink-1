@@ -432,10 +432,12 @@ import math
 import numbers
 import re
 import warnings
+
 from collections import OrderedDict, namedtuple
 
 import numpy as np
 import typecheck as tc
+
 from toposort import toposort, toposort_flatten
 
 from psyneulink.components.component import Component, ExecutionStatus, InitStatus, function_type
@@ -833,7 +835,6 @@ class System(System_Base):
                                                   targets=targets,
                                                   params=params)
 
-        self.function = self.execute
         self.scheduler_processing = scheduler
         self.scheduler_learning = None
         self.termination_processing = None
@@ -910,7 +911,7 @@ class System(System_Base):
         self._instantiate_graph(context=context)
         self._instantiate_learning_graph(context=context)
 
-    def _instantiate_function(self, context=None):
+    def _instantiate_function(self, function, context=None):
         """Suppress validation of function
 
         This is necessary to:
@@ -924,9 +925,10 @@ class System(System_Base):
                 format(self.name, self.paramsCurrent[FUNCTION], FUNCTION)
             self.paramsCurrent[FUNCTION] = self.execute
 
+    def _instantiate_value(self, context=None):
         # If validation pref is set, instantiate and execute the System
         if self.prefs.paramValidationPref:
-            super(System, self)._instantiate_function(context=context)
+            super()._instantiate_value(context=context)
         # Otherwise, just set System output info to the corresponding info for the last mechanism(s) in self.processes
         else:
             self.value = self.processes[-1].output_state.value
@@ -3107,6 +3109,10 @@ class System(System_Base):
 
     def _restore_state(self):
         pass
+
+    @property
+    def function(self):
+        return self.execute
 
     @property
     def mechanisms(self):

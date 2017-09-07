@@ -467,7 +467,7 @@ from psyneulink.components.states.state import StateError, State_Base, _instanti
 from psyneulink.globals.keywords import COMMAND_LINE, EXPONENT, FUNCTION, GATING_SIGNAL, INPUT_STATE, INPUT_STATE_PARAMS, LEARNING_SIGNAL, MAPPING_PROJECTION, MATRIX, MECHANISM, OUTPUT_STATE, OUTPUT_STATES, PROCESS_INPUT_STATE, PROJECTIONS, PROJECTION_TYPE, REFERENCE_VALUE, SENDER, SUM, SYSTEM_INPUT_STATE, VARIABLE, WEIGHT
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
-from psyneulink.globals.utilities import append_type_to_name, is_numeric, iscompatible
+from psyneulink.globals.utilities import append_type_to_name, is_instance_or_subclass, is_numeric, iscompatible
 
 __all__ = [
     'InputState', 'InputStateError', 'state_type_keywords',
@@ -813,7 +813,19 @@ class InputState(State_Base):
             raise InputStateError("Value specified for {} {} of {} ({}) is not compatible with its expected format ({})"
                                   .format(name, self.componentName, self.owner.name, self.value, reference_value))
 
-    def _instantiate_function(self, context=None):
+    def _validate_function(self, function, context):
+        # Insure that function is Function.LinearCombination
+        if not is_instance_or_subclass(function, (LinearCombination, Linear)):
+            raise StateError(
+                "{0} of {1} for {2} is {3}; it must be of LinearCombination or Linear type".format(
+                    FUNCTION,
+                    self.name,
+                    self.owner.name,
+                    function.componentName
+                )
+            )
+
+    def _instantiate_function(self, function, context=None):
         """Insure that function is LinearCombination and that output is compatible with owner.instance_defaults.variable
 
         Insures that function:
@@ -832,30 +844,9 @@ class InputState(State_Base):
         :return:
         """
 
-        super()._instantiate_function(context=context)
+        super()._instantiate_function(function=function, context=context)
 
-        # Insure that function is Function.LinearCombination
-        if not isinstance(self.function.__self__, (LinearCombination, Linear)):
-            raise StateError(
-                "{0} of {1} for {2} is {3}; it must be of LinearCombination "
-                "or Linear type".
-                format(FUNCTION,
-                       self.name,
-                       self.owner.name,
-                       self.function.__self__.componentName))
 
-        # Insure that self.value is compatible with self.reference_value
-        if self.reference_value is not None and not iscompatible(self.value,
-                                                                 self.reference_value):
-            raise InputStateError("Value ({}) of {} {} for {} is not "
-                                  "compatible with specified {} ({})".
-                                  format(self.value,
-                                         self.componentName,
-                                         self.name,
-                                         self.owner.name,
-                                         REFERENCE_VALUE,
-                                         self.reference_value))
-                                         # self.owner.variable))
 
     def _instantiate_projections(self, projections, context=None):
         """Instantiate Projections specified in PROJECTIONS entry of params arg of State's constructor

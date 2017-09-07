@@ -771,6 +771,7 @@ Class Reference
 
 import inspect
 import logging
+
 from collections import Iterable, OrderedDict
 from inspect import isclass
 
@@ -1706,11 +1707,11 @@ class Mechanism_Base(Mechanism):
         self._instantiate_parameter_states(context=context)
         super()._instantiate_attributes_before_function(context=context)
 
-    def _instantiate_function(self, context=None):
+    def _instantiate_function(self, function, context=None):
         """Assign weights and exponents if specified in input_states
         """
 
-        super()._instantiate_function(context=context)
+        super()._instantiate_function(function=function, context=context)
 
         if self.input_states and any(input_state.weight is not None for input_state in self.input_states):
 
@@ -2077,22 +2078,6 @@ class Mechanism_Base(Mechanism):
         # if self.prefs.reportOutputPref and context and EXECUTING in context:
         if self.prefs.reportOutputPref and context and (c in context for c in {EXECUTING, LEARNING}):
             self._report_mechanism_execution(self.input_values, self.user_params, self.output_state.value)
-        #endregion
-
-        #region RE-SET STATE_VALUES AFTER INITIALIZATION
-        # If this is (the end of) an initialization run, restore state values to initial condition
-        if '_init_' in context:
-            for state in self.input_states:
-                self.input_states[state].value = self.input_states[state].instance_defaults.variable
-            for state in self._parameter_states:
-                self._parameter_states[state].value =  getattr(self, '_'+state)
-            for state in self.output_states:
-                # Zero OutputStates in case of recurrence:
-                #    don't want any non-zero values as a residuum of initialization runs to be
-                #    transmittted back via recurrent Projections as initial inputs
-                self.output_states[state].value = self.output_states[state].value * 0.0
-        #endregion
-
         #endregion
 
         return self.value

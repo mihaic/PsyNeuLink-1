@@ -994,8 +994,7 @@ class State_Base(State):
     classPreferenceLevel = PreferenceLevel.CATEGORY
 
     requiredParamClassDefaultTypes = Component.requiredParamClassDefaultTypes.copy()
-    requiredParamClassDefaultTypes.update({FUNCTION_PARAMS : [dict],
-                                           PROJECTION_TYPE: [str, Projection]})   # Default projection type
+    requiredParamClassDefaultTypes.update({PROJECTION_TYPE: [str, Projection]})   # Default projection type
     paramClassDefaults = Component.paramClassDefaults.copy()
     paramClassDefaults.update({STATE_TYPE: None})
 
@@ -1259,7 +1258,26 @@ class State_Base(State):
                                        target_set[PROJECTION_TYPE],
                                        self.owner.name))
 
-    def _instantiate_function(self, context=None):
+    def _validate_value(self):
+        # Ensure that output of the function (self.value) is compatible with (same format as) its input (self.instance_defaults.variable)
+        #     (this enforces constraint that State functions should only combine values from multiple projections,
+        #     but not transform them in any other way;  so the format of its value should be the same as its variable).
+        if not iscompatible(self.instance_defaults.variable, self.value):
+            raise StateError(
+                "Output ({0}: {1}) of function ({2}) for {3} {4} of {5}"
+                " must be the same format as its input ({6}: {7})".format(
+                    type(self.value).__name__,
+                    self.value,
+                    self.function.__self__.componentName,
+                    self.name,
+                    self.__class__.__name__,
+                    self.owner.name,
+                    self.instance_defaults.variable.__class__.__name__,
+                    self.instance_defaults.variable
+                )
+            )
+
+    def _instantiate_function(self, function, context=None):
         """Insure that output of function (self.value) is compatible with its input (self.instance_defaults.variable)
 
         This constraint reflects the role of State functions:
@@ -1280,8 +1298,8 @@ class State_Base(State):
         #         (that is handled by the individual State subclasses (e.g., ADD is enforced for MATRIX ParameterState)
         if (
             (
-                (inspect.isclass(self.function) and issubclass(self.function, LinearCombination))
-                or isinstance(self.function, LinearCombination)
+                (inspect.isclass(function) and issubclass(function, LinearCombination))
+                or isinstance(function, LinearCombination)
             )
             and (
                 isinstance(self.instance_defaults.variable, np.matrix)
@@ -1294,29 +1312,11 @@ class State_Base(State):
             self.instance_defaults.variable = [self.instance_defaults.variable]
             var_is_matrix = True
 
-        super()._instantiate_function(context=context)
+        super()._instantiate_function(function=function, context=context)
 
         # If it is a matrix, remove from list in which it was embedded after instantiating and evaluating function
         if var_is_matrix:
             self.instance_defaults.variable = self.instance_defaults.variable[0]
-
-        # Ensure that output of the function (self.value) is compatible with (same format as) its input (self.instance_defaults.variable)
-        #     (this enforces constraint that State functions should only combine values from multiple projections,
-        #     but not transform them in any other way;  so the format of its value should be the same as its variable).
-        if not iscompatible(self.instance_defaults.variable, self.value):
-            raise StateError(
-                "Output ({0}: {1}) of function ({2}) for {3} {4} of {5}"
-                " must be the same format as its input ({6}: {7})".format(
-                    type(self.value).__name__,
-                    self.value,
-                    self.function.__self__.componentName,
-                    self.name,
-                    self.__class__.__name__,
-                    self.owner.name,
-                    self.instance_defaults.variable.__class__.__name__,
-                    self.instance_defaults.variable
-                )
-            )
 
     # FIX: PROJECTION_REFACTOR
     #      - MOVE THESE TO Projection, WITH self (State) AS ADDED ARG

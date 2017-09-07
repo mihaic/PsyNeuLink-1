@@ -604,28 +604,6 @@ class ParameterState(State_Base):
                                       "with its expected format ({})".
                                       format(name, self.componentName, self.owner.name, self.value, reference_value))
 
-    def _instantiate_function(self, context=None):
-        """Insure function is LinearCombination and that its output is compatible with param with which it is associated
-
-        Notes:
-        * Relevant param should have been provided as reference_value arg in the call to InputState__init__()
-        * Insures that self.value has been assigned (by call to super()._validate_function)
-        * This method is called only if the parameterValidationPref is True
-
-        :param context:
-        :return:
-        """
-        super()._instantiate_function(context=context)
-
-        # # Insure that output of function (self.value) is compatible with relevant parameter's reference_value
-        if not iscompatible(self.value, self.reference_value):
-            raise ParameterStateError("Value ({0}) of the {1} ParameterState for the {2} Mechanism is not compatible "
-                                      "with the type of value expected for that parameter ({3})".
-                                           format(self.value,
-                                                  self.name,
-                                                  self.owner.name,
-                                                  self.reference_value))
-
     def _instantiate_projections(self, projections, context=None):
         """Instantiate Projections specified in PROJECTIONS entry of params arg of State's constructor
 

@@ -396,7 +396,14 @@ def get_param_value_for_keyword(owner, keyword):
 
     """
     try:
-        return owner.paramsCurrent[FUNCTION].keyword(owner, keyword)
+        function_val = owner.paramsCurrent[FUNCTION]
+        if function_val is None:
+            # paramsCurrent will go directly to an attribute value first before
+            # returning what's actually in its dictionary, so fall back
+            keyval = owner.paramsCurrent.data[FUNCTION].keyword(owner, keyword)
+        else:
+            keyval = function_val.keyword(owner, keyword)
+        return keyval
     except FunctionError as e:
         # assert(False)
         # prefs is not always created when this is called, so check
@@ -7565,7 +7572,7 @@ class NavarroAndFuss(IntegratorFunction):
                          prefs=prefs,
                          context=context)
 
-    def _instantiate_function(self, context=None):
+    def _instantiate_function(self, function, context=None):
         import os
         import sys
         try:
@@ -7583,7 +7590,7 @@ class NavarroAndFuss(IntegratorFunction):
         # MATLAB is very finnicky about the formatting here to actually add the path so be careful if you modify
         self.eng1 = matlab.engine.start_matlab("-r 'addpath(char(\"{0}\"))' -nojvm".format(ddm_functions_path))
 
-        super()._instantiate_function(context=context)
+        super()._instantiate_function(function=function, context=context)
 
     def function(self,
                  variable=None,

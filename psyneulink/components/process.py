@@ -844,7 +844,6 @@ class Process(Process_Base):
                                                   learning_rate=learning_rate,
                                                   target=target,
                                                   params=params)
-        self.function = self.execute
 
         register_category(entry=self,
                           base_class=Process,
@@ -902,7 +901,7 @@ class Process(Process_Base):
         self._instantiate_pathway(context=context)
         # super(Process, self)._instantiate_function(context=context)
 
-    def _instantiate_function(self, context=None):
+    def _instantiate_function(self, function, context=None):
         """Override Function._instantiate_function:
 
         This is necessary to:
@@ -2445,7 +2444,9 @@ class Process(Process_Base):
 
         print ("\n---------------------------------------------------------")
 
-
+    @property
+    def function(self):
+        return self.execute
 
     @property
     def mechanisms(self):
