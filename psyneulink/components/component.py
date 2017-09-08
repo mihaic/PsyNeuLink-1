@@ -2492,6 +2492,8 @@ class Component(object):
             kwargs_to_instantiate = function.ClassDefaults.values().copy()
             _, kwargs = prune_unused_args(function.__init__, args=[], kwargs=kwargs_to_instantiate)
             self.function_object = function(default_variable=function_variable, **kwargs)
+        else:
+            raise ComponentError('Unsupported function type: {0}, function={1}'.format(type(function), function))
 
         self.function_object.owner = self
         self.function_params = self.function_object.user_params
