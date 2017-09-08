@@ -130,7 +130,9 @@ class TestGraphAndInput:
         assert set([c, d]) == set(s.get_mechanisms_by_role(MechanismRole.TERMINAL))
 
         assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
-        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(b) == set()
+        # TBI: Assign Mechanism Role: "INTERNAL" to all mechs that do not have another role.
+        # assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
         assert s.get_roles_by_mechanism(c) == {MechanismRole.TERMINAL}
         assert s.get_roles_by_mechanism(d) == {MechanismRole.TERMINAL}
 
@@ -149,15 +151,18 @@ class TestGraphAndInput:
             initial_values={a: [1, 1]},
         )
 
-        inputs = {a: [[2, 2], [0, 0]]}
+        inputs = {a: [[[2, 2]], [[0, 0]]]}
         s.run(inputs=inputs)
 
         assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
         assert {d} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
         assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
-        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
-        assert s.get_roles_by_mechanism(c) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(b) == set()
+        assert s.get_roles_by_mechanism(c) == set()
+        # TBI: Assign Mechanism Role: "INTERNAL" to all mechs that do not have another role.
+        # assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        # assert s.get_roles_by_mechanism(c) == {MechanismRole.INTERNAL}
         assert s.get_roles_by_mechanism(d) == {MechanismRole.TERMINAL}
 
     def test_chain(self):
@@ -176,17 +181,22 @@ class TestGraphAndInput:
             initial_values={a: [1, 1, 1]},
         )
 
-        inputs = {a: [[2, 2, 2], [0, 0, 0]]}
+        inputs = {a: [[[2, 2, 2]], [[0, 0, 0]]]}
         s.run(inputs=inputs)
 
         assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)
         assert {e} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
         assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
-        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
-        assert s.get_roles_by_mechanism(c) == {MechanismRole.INTERNAL}
-        assert s.get_roles_by_mechanism(d) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(b) == set()
+        assert s.get_roles_by_mechanism(c) == set()
+        assert s.get_roles_by_mechanism(d) == set()
         assert s.get_roles_by_mechanism(e) == {MechanismRole.TERMINAL}
+        # TBI: Assign Mechanism Role: "INTERNAL" to all mechs that do not have another role.
+        # assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        # assert s.get_roles_by_mechanism(c) == {MechanismRole.INTERNAL}
+        # assert s.get_roles_by_mechanism(d) == {MechanismRole.INTERNAL}
+        # assert s.get_roles_by_mechanism(e) == {MechanismRole.TERMINAL}
 
     def test_convergent(self):
         a = TransferMechanism(name='a', default_variable=[0, 0])
@@ -205,16 +215,20 @@ class TestGraphAndInput:
             initial_values={a: [1, 1]},
         )
 
-        inputs = {a: [[2, 2]], c: [[0]]}
+        inputs = {a: [[[2, 2]]], c: [[[0]]]}
         s.run(inputs=inputs)
 
         assert set([a, c]) == set(s.get_mechanisms_by_role(MechanismRole.ORIGIN))
         assert {e} == s.get_mechanisms_by_role(MechanismRole.TERMINAL)
 
         assert s.get_roles_by_mechanism(a) == {MechanismRole.ORIGIN}
-        assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(b) == set()
+        # TBI: Assign Mechanism Role: "INTERNAL" to all mechs that do not have another role.
+        # assert s.get_roles_by_mechanism(b) == {MechanismRole.INTERNAL}
         assert s.get_roles_by_mechanism(c) == {MechanismRole.ORIGIN}
-        assert s.get_roles_by_mechanism(d) == {MechanismRole.INTERNAL}
+        assert s.get_roles_by_mechanism(d) == set()
+        # TBI: Assign Mechanism Role: "INTERNAL" to all mechs that do not have another role.
+        # assert s.get_roles_by_mechanism(d) == {MechanismRole.INTERNAL}
         assert s.get_roles_by_mechanism(e) == {MechanismRole.TERMINAL}
 
     def cyclic_one_process(self):
