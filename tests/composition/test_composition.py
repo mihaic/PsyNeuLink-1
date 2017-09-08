@@ -1297,7 +1297,7 @@ class TestClampInput:
         )
         # FIX: This value is correct given that there is a BUG in Recurrent Transfer Mech --
         # Recurrent projection BEGINS with a value leftover from initialization
-        # (only shows up if the function has an additive component or default variable is not zero) 
+        # (only shows up if the function has an additive component or default variable is not zero)
         assert 925 == output[0][0]
 
 
@@ -1402,13 +1402,13 @@ class TestSystemm:
 
         comp = Composition()
 
-        A = TransferMechanism(name="A [transfer]", function=Linear(slope=2.0))
-        B = TransferMechanism(name="B [transfer]", function=Linear(slope=5.0))
+        A = TransferMechanism(name="A [transfer]", default_variable=[0,0,0,0], function=Linear(slope=2.0))
+        B = TransferMechanism(name="B [transfer]", default_variable=[0,0,0,0], function=Linear(slope=5.0))
         comp.add_mechanism(A)
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [1, 2, 3, 4]}
+        inputs_dict = {A: [[[1, 2, 3, 4]]]}
         sched = Scheduler(composition=comp)
 
         before = {}
@@ -1457,7 +1457,7 @@ class TestSystemm:
 
         for ts in before_expected:
             for mech in before_expected[ts]:
-                np.testing.assert_allclose(before[ts][mech], before_expected[ts][mech], err_msg='Failed on before[{0}][{1}]'.format(ts, mech))
+                np.testing.assert_allclose([before[ts][mech]][0], before_expected[ts][mech], err_msg='Failed on before[{0}][{1}]'.format(ts, mech))
 
         for ts in after_expected:
             for mech in after_expected[ts]:
@@ -1467,7 +1467,7 @@ class TestSystemm:
                         comp.append(x[0][0])
                     except TypeError:
                         comp.append(x)
-                np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
+                np.testing.assert_allclose(comp[0], after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
 
     def test_call_beforeafter_values_twopass(self):
 
@@ -1987,8 +1987,8 @@ class TestNestedCompositions:
         myPathScheduler = Scheduler(composition=myPath)
         myPathScheduler.add_condition(myMech2, AfterNCalls(myMech1, 2))
 
-        myPath.run(inputs={myMech1: 1}, scheduler_processing=myPathScheduler)
-        myPath.run(inputs={myMech1: [[1]]}, scheduler_processing=myPathScheduler)
+        myPath.run(inputs={myMech1: [[[1]]]}, scheduler_processing=myPathScheduler)
+        myPath.run(inputs={myMech1: [[[1]]]}, scheduler_processing=myPathScheduler)
         myPath2 = Pathway()
         myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
         myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
