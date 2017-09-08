@@ -1040,7 +1040,6 @@ class Composition(object):
         else:
 
             len_inputs = len(list(inputs.values())[0])
-
         # check whether the num trials given in the input dict matches the num_trials param
         if num_trials is not None:
             if len_inputs != num_trials:
