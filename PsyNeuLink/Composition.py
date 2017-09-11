@@ -719,7 +719,7 @@ class Composition(object):
         # loop over all origin mechanisms
         current_input_states = set()
         for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
-
+            print(self.composition_interface_mechanism.output_states)
             for input_state in mech.input_states:
                 # add it to our set of current input states
                 current_input_states.add(input_state)
@@ -731,6 +731,7 @@ class Composition(object):
                                                          reference_value= input_state.variable,
                                                          name="Interface to " + mech.name + " for " + input_state.name)
                     # self.composition_interface_mechanism.add_states(interface_output_state)
+                    self.composition_interface_mechanism.output_states.append(interface_output_state)
                     self.composition_interface_output_states[input_state] = interface_output_state
                     MappingProjection(sender=interface_output_state, receiver=input_state)
 
@@ -744,7 +745,7 @@ class Composition(object):
                     projection = None
 
             # remove the output state associated with this input state (this iteration) from the CIM output states
-            # self.composition_interface_mechanism.output_states.remove(self.composition_interface_output_states[input_state])
+            self.composition_interface_mechanism.output_states.remove(self.composition_interface_output_states[input_state])
 
             # and from the dictionary of CIM output state/input state pairs
             del self.composition_interface_output_states[input_state]
