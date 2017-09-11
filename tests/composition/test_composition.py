@@ -700,36 +700,6 @@ class TestGraph:
 
 class TestRun:
 
-    def test_run_2_mechanisms_default_input_1(self):
-        comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp._analyze_graph()
-        sched = Scheduler(composition=comp)
-        output = comp.run(
-            scheduler_processing=sched
-        )
-        assert 25 == output[0][0]
-
-    def test_run_2_mechanisms_input_5(self):
-        comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp._analyze_graph()
-        inputs_dict = {A: [5]}
-        sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
-        assert 125 == output[0][0]
-
     def test_projection_assignment_mistake_swap(self):
 
         comp = Composition()
@@ -882,23 +852,6 @@ class TestRun:
         )
 
         assert 40.0 == output[0][0]
-
-    def test_run_2_mechanisms_reuse_input(self):
-        comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
-        comp._analyze_graph()
-        inputs_dict = {A: [5]}
-        sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            num_trials=5
-        )
-        assert 125 == output[0][0]
 
     def test_run_2_mechanisms_incorrect_trial_spec(self):
         comp = Composition()
@@ -2388,39 +2341,6 @@ class TestInputStateSpecifications:
 
         assert 2 == output[0][0]
 
-    # def test_two_input_states_one_origin_different_shapes(self):
-    #
-    #     comp = Composition()
-    #     A = TransferMechanism(name="A",
-    #                           default_variable=[[0], [0,0,0]],
-    #                           input_states=[{NAME: "Input State 1",
-    #                                          },
-    #                                         {NAME: "Input State 2",
-    #                                          }],
-    #                           function=Linear(slope=1.0, default_variable=[[0], [0,0,0]])
-    #                           # specifying default_variable on the function doesn't seem to matter?
-    #                           )
-    #
-    #     comp.add_mechanism(A)
-    #
-    #     comp._analyze_graph()
-    #     inputs_dict = {A: [[[2.], [4., 5., 6.]]],
-    #                   }
-    #     sched = Scheduler(composition=comp)
-    #     output = comp.run(
-    #         inputs=inputs_dict,
-    #         scheduler_processing=sched
-    #         )
-    #
-    #     assert 2. == A.input_states[0].value
-    #     assert [4.,5.,6.] == A.input_states[1].value
-    #     assert "Input State 1" == A.input_states[0].name
-    #     assert "Input State 2" == A.input_states[1].name
-    #     assert 2. == A.variable[0]
-    #     assert [4.,5.,6.] == A.variable[1]
-    #
-    #     assert 2 == output[0][0]
-
     def test_two_input_states_created_first_with_deferred_init(self):
         comp = Composition()
 
@@ -2593,3 +2513,52 @@ class TestInputStateSpecifications:
         assert 4. == A.variable[1]
 
         assert 2 == output[0][0]
+
+class TestInputSpecifications:
+
+    def test_2_mechanisms_default_input_1(self):
+        comp = Composition()
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp._analyze_graph()
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            scheduler_processing=sched
+        )
+        assert 25 == output[0][0]
+
+    def test_2_mechanisms_input_5(self):
+        comp = Composition()
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp._analyze_graph()
+        inputs_dict = {A: [5]}
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+        assert 125 == output[0][0]
+
+    def test_run_2_mechanisms_reuse_input(self):
+        comp = Composition()
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp._analyze_graph()
+        inputs_dict = {A: [5]}
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            num_trials=5
+        )
+        assert 125 == output[0][0]
