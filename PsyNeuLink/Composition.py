@@ -719,7 +719,6 @@ class Composition(object):
         # loop over all origin mechanisms
         current_input_states = set()
         for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
-            print(self.composition_interface_mechanism.output_states)
             for input_state in mech.input_states:
                 # add it to our set of current input states
                 current_input_states.add(input_state)
@@ -1047,6 +1046,7 @@ class Composition(object):
                 # if one set of inputs was provided for many trials, set 'reuse_inputs' flag
                 if len_inputs == 1:
                     reuse_inputs = True
+                    len_inputs = num_trials
                 # otherwise, warn user that there is something wrong with their input specification
                 else:
                     raise CompositionError(
