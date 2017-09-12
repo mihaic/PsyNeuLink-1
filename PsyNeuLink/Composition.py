@@ -750,19 +750,21 @@ class Composition(object):
             del self.composition_interface_output_states[input_state]
 
     def _assign_values_to_interface_output_states(self, inputs):
-        for mech in list(inputs.keys()):
-            if type(inputs[mech]) == dict:
-                for i in range(len(inputs[mech])):
-                    self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
+        current_mechanisms = set()
+        for key in inputs:
+            if isinstance(key, Mechanism):
+                self.composition_interface_output_states[key.input_state].value = inputs[key]
+                current_mechanisms.add(key)
             else:
-                self.composition_interface_output_states[mech.input_state].value = inputs[mech]
+                self.composition_interface_output_states[key].value = inputs[key]
+                current_mechanisms.add(key.owner)
 
         origins = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
 
         # NOTE: This may need to change from default_variable to wherever a default value of the mechanism's variable
         # is stored -- the point is that if an input is not supplied for an origin mechanism, the mechanism should use
         # its default variable value
-        for mech in origins.difference(set(inputs.keys())):
+        for mech in origins.difference(set(current_mechanisms)):
             self.composition_interface_output_states[mech.input_state].value = mech.variableInstanceDefault
 
     def _assign_execution_ids(self, execution_id=None):
@@ -1095,9 +1097,9 @@ class Composition(object):
 
         # TBI: Handle runtime params?
         result = None
-
         # loop over the length of the list of inputs (# of trials)
         for input_index in input_indices:
+
             if call_before_trial:
                 call_before_trial()
             if scheduler_processing.termination_conds[TimeScale.RUN].is_satisfied(scheduler=scheduler_processing, execution_id=execution_id):

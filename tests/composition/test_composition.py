@@ -2530,6 +2530,55 @@ class TestInputSpecifications:
         )
         assert 25 == output[0][0]
 
+    def test_3_origins(self):
+        comp = Composition()
+        I1 = InputState(
+                        name="Input State 1",
+                        reference_value=[0]
+        )
+        I2 = InputState(
+                        name="Input State 2",
+                        reference_value=[0]
+        )
+        A = TransferMechanism(
+                            name="A",
+                            default_variable=[[0], [0]],
+                            input_states=[I1, I2],
+                            function=Linear(slope=1.0)
+        )
+        B = TransferMechanism(
+                            name="B",
+                            default_variable=[0,0],
+                            function=Linear(slope=1.0))
+        C = TransferMechanism(
+                            name="C",
+                            default_variable=[0, 0, 0],
+                            function=Linear(slope=1.0))
+        D = TransferMechanism(
+                            name="D",
+                            default_variable=[0],
+                            function=Linear(slope=1.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=D), D)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=D), D)
+        comp._analyze_graph()
+        inputs = {A: {I1: [[0],[1],[2]],
+                      I2: [[0],[1],[2]]},
+                  B: [[0,0], [1,1], [2,2]],
+                  C: [[0,0,0], [1,1,1], [2,2,2]]
+
+        }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs,
+            scheduler_processing=sched
+        )
+        assert 12 == output[0][0]
+
     def test_2_mechanisms_input_5(self):
         comp = Composition()
         A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
@@ -2538,7 +2587,7 @@ class TestInputSpecifications:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [5]}
+        inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
@@ -2554,7 +2603,7 @@ class TestInputSpecifications:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [5]}
+        inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
