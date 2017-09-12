@@ -369,8 +369,8 @@ class TestAnalyzeGraph:
 #         comp.add_mechanism(B)
 #         comp.add_projection(A, MappingProjection(), B)
 #         comp._analyze_graph()
-#         feed_dict_origin = {A: [[[0, 1, 2]]]}
-#         feed_dict_terminal = {B: [[[0, 1, 2]]]}
+#         feed_dict_origin = {A: [[0, 1, 2]]}
+#         feed_dict_terminal = {B: [[0, 1, 2]]}
 #         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
 #         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
 #
@@ -451,7 +451,7 @@ class TestAnalyzeGraph:
 #         comp.add_mechanism(B)
 #         comp.add_projection(A, MappingProjection(), B)
 #         comp._analyze_graph()
-#         feed_dict_origin = {A: [[[0, 1, 2]], [[0, 1, 2]]]}
+#         feed_dict_origin = {A: [[0, 1, 2]], [[0, 1, 2]]}
 #         feed_dict_terminal = {B: [[0, 1, 2]]}
 #         comp._validate_feed_dict(feed_dict_origin, comp.get_mechanisms_by_role(MechanismRole.ORIGIN), "origin")
 #         comp._validate_feed_dict(feed_dict_terminal, comp.get_mechanisms_by_role(MechanismRole.TERMINAL), "terminal")
@@ -764,8 +764,8 @@ class TestRun:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [5],
-            B: [5]
+            A: [[5]],
+            B: [[5]]
         }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -786,7 +786,7 @@ class TestRun:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [5]}
+        inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
         sched.add_condition(B, EveryNCalls(A, 2))
         output = comp.run(
@@ -808,7 +808,7 @@ class TestRun:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [5]}
+        inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
         sched.add_condition(B, EveryNCalls(A, 2))
         output = comp.run(
@@ -826,7 +826,7 @@ class TestRun:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [1, 2, 3, 4]}
+        inputs_dict = {A: [[1], [2], [3], [4]]}
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
@@ -844,7 +844,7 @@ class TestRun:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(), B)
         comp._analyze_graph()
-        inputs_dict = {A: [1, 2, 3, 4]}
+        inputs_dict = {A: [[1], [2], [3], [4]]}
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
@@ -869,7 +869,8 @@ class TestRun:
                 scheduler_processing=sched,
                 num_trials=5
             )
-        assert "number of trials" in str(error_text.value) and "does not match the length" in str(error_text.value)
+
+            assert "number of trials" in str(error_text.value) and "does not match the length" in str(error_text.value)
 
     def test_run_2_mechanisms_double_trial_specs(self):
         comp = Composition()
@@ -994,8 +995,8 @@ class TestPathway:
         path.add_linear_processing_pathway([B, D, E])
         path._analyze_graph()
         inputs_dict = {
-            A: [5],
-            B: [5]
+            A: [[5]],
+            B: [[5]]
         }
         sched = Scheduler(composition=path)
         output = path.run(
@@ -1039,8 +1040,8 @@ class TestClampInput:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [5],
-            B: [5]
+            A: [[5]],
+            B: [[5]]
         }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
@@ -1086,8 +1087,8 @@ class TestClampInput:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [[[5.]]],
-            B: [[[5.]]]
+            A: [[5.]],
+            B: [[5.]]
         }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
@@ -1133,8 +1134,8 @@ class TestClampInput:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [5],
-            B: [5]
+            A: [[5]],
+            B: [[5]]
         }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
@@ -1182,8 +1183,8 @@ class TestClampInput:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [5],
-            B: [5]
+            A: [[5]],
+            B: [[5]]
         }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
@@ -1233,8 +1234,8 @@ class TestClampInput:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [100.0],
-            B: [500.0]
+            A: [[100.0]],
+            B: [[500.0]]
         }
         sched = Scheduler(composition=comp)
         sched.add_condition(A, EveryNPasses(1))
@@ -1292,7 +1293,7 @@ class TestCallBeforeAfterTimescale:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [1, 2, 3, 4]}
+        inputs_dict = {A: [[1], [2], [3], [4]]}
         sched = Scheduler(composition=comp)
 
         comp.run(
@@ -1332,7 +1333,7 @@ class TestSystemm:
         sys.add_mechanism(B)
         sys.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         sys._analyze_graph()
-        inputs_dict = {A: [5]}
+        inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=sys)
         output = sys.run(
             inputs=inputs_dict,
@@ -1355,13 +1356,13 @@ class TestSystemm:
 
         comp = Composition()
 
-        A = TransferMechanism(name="A [transfer]", default_variable=[0,0,0,0], function=Linear(slope=2.0))
-        B = TransferMechanism(name="B [transfer]", default_variable=[0,0,0,0], function=Linear(slope=5.0))
+        A = TransferMechanism(name="A [transfer]", function=Linear(slope=2.0))
+        B = TransferMechanism(name="B [transfer]", function=Linear(slope=5.0))
         comp.add_mechanism(A)
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [[[1, 2, 3, 4]]]}
+        inputs_dict = {A: [[1],[ 2], [3], [4]]}
         sched = Scheduler(composition=comp)
 
         before = {}
@@ -1410,7 +1411,8 @@ class TestSystemm:
 
         for ts in before_expected:
             for mech in before_expected[ts]:
-                np.testing.assert_allclose([before[ts][mech]][0], before_expected[ts][mech], err_msg='Failed on before[{0}][{1}]'.format(ts, mech))
+                # extra brackets around 'before_expected[ts][mech]' were needed for np assert to work
+                np.testing.assert_allclose([before[ts][mech]], [before_expected[ts][mech]], err_msg='Failed on before[{0}][{1}]'.format(ts, mech))
 
         for ts in after_expected:
             for mech in after_expected[ts]:
@@ -1420,7 +1422,7 @@ class TestSystemm:
                         comp.append(x[0][0])
                     except TypeError:
                         comp.append(x)
-                np.testing.assert_allclose(comp[0], after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
+                np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
 
     def test_call_beforeafter_values_twopass(self):
 
@@ -1443,7 +1445,7 @@ class TestSystemm:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [1, 2]}
+        inputs_dict = {A: [[1], [2]]}
         sched = Scheduler(composition=comp)
         sched.add_condition(B, EveryNCalls(A, 2))
 
@@ -1940,8 +1942,8 @@ class TestNestedCompositions:
         myPathScheduler = Scheduler(composition=myPath)
         myPathScheduler.add_condition(myMech2, AfterNCalls(myMech1, 2))
 
-        myPath.run(inputs={myMech1: [[[1]]]}, scheduler_processing=myPathScheduler)
-        myPath.run(inputs={myMech1: [[[1]]]}, scheduler_processing=myPathScheduler)
+        myPath.run(inputs={myMech1: [[1]]}, scheduler_processing=myPathScheduler)
+        myPath.run(inputs={myMech1: [[1]]}, scheduler_processing=myPathScheduler)
         myPath2 = Pathway()
         myMech4 = TransferMechanism(function=Linear(slope=2.0))  # 1 x 2 = 2
         myMech5 = TransferMechanism(function=Linear(slope=2.0))  # 2 x 2 = 4
@@ -1994,7 +1996,7 @@ class TestCompositionInterface:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [[[5.]]],
+            A: [[5.]],
             # two trials of one input state each
             #        TRIAL 1     TRIAL 2
             # A : [ [ [0,0] ] , [ [0, 0] ]  ]
@@ -2004,7 +2006,7 @@ class TestCompositionInterface:
 
             #       TRIAL1 IS1      IS2      IS3     TRIAL2    IS1      IS2
             # A : [ [     [0,0], [0,0,0], [0,0,0,0] ] ,     [ [0, 0],   [0] ]  ]
-            B: [[[5.]]]
+            B: [[5.]]
         }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2043,8 +2045,8 @@ class TestCompositionInterface:
         comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
         comp._analyze_graph()
         inputs_dict = {
-            A: [[[5.]]],
-            B: [[[5.]]]
+            A: [[5.]],
+            B: [[5.]]
         }
         sched = Scheduler(composition=comp)
 
@@ -2054,40 +2056,8 @@ class TestCompositionInterface:
         )
 
         inputs_dict2 = {
-            A: [[[2.]]],
-            B: [[[2.]]]
-        }
-        output2 = comp.run(
-            inputs=inputs_dict2,
-            scheduler_processing=sched
-        )
-
-        assert 250 == output[0][0]
-        assert 100 == output2[0][0]
-
-    def test_adding_origin_for_second_execution(self):
-
-        comp = Composition()
-        A = TransferMechanism(name="A",
-                              function=Linear(slope=1.0)
-                              )
-
-        B = TransferMechanism(name="B", function=Linear(slope=1.0))
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
-        comp.add_mechanism(A)
-        comp.add_mechanism(B)
-        comp.add_mechanism(C)
-        comp.add_mechanism(D)
-        comp.add_projection(A, MappingProjection(sender=A, receiver=C), C)
-        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
-        comp.add_mechanism(E)
-        comp.add_projection(C, MappingProjection(sender=C, receiver=E), E)
-        comp.add_projection(D, MappingProjection(sender=D, receiver=E), E)
-        comp._analyze_graph()
-        inputs_dict = {
-            A: [[[5.]]],
+            A: [[2.]],
+            B: [[5.]],
             # two trials of one input state each
             #        TRIAL 1     TRIAL 2
             # A : [ [ [0,0] ] , [ [0, 0] ]  ]
@@ -2097,7 +2067,7 @@ class TestCompositionInterface:
 
             #       TRIAL1 IS1      IS2      IS3     TRIAL2    IS1      IS2
             # A : [ [     [0,0], [0,0,0], [0,0,0,0] ] ,     [ [0, 0],   [0] ]  ]
-            B: [[[5.]]]
+            B: [[5.]]
         }
         sched = Scheduler(composition=comp)
 
@@ -2119,9 +2089,9 @@ class TestCompositionInterface:
 
         # execute the updated composition
         inputs_dict2 = {
-            A: [[[1.]]],
-            B: [[[2.]]],
-            F: [[[3.]]]
+            A: [[1.]],
+            B: [[2.]],
+            F: [[3.]]
         }
 
         sched = Scheduler(composition=comp)
@@ -2148,7 +2118,7 @@ class TestCompositionInterface:
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.]]]}
+        inputs_dict = {A: [[5.]]}
         sched = Scheduler(composition=comp)
 
         output = comp.run(
@@ -2167,7 +2137,7 @@ class TestCompositionInterface:
         comp._analyze_graph()
 
         # execute the updated composition
-        inputs_dict2 = {F: [[[3.]]]}
+        inputs_dict2 = {F: [[3.]]}
 
         sched = Scheduler(composition=comp)
         output2 = comp.run(
@@ -2201,14 +2171,18 @@ class TestCompositionInterface:
                               )
         comp.add_mechanism(A)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]], }
+        inputs_dict = {A: {A.input_states[0]: [[5.]],
+                           A.input_states[1]: [[5.]]}
+                       }
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
             scheduler_processing=sched
         )
 
-        inputs_dict2 = {A: [[[2.], [4.]]], }
+        inputs_dict2 = {A: {A.input_states[0]: [[2.]],
+             A.input_states[1]: [[4.]]}
+         }
         output2 = comp.run(
             inputs=inputs_dict2,
             scheduler_processing=sched
@@ -2249,7 +2223,8 @@ class TestCompositionInterface:
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp.add_projection(B, MappingProjection(sender=B, receiver=C), C)
         comp._analyze_graph()
-        inputs_dict = {A: [[[5.], [5.]]],
+        inputs_dict = {A: {A.input_states[0]: [[5.]],
+                           A.input_states[1]: [[5.]]}
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2283,10 +2258,10 @@ class TestCompositionInterface:
         # again (sched, even though it is tied to comp, will not update according to changes in comp)
         comp._analyze_graph()
         sched = Scheduler(composition=comp)
-        inputs_dict2 = {
-            A: [[[2.], [4.]]],
-            D: [[[2.], [4.]]]
-        }
+        inputs_dict2 = {A: {A.input_states[0]: [[2.]],
+                           A.input_states[1]: [[4.]]},
+                       D: {D.input_states[0]: [[2.]],
+                           D.input_states[1]: [[4.]]} }
         output2 = comp.run(
             inputs=inputs_dict2,
             scheduler_processing=sched
@@ -2325,7 +2300,9 @@ class TestInputStateSpecifications:
         comp.add_mechanism(A)
 
         comp._analyze_graph()
-        inputs_dict = {A: [[[2.], [4.]]],
+
+        inputs_dict = { A: { A.input_states[0]: [[2.]],
+                             A.input_states[1]: [[4.]]}
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2365,7 +2342,8 @@ class TestInputStateSpecifications:
 
         # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[2.], [4.]]],
+        inputs_dict = { A: { A.input_states[0]: [[2.]],
+                             A.input_states[1]: [[4.]]}
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2399,7 +2377,8 @@ class TestInputStateSpecifications:
 
         # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[2.], [4.]]],
+        inputs_dict = { A: { A.input_states[0]: [[2.]],
+                             A.input_states[1]: [[4.]]}
                        }
         sched = Scheduler(composition=comp)
         output = comp.run(
@@ -2433,7 +2412,9 @@ class TestInputStateSpecifications:
 
         # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[2.], [4.]]], }
+        inputs_dict = { A: { A.input_states[0]: [[2.]],
+                             A.input_states[1]: [[4.]]}
+                       }
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
@@ -2466,39 +2447,9 @@ class TestInputStateSpecifications:
 
         # get comp ready to run (identify roles, create sched, assign inputs)
         comp._analyze_graph()
-        inputs_dict = {A: [[[2.], [4.]]], }
-        sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
-
-        assert 2. == A.input_states[0].value
-        assert 4. == A.input_states[1].value
-        assert "Default_InputStat-1" == A.input_states[0].name
-        assert "Default_InputStat-2" == A.input_states[1].name
-        assert 2. == A.variable[0]
-        assert 4. == A.variable[1]
-
-        assert 2 == output[0][0]
-
-    def test_two_input_states_implied_by_default_variable(self):
-        comp = Composition()
-
-        # create mechanism A
-
-        A = TransferMechanism(
-            name="A",
-            default_variable=[[0], [0]],
-            function=Linear(slope=1.0)
-        )
-
-        # add mech A to composition
-        comp.add_mechanism(A)
-
-        # get comp ready to run (identify roles, create sched, assign inputs)
-        comp._analyze_graph()
-        inputs_dict = {A: [[[2.], [4.]]], }
+        inputs_dict = { A: { A.input_states[0]: [[2.]],
+                             A.input_states[1]: [[4.]]}
+                       }
         sched = Scheduler(composition=comp)
         output = comp.run(
             inputs=inputs_dict,
