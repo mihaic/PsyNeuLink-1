@@ -319,8 +319,8 @@ class Composition(object):
         self._graph_processing = None
         self.composition_interface_output_states = {}
         self.mechanisms = []
-        self.composition_interface_mechanism = CompositionInterfaceMechanism()
-        # self.input_mechanisms = {}
+        self.input_CIM = CompositionInterfaceMechanism(name="input_CIM")
+        self.target_CIM = CompositionInterfaceMechanism(name="target_CIM")
         self.execution_ids = []
 
         self._scheduler_processing = None
@@ -725,12 +725,12 @@ class Composition(object):
 
                 # if there is not a corresponding CIM output state, add one
                 if input_state not in set(self.composition_interface_output_states.keys()):
-                    interface_output_state = OutputState(owner=self.composition_interface_mechanism,
+                    interface_output_state = OutputState(owner=self.input_CIM,
                                                          variable=input_state.variable,
                                                          reference_value= input_state.variable,
                                                          name="Interface to " + mech.name + " for " + input_state.name)
-                    # self.composition_interface_mechanism.add_states(interface_output_state)
-                    self.composition_interface_mechanism.output_states.append(interface_output_state)
+                    # self.input_CIM.add_states(interface_output_state)
+                    self.input_CIM.output_states.append(interface_output_state)
                     self.composition_interface_output_states[input_state] = interface_output_state
                     MappingProjection(sender=interface_output_state, receiver=input_state)
 
@@ -744,14 +744,14 @@ class Composition(object):
                     projection = None
 
             # remove the output state associated with this input state (this iteration) from the CIM output states
-            self.composition_interface_mechanism.output_states.remove(self.composition_interface_output_states[input_state])
+            self.input_CIM.output_states.remove(self.composition_interface_output_states[input_state])
 
             # and from the dictionary of CIM output state/input state pairs
             del self.composition_interface_output_states[input_state]
 
     def _assign_values_to_interface_output_states(self, inputs):
         for mech in list(inputs.keys()):
-            if type(inputs[mech]) == list:
+            if type(inputs[mech]) == dict:
                 for i in range(len(inputs[mech])):
                     self.composition_interface_output_states[mech.input_states[i]].value = inputs[mech][i]
             else:
@@ -786,7 +786,7 @@ class Composition(object):
         # for k in self.input_mechanisms.keys():
         #     self.input_mechanisms[k]._execution_id = execution_id
 
-        self.composition_interface_mechanism._execution_id = execution_id
+        self.input_CIM._execution_id = execution_id
 
         self._execution_id = execution_id
         return execution_id
@@ -949,6 +949,35 @@ class Composition(object):
 
         return num
 
+    def _process_inputs(self, inputs):
+        '''
+        Catches errors in specification of inputs to composition and returns the number of trials based on the number of
+        inputs provided for each mechanism.
+        '''
+
+        def _get_input(inputs):
+            for key in inputs:
+                if isinstance(inputs[key], dict):
+                    for inner_key in inputs[key]:
+                        yield inputs[key][inner_key]
+                else:
+                    yield inputs[key]
+
+
+        num_trials = len( next( _get_input( inputs )))
+
+        for current_input in _get_input(inputs):
+            if len(current_input) != num_trials:
+                raise CompositionError("Input specifications for mechanisms in {} are incompatible. Inputs must be "
+                                       "provided for the same number of trials for each mechanism.").__format__(self)
+            variable_len = len(current_input[0])
+            for var in current_input:
+                if len(var) != variable_len:
+                    raise CompositionError("Check input specification for {}. Input values for a given mechanism or "
+                                           "input state must be the same length across all trials.").__format__(self)
+        return num_trials
+
+
     def run(
         self,
         inputs=None,
@@ -1017,6 +1046,7 @@ class Composition(object):
 
             output value of the final Mechanism executed in the composition : various
         '''
+
         reuse_inputs = False
 
         if scheduler_processing is None:
@@ -1034,16 +1064,17 @@ class Composition(object):
         scheduler_processing.update_termination_conditions(termination_processing)
         scheduler_learning.update_termination_conditions(termination_learning)
 
-        if inputs is None:
+        if inputs is not None:
+            len_inputs = self._process_inputs(inputs)
+        else:
             inputs = {}
             len_inputs = 1
-        else:
 
-            len_inputs = len(list(inputs.values())[0])
         # check whether the num trials given in the input dict matches the num_trials param
         if num_trials is not None:
             if len_inputs != num_trials:
-                # if one set of inputs was provided for many trials, set 'reuse_inputs' flag
+                # if one set of inputs was provided for many trials, set 'reuse_inputs' flag and re-set len_inputs to
+                # the number of trials given by the user
                 if len_inputs == 1:
                     reuse_inputs = True
                     len_inputs = num_trials
@@ -1051,7 +1082,7 @@ class Composition(object):
                 else:
                     raise CompositionError(
                         "The number of trials [{}] specified for the composition [{}] does not match the "
-                        "length [{}] of the inputs specified in the inputs dictionary [{}]. "
+                        "number [{}] of inputs specified per mechanism (or input state) in the inputs dictionary [{}]. "
                         .format(num_trials, self, len_inputs, inputs)
                     )
 
@@ -1076,7 +1107,11 @@ class Composition(object):
 
             # loop over all mechanisms that receive inputs from the outside world
             for mech in inputs.keys():
-                execution_inputs[mech] = inputs[mech][0 if reuse_inputs else input_index]
+                if isinstance(inputs[mech], dict):
+                    for input_state in inputs[mech].keys():
+                        execution_inputs[input_state] = inputs[mech][input_state][0 if reuse_inputs else input_index]
+                else:
+                    execution_inputs[mech] = inputs[mech][0 if reuse_inputs else input_index]
 
             num = self.execute(
                 execution_inputs,
