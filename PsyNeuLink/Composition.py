@@ -40,7 +40,7 @@ Class Reference
 
 import logging
 import uuid
-
+import warnings
 import numpy as np
 
 from collections import Iterable, OrderedDict
@@ -52,7 +52,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceM
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Components.States.OutputState import OutputState
-from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
+from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP, TARGET
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
@@ -317,10 +317,11 @@ class Composition(object):
         # core attributes
         self.graph = Graph()  # Graph of the Composition
         self._graph_processing = None
-        self.composition_interface_output_states = {}
         self.mechanisms = []
-        self.input_CIM = CompositionInterfaceMechanism(name="input_CIM")
+        self.stimulus_CIM = CompositionInterfaceMechanism(name="stimulus_CIM")
         self.target_CIM = CompositionInterfaceMechanism(name="target_CIM")
+        self.stimulus_CIM_output_states = {}
+        self.target_CIM_output_states = {}
         self.execution_ids = []
 
         self._scheduler_processing = None
@@ -583,7 +584,7 @@ class Composition(object):
                         elif child not in visited:
                             next_visit_stack.append(child)
 
-        self._create_composition_interface_output_states()
+        self._create_stimulus_CIM_output_states()
         self.needs_update_graph = False
 
     def _update_processing_graph(self):
@@ -710,7 +711,7 @@ class Composition(object):
                                          "{!s} where the InputState takes values of length {!s}".
                                          format(i, mech.name, val_length, state_length))
 
-    def _create_composition_interface_output_states(self):
+    def _create_stimulus_CIM_output_states(self):
         '''
             builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
             corresponding OutputState on the CompositionInterfaceMechanism
@@ -724,39 +725,115 @@ class Composition(object):
                 current_input_states.add(input_state)
 
                 # if there is not a corresponding CIM output state, add one
-                if input_state not in set(self.composition_interface_output_states.keys()):
-                    interface_output_state = OutputState(owner=self.input_CIM,
+                if input_state not in set(self.stimulus_CIM_output_states.keys()):
+                    interface_output_state = OutputState(owner=self.stimulus_CIM,
                                                          variable=input_state.variable,
                                                          reference_value= input_state.variable,
                                                          name="Interface to " + mech.name + " for " + input_state.name)
-                    # self.input_CIM.add_states(interface_output_state)
-                    self.input_CIM.output_states.append(interface_output_state)
-                    self.composition_interface_output_states[input_state] = interface_output_state
+                    # self.stimulus_CIM.add_states(interface_output_state)
+                    self.stimulus_CIM.output_states.append(interface_output_state)
+                    self.stimulus_CIM_output_states[input_state] = interface_output_state
                     MappingProjection(sender=interface_output_state, receiver=input_state)
 
-        sends_to_input_states = set(self.composition_interface_output_states.keys())
+        sends_to_input_states = set(self.stimulus_CIM_output_states.keys())
         # For any output state still registered on the CIM that does not map to a corresponding ORIGIN mech I.S.:
         for input_state in sends_to_input_states.difference(current_input_states):
             for projection in input_state.path_afferents:
-                if projection.sender == self.composition_interface_output_states[input_state]:
+                if projection.sender == self.stimulus_CIM_output_states[input_state]:
                     # remove the corresponding projection from the ORIGIN mechanism's path afferents
                     input_state.path_afferents.remove(projection)
                     projection = None
 
             # remove the output state associated with this input state (this iteration) from the CIM output states
-            self.input_CIM.output_states.remove(self.composition_interface_output_states[input_state])
+            self.stimulus_CIM.output_states.remove(self.stimulus_CIM_output_states[input_state])
 
             # and from the dictionary of CIM output state/input state pairs
-            del self.composition_interface_output_states[input_state]
+            del self.stimulus_CIM_output_states[input_state]
 
-    def _assign_values_to_interface_output_states(self, inputs):
+
+
+    #       From devel:
+
+    #     def _instantiate_target_input(self, context=None):
+    #
+    #     if self.target is None:
+    #         # # MODIFIED 6/26/17 OLD:
+    #         # raise ProcessError("Learning has been specified for {} and it has a TARGET ObjectiveMechanism, "
+    #         #                    "so it must also have a target input when run.".format(self.name))
+    #         # MODIFIED 6/26/17 NEW:
+    #         # target arg was not specified in Process' constructor,
+    #         #    so use the value of the TARGET InputState for the TARGET Mechanism as the default
+    #         self.target = self.target_mechanism.input_states[TARGET].value
+    #         if self.verbosePref:
+    #             warnings.warn("Learning has been specified for {} and it has a TARGET ObjectiveMechanism, "
+    #                           " but its \'target\' argument was not specified; default will be used ({})".
+    #                           format(self.name, self.target))
+    #         # MODIFIED 6/26/17 END
+    #
+    #     target = np.atleast_1d(self.target)
+    #
+    #     # Create ProcessInputState for target and assign to targetMechanism's target inputState
+    #     target_mech_target = self.target_mechanism.input_states[TARGET]
+    #
+    #     # Check that length of process' target input matches length of targetMechanism's target input
+    #     if len(target) != len(target_mech_target.variable):
+    #         raise ProcessError("Length of target ({}) does not match length of input for target_mechanism in {}".
+    #                            format(len(target), len(target_mech_target.variable)))
+    #
+    #     target_input_state = ProcessInputState(owner=self,
+    #                                             variable=target,
+    #                                             prefs=self.prefs,
+    #                                             name=TARGET)
+    #     self.target_input_states.append(target_input_state)
+    #
+    #     # Add MappingProjection from target_input_state to ComparatorMechanism's TARGET InputState
+    #     from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
+    #     MappingProjection(sender=target_input_state,
+    #             receiver=target_mech_target,
+    #             name=self.name+'_Input Projection to '+target_mech_target.name)
+
+
+    def _create_target_CIM_output_states(self):
+        # loop over all target mechanisms
+        current_input_states = set()
+        for mech in self.get_mechanisms_by_role(MechanismRole.TARGET):
+            current_input_states.add(mech.input_states[TARGET])
+
+            # if there is not a corresponding CIM output state, add one
+            if mech.input_states[TARGET] not in set(self.target_CIM_output_states.keys()):
+                interface_output_state = OutputState(owner=self.target_CIM,
+                                                     variable=mech.input_states[TARGET].value,
+                                                     reference_value= mech.input_states[TARGET].value,
+                                                     name="Interface to " + mech.name + " for " + mech.input_states[TARGET].name)
+                # self.target_CIM.add_states(interface_output_state)
+                self.target_CIM.output_states.append(interface_output_state)
+                self.target_CIM_output_states[mech.input_states[TARGET]] = interface_output_state
+                MappingProjection(sender=interface_output_state, receiver=mech.input_states[TARGET])
+
+        sends_to_input_states = set(self.target_CIM_output_states.keys())
+        # For any output state still registered on the CIM that does not map to a corresponding TARGET mech:
+        for input_state in sends_to_input_states.difference(current_input_states):
+            for projection in input_state.path_afferents:
+                if projection.sender == self.target_CIM_output_states[input_state]:
+                    # remove the corresponding projection from the ORIGIN mechanism's path afferents
+                    input_state.path_afferents.remove(projection)
+                    projection = None
+
+            # remove the output state associated with this input state (this iteration) from the CIM output states
+            self.target_CIM.output_states.remove(self.target_CIM_output_states[input_state])
+
+            # and from the dictionary of CIM output state/input state pairs
+            del self.target_CIM_output_states[input_state]
+
+    def _assign_values_to_stimulus_CIM_output_states(self, inputs):
+        
         current_mechanisms = set()
         for key in inputs:
             if isinstance(key, Mechanism):
-                self.composition_interface_output_states[key.input_state].value = inputs[key]
+                self.stimulus_CIM_output_states[key.input_state].value = inputs[key]
                 current_mechanisms.add(key)
             else:
-                self.composition_interface_output_states[key].value = inputs[key]
+                self.stimulus_CIM_output_states[key].value = inputs[key]
                 current_mechanisms.add(key.owner)
 
         origins = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
@@ -765,7 +842,13 @@ class Composition(object):
         # is stored -- the point is that if an input is not supplied for an origin mechanism, the mechanism should use
         # its default variable value
         for mech in origins.difference(set(current_mechanisms)):
-            self.composition_interface_output_states[mech.input_state].value = mech.variableInstanceDefault
+            self.stimulus_CIM_output_states[mech.input_state].value = mech.variableInstanceDefault
+
+    def _assign_values_to_target_CIM_output_states(self, targets):
+
+        for mech in targets:
+            # assigning target provided for this mechanism to the the target_CIM_output_state that sends to it
+            self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
 
     def _assign_execution_ids(self, execution_id=None):
         '''
@@ -788,7 +871,7 @@ class Composition(object):
         # for k in self.input_mechanisms.keys():
         #     self.input_mechanisms[k]._execution_id = execution_id
 
-        self.input_CIM._execution_id = execution_id
+        self.stimulus_CIM._execution_id = execution_id
 
         self._execution_id = execution_id
         return execution_id
@@ -873,7 +956,7 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
-        self._assign_values_to_interface_output_states(inputs)
+        self._assign_values_to_stimulus_CIM_output_states(inputs)
 
         next_pass_before = 1
         next_pass_after = 1
@@ -925,7 +1008,7 @@ class Composition(object):
                                 mechanism.recurrent_projection.sender.value = [0.0]
                         elif mechanism in no_clamp_inputs:
                             for input_state in mechanism.input_states:
-                                self.composition_interface_output_states[input_state].value = 0.0
+                                self.stimulus_CIM_output_states[input_state].value = 0.0
                             # self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
@@ -941,7 +1024,7 @@ class Composition(object):
                             for input_state in mechanism.input_states:
                             # clamp = None --> "turn off" input mechanism
                             # self.input_mechanisms[mechanism]._output_states[0].value = 0
-                                self.composition_interface_output_states[input_state].value = 0
+                                self.stimulus_CIM_output_states[input_state].value = 0
 
             if call_after_time_step:
                 call_after_time_step()
