@@ -2473,6 +2473,7 @@ class Component(object):
 
         if isinstance(self, Function):
             self.function_object = self
+            self.function_object.owner = self
             return
 
         function_variable = self._parse_function_variable(self.instance_defaults.variable)
