@@ -78,7 +78,7 @@ class TestScheduler:
         termination_conds[TimeScale.RUN] = AfterNTrials(6)
         termination_conds[TimeScale.TRIAL] = AfterNPasses(1)
         comp1.run(
-            inputs={A: range(6)},
+            inputs={A: [[0], [1], [2], [3], [4], [5]]},
             scheduler_processing=sched,
             termination_processing=termination_conds
         )
@@ -91,7 +91,7 @@ class TestScheduler:
         assert output == pytest.helpers.setify_expected_output(expected_output)
 
         comp2.run(
-            inputs={A: range(6)},
+            inputs={A: [[0], [1], [2], [3], [4], [5]]},
             scheduler_processing=sched,
             termination_processing=termination_conds
         )
@@ -117,7 +117,7 @@ class TestScheduler:
         termination_conds[TimeScale.TRIAL] = AfterNPasses(1)
         eid = uuid.uuid4()
         comp.run(
-            inputs={A: range(6)},
+            inputs={A: [[0], [1], [2], [3], [4], [5]]},
             scheduler_processing=sched,
             termination_processing=termination_conds,
             execution_id=eid,
@@ -131,7 +131,7 @@ class TestScheduler:
         assert output == pytest.helpers.setify_expected_output(expected_output)
 
         comp.run(
-            inputs={A: range(6)},
+            inputs={A: [[0], [1], [2], [3], [4], [5]]},
             scheduler_processing=sched,
             termination_processing=termination_conds,
             execution_id=eid,
@@ -146,7 +146,7 @@ class TestScheduler:
 
         eid2 = uuid.uuid4()
         comp.run(
-            inputs={A: range(6)},
+            inputs={A: [[0], [1], [2], [3], [4], [5]]},
             scheduler_processing=sched,
             termination_processing=termination_conds,
             execution_id=eid2,
@@ -345,7 +345,7 @@ class TestLinear:
         termination_conds[TimeScale.RUN] = AfterNTrials(2)
         termination_conds[TimeScale.TRIAL] = AfterNCalls(C, 3)
         comp.run(
-                inputs={A: range(6)},
+                inputs={A: [[0], [1], [2], [3], [4], [5]]},
                 scheduler_processing=sched,
                 termination_processing=termination_conds
         )

@@ -377,7 +377,7 @@ class TestCondition:
             termination_conds[TimeScale.RUN] = AfterNTrials(5)
             termination_conds[TimeScale.TRIAL] = AtPass(1)
             comp.run(
-                inputs={A: range(6)},
+                inputs={A: [[0], [1], [2], [3], [4], [5]]},
                 scheduler_processing=sched,
                 termination_processing=termination_conds
             )
@@ -398,7 +398,7 @@ class TestCondition:
             termination_conds[TimeScale.RUN] = AtTrial(4)
             termination_conds[TimeScale.TRIAL] = AtPass(1)
             comp.run(
-                inputs={A: range(6)},
+                inputs={A: [[0], [1], [2], [3], [4], [5]]},
                 scheduler_processing=sched,
                 termination_processing=termination_conds
             )
@@ -419,7 +419,7 @@ class TestCondition:
             termination_conds[TimeScale.RUN] = AfterTrial(4)
             termination_conds[TimeScale.TRIAL] = AtPass(1)
             comp.run(
-                inputs={A: range(6)},
+                inputs={A: [[0], [1], [2], [3], [4], [5]]},
                 scheduler_processing=sched,
                 termination_processing=termination_conds
             )
