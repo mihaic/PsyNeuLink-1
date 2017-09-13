@@ -10,6 +10,8 @@ from PsyNeuLink.Components.Mechanisms.Mechanism import mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.IntegratorMechanism import IntegratorMechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.RecurrentTransferMechanism import RecurrentTransferMechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
+from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningMechanism import LearningMechanism
+from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism import ComparatorMechanism
 from PsyNeuLink.Components.Process import process
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.States.InputState import InputState
@@ -2562,3 +2564,130 @@ class TestInputSpecifications:
             num_trials=5
         )
         assert 125 == output[0][0]
+
+
+class TestInputSpecifications:
+
+    def test_2_mechanisms_default_input_1(self):
+        comp = Composition()
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp._analyze_graph()
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            scheduler_processing=sched
+        )
+        assert 25 == output[0][0]
+
+    def test_3_origins(self):
+        comp = Composition()
+        I1 = InputState(
+                        name="Input State 1",
+                        reference_value=[0]
+        )
+        I2 = InputState(
+                        name="Input State 2",
+                        reference_value=[0]
+        )
+        A = TransferMechanism(
+                            name="A",
+                            default_variable=[[0], [0]],
+                            input_states=[I1, I2],
+                            function=Linear(slope=1.0)
+        )
+        B = TransferMechanism(
+                            name="B",
+                            default_variable=[0,0],
+                            function=Linear(slope=1.0))
+        C = TransferMechanism(
+                            name="C",
+                            default_variable=[0, 0, 0],
+                            function=Linear(slope=1.0))
+        D = TransferMechanism(
+                            name="D",
+                            default_variable=[0],
+                            function=Linear(slope=1.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=D), D)
+        comp.add_projection(B, MappingProjection(sender=B, receiver=D), D)
+        comp.add_projection(C, MappingProjection(sender=C, receiver=D), D)
+        comp._analyze_graph()
+        inputs = {A: {I1: [[0],[1],[2]],
+                      I2: [[0],[1],[2]]},
+                  B: [[0,0], [1,1], [2,2]],
+                  C: [[0,0,0], [1,1,1], [2,2,2]]
+
+        }
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs,
+            scheduler_processing=sched
+        )
+        assert 12 == output[0][0]
+
+    def test_2_mechanisms_input_5(self):
+        comp = Composition()
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp._analyze_graph()
+        inputs_dict = {A: [[5]]}
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched
+        )
+        assert 125 == output[0][0]
+
+    def test_run_2_mechanisms_reuse_input(self):
+        comp = Composition()
+        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(function=Linear(slope=5.0))
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
+        comp._analyze_graph()
+        inputs_dict = {A: [[5]]}
+        sched = Scheduler(composition=comp)
+        output = comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            num_trials=5
+        )
+        assert 125 == output[0][0]
+
+class TestLearning:
+
+    def test_single_layer_learning(self):
+
+        from PsyNeuLink.Composition import MechanismRole
+        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningAuxilliary import ACTIVATION_INPUT
+        comp = Composition()
+
+        originMech = TransferMechanism(function=Linear(slope=1.0))
+        terminalMech = TransferMechanism(function=Linear(slope=1.0))
+        targetMech = ComparatorMechanism()
+        comp._add_mechanism_role(targetMech, MechanismRole.TARGET)
+        learningMech = LearningMechanism()
+
+        comp.add_mechanism(originMech)
+        comp.add_mechanism(terminalMech)
+        comp.add_mechanism(targetMech)
+        comp.add_mechanism(learningMech)
+
+        primaryLearnedProjection = MappingProjection(sender=originMech, receiver=terminalMech)
+        activationProjection = MappingProjection(sender=originMech, receiver=learningMech.input_states[ACTIVATION_INPUT])
+
+        comp.add_projection(originMech, primaryLearnedProjection, terminalMech)
+        comp.add_projection((originMech, activationProjection, learningMech))
+
+        # assert 16 == output[0][0]
+
