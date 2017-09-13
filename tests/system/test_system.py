@@ -123,7 +123,7 @@ class TestGraphAndInput:
             initial_values={a: [1, 1]},
         )
 
-        inputs = {a: [2, 2]}
+        inputs = {a: [[2, 2]]}
         s.run(inputs)
 
         assert {a} == s.get_mechanisms_by_role(MechanismRole.ORIGIN)

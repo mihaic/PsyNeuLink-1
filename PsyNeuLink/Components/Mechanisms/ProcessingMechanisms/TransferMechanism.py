@@ -666,7 +666,6 @@ class TransferMechanism(ProcessingMechanism_Base):
                                                              )
 
         elif time_scale is TimeScale.TRIAL:
-            print("VARIABLE  = ", variable)
             noise = self._try_execute_param(self.noise, variable)
             # formerly: current_input = self.input_state.value + noise
             # (MODIFIED 7/13/17 CW) this if/else below is hacky: just allows a nicer error message

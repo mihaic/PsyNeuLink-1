@@ -507,13 +507,13 @@ class TestRecurrentTransferMechanismInProcess:
             size=3,
             function=Linear)
         p = process(size=4, pathway=[R, T], prefs=TestRecurrentTransferMechanismInSystem.simple_prefs)
-        p.run(inputs={R:[[1, 2, 3, 4]]})
+        p.run(inputs={R: [[1, 2, 3, 4]]})
         assert (R.value.tolist() == [[1., 2., 3., 4.]])
         assert (T.value.tolist() == [[10., 10., 10.]])
-        p.run(inputs={R:[[5, 6, 7, 8]]})
+        p.run(inputs={R: [[5, 6, 7, 8]]})
         assert (R.value.tolist() == [[-4, -2, 0, 2]])
         assert (T.value.tolist() == [[-4, -4, -4]])
-        p.run(inputs={R:[[-1, 2, -2, 5.5]]})
+        p.run(inputs={R: [[-1, 2, -2, 5.5]]})
         assert (R.value.tolist() == [[-1.0, 4.0, 2.0, 11.5]])
         assert (T.value.tolist() == [[16.5, 16.5, 16.5]])
 
@@ -527,7 +527,7 @@ class TestRecurrentTransferMechanismInProcess:
             function=Linear)
         p = process(size=4, pathway=[T, R], prefs=TestRecurrentTransferMechanismInSystem.simple_prefs)
         R.matrix = [[2, 0, 1, 3]] * 4
-        p.run(inputs={T:[[1, 2, 3, 4]]})
+        p.run(inputs={T: [[1, 2, 3, 4]]})
         assert(T.value.tolist() == [[1, 2, 3, 4]])
         assert(R.value.tolist() == [[1, 2, 3, 4]])
         p.run(inputs = {T: [[1, 3, 2, 5]]})
@@ -546,7 +546,7 @@ class TestRecurrentTransferMechanismInProcess:
             function=Linear)
         p = process(size=4, pathway=[T, R], prefs=TestRecurrentTransferMechanismInSystem.simple_prefs)
         R.recurrent_projection.matrix = [[2, 0, 1, 3]] * 4
-        p.run(inputs = {T:[[1, 2, 3, 4]]})
+        p.run(inputs = {T: [[1, 2, 3, 4]]})
         assert(T.value.tolist() == [[1, 2, 3, 4]])
         assert(R.value.tolist() == [[1, 2, 3, 4]])
         p.run(inputs = {T: [[1, 3, 2, 5]]})
