@@ -602,7 +602,7 @@ class TestRecurrentTransferMechanismInSystem:
         assert (R.value.tolist() == [[-4, -2, 0, 2]])
         assert (T.value.tolist() == [[-4, -4, -4]])
         R.recurrent_projection.auto = [1, 1, 2, 4]
-        s.run(inputs={R: [12, 11, 10, 9]})
+        s.run(inputs={R: [[12, 11, 10, 9]]})
         assert (R.value.tolist() == [[8, 11, 14, 23]])
         assert (T.value.tolist() == [[56, 56, 56]])
 
