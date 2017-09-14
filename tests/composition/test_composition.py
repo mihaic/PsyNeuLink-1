@@ -2669,25 +2669,94 @@ class TestLearning:
     def test_single_layer_learning(self):
 
         from PsyNeuLink.Composition import MechanismRole
-        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningAuxilliary import ACTIVATION_INPUT
+        from PsyNeuLink.Globals.Keywords import SAMPLE, NAME, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, TARGET, LEARNING_MECHANISM
+        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningAuxilliary \
+            import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL
+        from PsyNeuLink.Components.Functions.Function import Reinforcement
+        from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection
+
+
         comp = Composition()
 
-        originMech = TransferMechanism(function=Linear(slope=1.0))
-        terminalMech = TransferMechanism(function=Linear(slope=1.0))
-        targetMech = ComparatorMechanism()
-        comp._add_mechanism_role(targetMech, MechanismRole.TARGET)
-        learningMech = LearningMechanism()
+        inputSourceMech = TransferMechanism(name="inputSourceMech",
+                                       function=Linear(slope=1.0))
+        outputSourceMech = TransferMechanism(name="outputSourceMech",
+                                         function=Linear(slope=1.0))
 
-        comp.add_mechanism(originMech)
-        comp.add_mechanism(terminalMech)
+        primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
+                                                     receiver=outputSourceMech)
+
+
+        # ** Variables used by multiple learning components **
+        activation_input = np.zeros_like(inputSourceMech.value)
+        activation_output = np.zeros_like(outputSourceMech.value)
+        error_signal = np.zeros_like(outputSourceMech.output_state.value)
+        learning_rate = 0.05
+        # activation_function = []
+        context = "testing"
+        # ----------------------------------------------------
+
+
+        targetMech = ComparatorMechanism(sample=outputSourceMech.output_state,
+                                                      target=TARGET,
+                                                      input_states=[{NAME:SAMPLE,
+                                                                     VARIABLE: outputSourceMech.output_state.value,
+                                                                     WEIGHT:-1
+                                                                     },
+                                                                    {NAME:TARGET,
+                                                                     VARIABLE: outputSourceMech.output_state.value,
+                                                                     # WEIGHT:1
+                                                                     }],
+                                                      name="{} {}".format(outputSourceMech.name,
+                                                                          COMPARATOR_MECHANISM),
+                                                      context=context)
+
+        comp._add_mechanism_role(targetMech, MechanismRole.TARGET)
+
+        learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate))
+        learningMech = LearningMechanism(variable=[activation_input,
+                                                     activation_output,
+                                                   error_signal],
+                                         error_source=targetMech,
+                                         function=Reinforcement(
+                                             default_variable=[activation_input, activation_output, error_signal],
+                                         activation_function=outputSourceMech.function_object,
+                                         learning_rate=learning_rate),
+
+                                         learning_signals=[learningProj],
+                                         name = primaryLearnedProjection + " " +LEARNING_MECHANISM,
+                                         context=context)
+
+        comp.add_mechanism(inputSourceMech)
+        comp.add_mechanism(outputSourceMech)
         comp.add_mechanism(targetMech)
         comp.add_mechanism(learningMech)
 
-        primaryLearnedProjection = MappingProjection(sender=originMech, receiver=terminalMech)
-        activationProjection = MappingProjection(sender=originMech, receiver=learningMech.input_states[ACTIVATION_INPUT])
+        # input projection is handled by stimulus_CIM
 
-        comp.add_projection(originMech, primaryLearnedProjection, terminalMech)
-        comp.add_projection((originMech, activationProjection, learningMech))
+        activationInputProjection = MappingProjection(sender=inputSourceMech,
+                                                      receiver=learningMech.input_states[ACTIVATION_INPUT])
+        activationOutputProjection = MappingProjection(sender=outputSourceMech,
+                                                       receiver=learningMech.input_states[ACTIVATION_OUTPUT])
+        sampleProjection = MappingProjection(sender=outputSourceMech,
+                                             receiver=targetMech.input_states[SAMPLE])
+        # Target projection is handled by target_CIM
 
-        # assert 16 == output[0][0]
+        errorProjection = MappingProjection(sender=targetMech.output_states[ERROR_SIGNAL],
+                                            receiver=learningMech.input_states[ERROR_SIGNAL])
+
+        comp.add_projection(inputSourceMech, primaryLearnedProjection, outputSourceMech)
+        comp.add_projection(inputSourceMech, activationInputProjection, learningMech)
+        comp.add_projection(outputSourceMech, activationOutputProjection, learningMech)
+        comp.add_projection(outputSourceMech, sampleProjection, targetMech)
+        comp.add_projection(targetMech, errorProjection, learningMech)
+
+        sched = Scheduler(composition=comp)
+        stimulus_dict = {inputSourceMech: [[1]]}
+        output = comp.run(
+            inputs=stimulus_dict,
+            scheduler_processing=sched,
+        )
+
+        print(output)
 
