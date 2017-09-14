@@ -2669,7 +2669,7 @@ class TestLearning:
     def test_single_layer_learning(self):
 
         from PsyNeuLink.Composition import MechanismRole
-        from PsyNeuLink.Globals.Keywords import SAMPLE, NAME, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, TARGET, LEARNING_MECHANISM
+        from PsyNeuLink.Globals.Keywords import SAMPLE, NAME, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, TARGET, LEARNING_MECHANISM, MATRIX
         from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningAuxilliary \
             import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL
         from PsyNeuLink.Components.Functions.Function import Reinforcement
@@ -2679,18 +2679,25 @@ class TestLearning:
         comp = Composition()
 
         inputSourceMech = TransferMechanism(name="inputSourceMech",
-                                       function=Linear(slope=1.0))
+                                            default_variable= [0],
+                                            function=Linear(slope=1.0))
         outputSourceMech = TransferMechanism(name="outputSourceMech",
-                                         function=Linear(slope=1.0))
+                                             default_variable=[0],
+                                             function=Linear(slope=1.0))
 
         primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
-                                                     receiver=outputSourceMech)
+                                                     receiver=outputSourceMech,
+                                                     matrix=[1],
+                                                     name="primary_learned_projection")
 
 
         # ** Variables used by multiple learning components **
-        activation_input = np.zeros_like(inputSourceMech.value)
-        activation_output = np.zeros_like(outputSourceMech.value)
+        activation_input = [np.zeros_like(inputSourceMech.value)]
+        print(activation_input, " = activation_input")
+        activation_output = [np.zeros_like(outputSourceMech.value)]
+        print(activation_output, " = activation_output")
         error_signal = np.zeros_like(outputSourceMech.output_state.value)
+        print(error_signal, " = error_signal")
         learning_rate = 0.05
         # activation_function = []
         context = "testing"
@@ -2711,12 +2718,10 @@ class TestLearning:
                                                                           COMPARATOR_MECHANISM),
                                                       context=context)
 
-        comp._add_mechanism_role(targetMech, MechanismRole.TARGET)
 
-        learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate))
-        learningMech = LearningMechanism(variable=[activation_input,
-                                                     activation_output,
-                                                   error_signal],
+        learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate), receiver =primaryLearnedProjection._parameter_states[MATRIX])
+        learningProj.receiver = primaryLearnedProjection._parameter_states[MATRIX]
+        learningMech = LearningMechanism(variable=[[0], [0], [0]],
                                          error_source=targetMech,
                                          function=Reinforcement(
                                              default_variable=[activation_input, activation_output, error_signal],
@@ -2724,14 +2729,16 @@ class TestLearning:
                                          learning_rate=learning_rate),
 
                                          learning_signals=[learningProj],
-                                         name = primaryLearnedProjection + " " +LEARNING_MECHANISM,
+                                         name = primaryLearnedProjection.name + " " +LEARNING_MECHANISM,
                                          context=context)
 
+        # learningProj.sender = learningMech
         comp.add_mechanism(inputSourceMech)
         comp.add_mechanism(outputSourceMech)
         comp.add_mechanism(targetMech)
         comp.add_mechanism(learningMech)
 
+        comp._add_mechanism_role(targetMech, MechanismRole.TARGET)
         # input projection is handled by stimulus_CIM
 
         activationInputProjection = MappingProjection(sender=inputSourceMech,
