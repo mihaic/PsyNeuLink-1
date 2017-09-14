@@ -7,10 +7,11 @@ import pytest
 
 from PsyNeuLink.Components.Functions.Function import Linear, SimpleIntegrator
 from PsyNeuLink.Components.Mechanisms.Mechanism import mechanism
-from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms import IntegratorMechanism
+from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.IntegratorMechanism import IntegratorMechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
-from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningMechanism import LearningMechanism
-from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism import ComparatorMechanism
+from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningMechanism import LearningMechanism
+from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism import ComparatorMechanism
+from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.TransferMechanisms.RecurrentTransferMechanism import RecurrentTransferMechanism
 from PsyNeuLink.Components.Process import process
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.States.InputState import InputState
@@ -2147,7 +2148,7 @@ class TestCompositionInterface:
         )
 
         projections_to_A = []
-        expected_projections_to_A = [("(OutputState RESULT)", "(InputState Default_InputStat)")]
+        expected_projections_to_A = [("(OutputState RESULT)", "(InputState Default_InputState)")]
         for input_state in A.input_states:
             for p_a in input_state.path_afferents:
                 projections_to_A.append((str(p_a.sender), str(p_a.receiver)))
@@ -2459,8 +2460,8 @@ class TestInputStateSpecifications:
 
         assert 2. == A.input_states[0].value
         assert 4. == A.input_states[1].value
-        assert "Default_InputStat-1" == A.input_states[0].name
-        assert "Default_InputStat-2" == A.input_states[1].name
+        assert "Default_InputState-1" == A.input_states[0].name
+        assert "Default_InputState-2" == A.input_states[1].name
         assert 2. == A.variable[0]
         assert 4. == A.variable[1]
 
@@ -2669,7 +2670,7 @@ class TestLearning:
 
         from PsyNeuLink.Composition import MechanismRole
         from PsyNeuLink.Globals.Keywords import SAMPLE, NAME, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, TARGET, LEARNING_MECHANISM, MATRIX
-        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningAuxilliary \
+        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningAuxilliary \
             import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL
         from PsyNeuLink.Components.Functions.Function import Reinforcement
         from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection
@@ -2718,7 +2719,8 @@ class TestLearning:
                                                       context=context)
 
 
-        learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate), receiver =primaryLearnedProjection._parameter_states[MATRIX])
+        learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate),
+                                          receiver =primaryLearnedProjection._parameter_states[MATRIX])
         learningProj.receiver = primaryLearnedProjection._parameter_states[MATRIX]
         learningMech = LearningMechanism(variable=[[0], [0], [0]],
                                          error_source=targetMech,

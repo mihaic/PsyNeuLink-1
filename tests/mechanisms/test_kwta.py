@@ -450,7 +450,7 @@ class TestKWTAAverageBased:
         )
         p = process(pathway=[K], prefs=TestKWTAAverageBased.simple_prefs)
         s = system(processes=[p], prefs=TestKWTAAverageBased.simple_prefs)
-        kwta_input = {K: [1, 2, 3, 4]}
+        kwta_input = {K: [[1, 2, 3, 4]]}
         s.run(inputs=kwta_input)
         assert K.value.tolist() == [[-1.5, -0.5, 0.5, 1.5]]
 
@@ -465,7 +465,7 @@ class TestKWTAAverageBased:
         )
         p = process(pathway=[K], prefs=TestKWTAAverageBased.simple_prefs)
         s = system(processes=[p], prefs=TestKWTAAverageBased.simple_prefs)
-        kwta_input = {K: [1, 2, 3, 4]}
+        kwta_input = {K: [[1, 2, 3, 4]]}
         s.run(inputs=kwta_input)
         assert K.value.tolist() == [[-2, -1, 0, 1]]
 
@@ -481,7 +481,7 @@ class TestKWTAAverageBased:
         )
         p = process(pathway=[K], prefs=TestKWTAAverageBased.simple_prefs)
         s = system(processes=[p], prefs=TestKWTAAverageBased.simple_prefs)
-        kwta_input = {K: [1, 2, 3, 4]}
+        kwta_input = {K: [[1, 2, 3, 4]]}
         s.run(inputs=kwta_input)
         assert K.value.tolist() == [[-2.6, -1.6, -0.6000000000000001, 0.3999999999999999]]
 
@@ -497,6 +497,6 @@ class TestKWTAAverageBased:
         )
         p = process(pathway=[K], prefs=TestKWTAAverageBased.simple_prefs)
         s = system(processes=[p], prefs=TestKWTAAverageBased.simple_prefs)
-        kwta_input = {K: [1, 2, 3, 4]}
+        kwta_input = {K: [[1, 2, 3, 4]]}
         s.run(inputs=kwta_input)
         assert K.value.tolist() == [[-1.4, -0.3999999999999999, 0.6000000000000001, 1.6]]
