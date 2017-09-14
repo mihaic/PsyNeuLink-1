@@ -852,7 +852,7 @@ class Composition(object):
         # is stored -- the point is that if an input is not supplied for an origin mechanism, the mechanism should use
         # its default variable value
         for mech in origins.difference(set(current_mechanisms)):
-            self.stimulus_CIM_output_states[mech.input_state].value = mech.variableInstanceDefault
+            self.stimulus_CIM_output_states[mech.input_state].value = mech.instance_defaults.variable
 
     def _assign_values_to_target_CIM_output_states(self, targets):
         for mech in targets:
