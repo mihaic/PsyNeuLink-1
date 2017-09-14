@@ -3,7 +3,6 @@ import profile
 from PsyNeuLink.Components.Mechanisms.IntegratorMechanism import *
 from PsyNeuLink.Components.Mechanisms.LinearMechanism import *
 
-from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.DDM import *
 from PsyNeuLink.Components.Process import Process_Base
 from PsyNeuLink.Components.System import System_Base
 from PsyNeuLink.Globals.Keywords import *
@@ -64,14 +63,14 @@ def run():
     # Present stimulus:
     CentralClock.time_step = 0
     mySystem.execute([[0.5],[0]])
-    print ('\n{0}\n{1}'.format(mySystem.terminalMechanisms.outputStateNames,
-                               mySystem.terminalMechanisms.outputStateValues))
+    print ('\n{0}\n{1}'.format(mySystem.terminal_mechanisms.outputStateNames,
+                               mySystem.terminal_mechanisms.outputStateValues))
 
     # Present feedback:
     CentralClock.time_step = 1
     mySystem.execute([[0],[1]])
-    print ('\n{0}\n{1}'.format(mySystem.terminalMechanisms.outputStateNames,
-                               mySystem.terminalMechanisms.outputStateValues))
+    print ('\n{0}\n{1}'.format(mySystem.terminal_mechanisms.outputStateNames,
+                               mySystem.terminal_mechanisms.outputStateValues))
 
     #endregion
 

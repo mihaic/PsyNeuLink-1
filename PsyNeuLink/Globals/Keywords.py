@@ -17,7 +17,7 @@
 #  The attributes of each are assigned to constants (listed in the next section of this module)
 #    that are the ones actually used by the code.
 
-class Keywords:
+class MechanismRoles:
     """
     Attributes
     ----------
@@ -26,7 +26,7 @@ class Keywords:
         A `ProcessingMechanism <ProcessingMechanism>` that is the first Mechanism of a `Process` and/or `System`,
         and that receives the input to the Process or System when it is :ref:`executed or run <Run>`.  A Process may
         have only one `ORIGIN` Mechanism, but a System may have many.  Note that the `ORIGIN`
-        Mechanism of a Process is not necessarily an `ORIGIN` of the System to which it belongs, as it may receiver
+        Mechanism of a Process is not necessarily an `ORIGIN` of the System to which it belongs, as it may receive
         `Projections <Projection>` from other Processes in the System. The `ORIGIN` Mechanisms of a Process or
         System are listed in its :keyword:`origin_mechanisms` attribute, and can be displayed using its :keyword:`show`
         method.  For additional details about `ORIGIN` Mechanisms in Processes, see
@@ -38,16 +38,16 @@ class Keywords:
         A `ProcessingMechanism <ProcessingMechanism>` that is not designated as having any other status.
 
     CYCLE
-        A `ProcessingMechanism <ProcessingMechanism>` that is *not* an `ORIGIN` Mechanism, and receives a `Projection`
-        that closes a recurrent loop in a `Process` and/or `System`.  If it is an `ORIGIN` Mechanism, then it is simply
-        designated as such (since it will be assigned input and therefore be initialized in any event).
+        A `ProcessingMechanism <ProcessingMechanism>` that is *not* an `ORIGIN` Mechanism, and receives a `Projection
+        <Projection>` that closes a recurrent loop in a `Process` and/or `System`.  If it is an `ORIGIN` Mechanism, then
+        it is simply designated as such (since it will be assigned input and therefore be initialized in any event).
 
     INITIALIZE_CYCLE
         A `ProcessingMechanism <ProcessingMechanism>` that is the `sender <Projection.Projection.sender>` of a
-        `Projection` that closes a loop in a `Process` or `System`, and that is not an `ORIGIN` Mechanism (since in
-        that case it will be initialized in any event). An `initial value  <Run_InitialValues>` can be assigned to such
-        Mechanisms, that will be used to initialize the Process or System when it is first run.  For additional
-        information, see `Run <Run_Initial_Values>`, `System Mechanisms <System_Mechanisms>` and
+        `Projection <Projection>` that closes a loop in a `Process` or `System`, and that is not an `ORIGIN` Mechanism
+        (since in that case it will be initialized in any event). An `initial value  <Run_InitialValues>` can be
+        assigned to such Mechanisms, that will be used to initialize the Process or System when it is first run.  For
+        additional information, see `Run <Run_Initial_Values>`, `System Mechanisms <System_Mechanisms>` and
         `System Input and Initialization <System_Execution_Input_And_Initialization>`.
 
     TERMINAL
@@ -55,14 +55,15 @@ class Keywords:
         that provides the output to the Process or System when it is `executed or run <Run>`.  A Process may
         have only one `TERMINAL` Mechanism, but a System may have many.  Note that the `TERMINAL`
         Mechanism of a process is not necessarily a `TERMINAL` Mechanism of the System to which it belongs,
-        as it may send projections to other processes in the System.  The `TERMINAL` Mechanisms of a Process
-        or System are listed in its :keyword:`terminalMechanisms` attribute, and can be displayed using its
-        :keyword:`show` method.  For additional details about `TERMINAL` Mechanisms in Processes, see
-        `Process_Mechanisms` and `Process_Input_And_Output`; and for Systems see `System_Mechanisms`.
+        as it may send projections to other processes in the System (see `example
+        <LearningProjection_Target_vs_Terminal_Figure>`).  The `TERMINAL` Mechanisms of a Process or System are listed in
+        its :keyword:`terminalMechanisms` attribute, and can be displayed using its :keyword:`show` method.  For
+        additional details about `TERMINAL` Mechanisms in Processes, see `Process_Mechanisms` and
+        `Process_Input_And_Output`; and for Systems see `System_Mechanisms`.
 
     SINGLETON
-        A `ProcessingMechanism` that is the only Mechanism in a `Process` and/or `System`.  It can serve the
-        functions of an `ORIGIN` and/or a `TERMINAL` Mechanism.
+        A `ProcessingMechanism <ProcessingMechanism>` that is the only Mechanism in a `Process` and/or `System`.
+        It can serve the functions of an `ORIGIN` and/or a `TERMINAL` Mechanism.
 
     LEARNING
         A `LearningMechanism <LearningMechanism>` in a `Process` and/or `System`.
@@ -94,11 +95,11 @@ class MatrixKeywords:
     ----------
 
     IDENTITY_MATRIX
-        a square matrix of 1's along the diagnoal, 0's elsewhere; this requires that the length of the sender and 
+        a square matrix of 1's along the diagnoal, 0's elsewhere; this requires that the length of the sender and
         receiver values are the same.
 
     HOLLOW_MATRIX
-        a square matrix of 0's along the diagnoal, 1's elsewhere; this requires that the length of the sender and 
+        a square matrix of 0's along the diagnoal, 1's elsewhere; this requires that the length of the sender and
         receiver values are the same.
 
     FULL_CONNECTIVITY_MATRIX
@@ -177,7 +178,8 @@ SEPARATOR_BAR = ' | '
 kwProgressBarChar = '.'
 # kwValueSuffix = '_value'
 NO_CONTEXT = "NO_CONTEXT"
-INITIALIZING = " INITIALIZING "  # Used as context for Log
+INITIALIZING = " INITIALIZING "  # Used as status and context for Log
+INITIALIZED = " INITIALIZED "  # Used as status
 kwInstantiate = " INSTANTIATING "  # Used as context for Log
 EXECUTING = " EXECUTING " # Used in context for Log and ReportOutput pref
 kwAssign = '| Assign' # Used in context for Log
@@ -265,7 +267,7 @@ FUNCTION = "function" # Param name for function, method, or type to instantiate 
 FUNCTION_PARAMS  = "function_params" # Params used to instantiate or assign to a FUNCTION
 
 PARAM_CLASS_DEFAULTS = "paramClassDefaults"        # "Factory" default params for a Function
-PARAM_INSTANCE_DEFAULTS = "paramsInstanceDefaults" # Params used to instantiate a Function; supercede paramClassDefaults
+PARAM_INSTANCE_DEFAULTS = "paramInstanceDefaults" # Params used to instantiate a Function; supercede paramClassDefaults
 PARAMS_CURRENT = "paramsCurrent"                  # Params currently in effect for an instance of a Function
                                                    #    in general, this includes params specifed as arg in a
                                                    #    to Function.execute;  however, there are some exceptions
@@ -325,12 +327,12 @@ LEARNING_FUNCTION_TYPE = 'LEARNING FUNCTION TYPE'
 
 # Component SUBTYPES -----------------
 
-# ControlMechanisms:
+# ControlMechanism:
 DEFAULT_CONTROL_MECHANISM = "DefaultControlMechanism"
 EVC_MECHANISM = "EVCMechanism"
 
 # ObjectiveMechanisms:
-OBJECTIVE_MECHANISM = "ObjectiveMechanism"
+OBJECTIVE_MECHANISM_OBJECT = "ObjectiveMechanism"
 COMPARATOR_MECHANISM = "ComparatorMechanism"
 
 # ProcessingMechanisms:
@@ -355,6 +357,7 @@ INTEGRATOR_FUNCTION = "Integrator Function"
 SIMPLE_INTEGRATOR_FUNCTION = "SimpleIntegrator Function"
 CONSTANT_INTEGRATOR_FUNCTION = "ConstantIntegrator Function"
 ACCUMULATOR_INTEGRATOR_FUNCTION = "AccumulatorIntegrator Function"
+FHN_INTEGRATOR_FUNCTION = "FHNIntegrator Function"
 ACCUMULATOR_INTEGRATOR = "AccumulatorIntegrator"  # (7/19/17 CW) added for MappingProjection.py
 ADAPTIVE_INTEGRATOR_FUNCTION = "AdaptiveIntegrator Function"
 DRIFT_DIFFUSION_INTEGRATOR_FUNCTION = "DriftDiffusionIntegrator Function"
@@ -485,7 +488,7 @@ kwInitialPoint = 'initial_point'
 MODULATION = 'modulation'
 
 # ControlMechanism / EVCMechanism
-MAKE_DEFAULT_CONTROLLER = "make_default_controller"
+OBJECTIVE_MECHANISM = "objective_mechanism"
 MONITOR_FOR_CONTROL = "monitor_for_control"
 PREDICTION_MECHANISM = "Prediction Mechanism"
 PREDICTION_MECHANISM_TYPE = "prediction_mechanism_type"

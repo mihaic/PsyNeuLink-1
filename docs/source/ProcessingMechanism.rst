@@ -1,5 +1,5 @@
-Processing Mechanism
-====================
+Processing Mechanisms
+=====================
 
 .. _ProcessingMechanism_Subtypes:
 
@@ -8,12 +8,7 @@ Processing Mechanism
 
    TransferMechanism
    IntegratorMechanism
-   DDM
-   RecurrentTransferMechanism
-   LCA
-   KWTA
    ObjectiveMechanism
-   ComparatorMechanism
 
 .. automodule:: ProcessingMechanisms.ProcessingMechanism
    :members:

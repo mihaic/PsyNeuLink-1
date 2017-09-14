@@ -1,11 +1,6 @@
 EVCMechanism
 ============
 
-.. toctree::
-   :maxdepth: 1
-
-   EVCAuxiliary
-
-.. automodule:: AdaptiveMechanisms.ControlMechanisms.EVCMechanism
+.. automodule:: Library.Mechanisms.AdaptiveMechanisms.ControlMechanisms.EVC.EVCMechanism
    :members:
-   :exclude-members: random, LinearCombination
+   :exclude-members: random, LinearCombination, Linear

@@ -1,5 +1,4 @@
 # GLOBALS:
-from PsyNeuLink.Globals.Keywords import *
 
 # MECHANISMS:
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.IntegratorMechanism import IntegratorMechanism
@@ -7,9 +6,17 @@ from PsyNeuLink.Globals.Keywords import *
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.DDM import *
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.LCA import LCA, LCA_OUTPUT
 
+from PsyNeuLink.Components.System import system
+from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.ObjectiveMechanism import ObjectiveMechanism
+from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanism.ControlMechanism import ControlMechanism_Base
+from PsyNeuLink.Library.Mechanisms.AdaptiveMechanisms.ControlMechanisms.EVC.EVCMechanism import EVCMechanism
+from PsyNeuLink.Components.Functions.Function import Logistic, Linear, LinearCombination
+from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.IntegratorMechanisms.DDM import DDM, DDM_OUTPUT, \
+    DECISION_VARIABLE,RESPONSE_TIME, PROBABILITY_UPPER_THRESHOLD
+from PsyNeuLink.Globals.Keywords import GAIN, THRESHOLD, SUM, PRODUCT, CONTROL, IDENTITY_MATRIX, RESULT, MEAN, VARIANCE
+
 # COMPOSITIONS:
 from PsyNeuLink.Components.Process import process
-from PsyNeuLink.Components.System import system
 
 
 # FUNCTIONS:
@@ -20,13 +27,8 @@ from PsyNeuLink.Components.System import system
 # from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection
 # from PsyNeuLink.Components.Projections.ModulatoryProjections.ControlProjection import ControldProjection
 # from PsyNeuLink.Components.States.ParameterState import ParameterState, PARAMETER_STATE_PARAMS
+from PsyNeuLink.Components.Functions.Function import BogaczEtAl
 
-class ScratchPadError(Exception):
-    def __init__(self, error_value):
-        self.error_value = error_value
-
-# ----------------------------------------------- PsyNeuLink -----------------------------------------------------------
-#
 
 class ScratchPadError(Exception):
     def __init__(self, error_value):
@@ -38,11 +40,6 @@ class ScratchPadError(Exception):
 #region USER GUIDE
 # from PsyNeuLink.Components.Process import process, Process_Base
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
-from PsyNeuLink.Components.Functions.Function import Logistic
-from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
-from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.DDM import DDM
-import numpy as np
-
 
 #region SIMPLE NN EXAMPLE:
 
@@ -381,8 +378,8 @@ import numpy as np
 #region TEST Modulation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import *
-# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanisms.ControlMechanism import ControlMechanism_Base
-# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanisms.EVCMechanism import EVCMechanism
+# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanism.ControlMechanism import ControlMechanism_Base
+# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanism.EVCMechanism import EVCMechanism
 # from PsyNeuLink.Components.States.ModulatorySignals.ControlSignal import ControlSignal
 # from PsyNeuLink.Components.Projections.ModulatoryProjections.ControlProjection import ControlProjection
 # from PsyNeuLink.Components.Functions.Function import *
@@ -432,7 +429,7 @@ import numpy as np
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import *
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism \
 #     import ComparatorMechanism
-# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanisms.LearningMechanism \
+# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningMechanism \
 #     import LearningMechanism
 # from PsyNeuLink.Components.Functions.Function import *
 # from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import *
@@ -657,28 +654,231 @@ import numpy as np
 #
 #endregion
 
+# #region TEST SYSTEM (test_system) @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# print("TEST SYSTEM test_system")
+#
+# a = TransferMechanism(name='a', default_variable=[0, 0])
+# b = TransferMechanism(name='b')
+# c = TransferMechanism(name='c')
+# d = TransferMechanism(name='d')
+#
+# p1 = process(pathway=[a, b, c], name='p1')
+# p2 = process(pathway=[a, b, d], name='p2')
+#
+# s = system(
+#     processes=[p1, p2],
+#     name='Branch System',
+#     initial_values={a: [1, 1]},
+# )
+#
+# inputs = {a: [2, 2]}
+# s.run(inputs)
+# #endregion
 
-#region TEST SYSTEM (test_system) @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-print("TEST SYSTEM test_system")
+# #region TEST MULTIPLE LEARNING SEQUENCES IN A PROCESS @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# print("TEST MULTIPLE LEARNING SEQUENCES IN A PROCESS")
+#
+# a = TransferMechanism(name='a', default_variable=[0, 0])
+# b = TransferMechanism(name='b')
+# c = TransferMechanism(name='c')
+# d = TransferMechanism(name='d')
+#
+# p1 = process(pathway=[a,
+#                       # MappingProjection(matrix=(RANDOM_CONNECTIVITY_MATRIX, LEARNING),
+#                       #                   name="MP-1"),
+#                       b,
+#                       c,
+#                       # MappingProjection(matrix=(RANDOM_CONNECTIVITY_MATRIX, LEARNING_PROJECTION),
+#                       #                   name="MP-2"),
+#                       d],
+#              # learning=LEARNING,
+#              name='p1')
+#
+# # s = system(
+# #     processes=[p1],
+# #     name='Double Learning System',
+# #     # initial_values={a: [1, 1]},
+# # )
+#
+# # inputs = {a: [2, 2]}
+# # s.run(inputs)
+# # s.show_graph(show_learning=True)
+#
+# inputs = {a: [2, 2]}
+# TEST = p1.execute(input=[2,2])
+# # p1.run(inputs)
+# TEST=True
+#
+# #endregion
 
-a = TransferMechanism(name='a', default_variable=[0, 0])
-b = TransferMechanism(name='b')
-c = TransferMechanism(name='c')
-d = TransferMechanism(name='d')
+# #region TEST ControlMechanism and ObjectiveMechanism EXAMPLES @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# print("TEST ControlMechanism and ObjectiveMechanism EXAMPLES")
 
-p1 = process(pathway=[a, b, c], name='p1')
-p2 = process(pathway=[a, b, d], name='p2')
+# my_transfer_mech_A = TransferMechanism()
+# my_DDM = DDM()
+# my_transfer_mech_B = TransferMechanism(function=Logistic)
+#
+# my_control_mech = ControlMechanism_Base(
+#                          objective_mechanism=ObjectiveMechanism(monitored_values=[(my_transfer_mech_A, 2, 1),
+#                                                                                   my_DDM.output_states[
+#                                                                                       my_DDM.RESPONSE_TIME]],
+#                                                                 function=LinearCombination(operation=SUM)),
+#                          control_signals=[(THRESHOLD, my_DDM),
+#                                           (GAIN, my_transfer_mech_B)])
 
-s = system(
-    processes=[p1, p2],
-    name='Branch System',
-    initial_values={a: [1, 1]},
+
+# my_control_mech = ControlMechanism_Base(objective_mechanism=[(my_transfer_mech_A, 2, 1),
+#                                                     my_DDM.output_states[my_DDM.RESPONSE_TIME]],
+#                                function=LinearCombination(operation=SUM),
+#                                control_signals=[(THRESHOLD, my_DDM),
+#                                                 (GAIN, my_transfer_mech_2)])
+
+# my_control_mech = ControlMechanism_Base(
+#                         objective_mechanism=[(my_transfer_mech_A, 2, 1),
+#                                              my_DDM.output_states[my_DDM.RESPONSE_TIME]],
+#                         control_signals=[(THRESHOLD, my_DDM),
+#                                          (GAIN, my_transfer_mech_B)])
+
+
+# my_obj_mech=ObjectiveMechanism(monitored_values=[(my_transfer_mech_A, 2, 1),
+#                                                  my_DDM.output_states[my_DDM.RESPONSE_TIME]],
+#                                function=LinearCombination(operation=PRODUCT))
+#
+# my_control_mech = ControlMechanism_Base(
+#                         objective_mechanism=my_obj_mech,
+#                         control_signals=[(THRESHOLD, my_DDM),
+#                                          (GAIN, my_transfer_mech_B)])
+
+# # Mechanisms:
+# Input = TransferMechanism(name='Input')
+# Decision = DDM(function=BogaczEtAl(drift_rate=(1.0, CONTROL),
+#                                    threshold=(1.0, CONTROL),
+#                                    noise=0.5,
+#                                    starting_point=0,
+#                                    t0=0.45),
+#                output_states=[DECISION_VARIABLE,
+#                               RESPONSE_TIME,
+#                               PROBABILITY_UPPER_THRESHOLD],
+#                name='Decision')
+# Reward = TransferMechanism(output_states=[RESULT, MEAN, VARIANCE],
+#                            name='Reward')
+#
+# # Processes:
+# TaskExecutionProcess = process(
+#     default_variable=[0],
+#     pathway=[Input, IDENTITY_MATRIX, Decision],
+#     name = 'TaskExecutionProcess')
+# RewardProcess = process(
+#     default_variable=[0],
+#     pathway=[Reward],
+#     name = 'RewardProcess')
+#
+# # System:
+# mySystem = system(processes=[TaskExecutionProcess, RewardProcess],
+#                   controller=EVCMechanism(objective_mechanism=ObjectiveMechanism(monitored_values=[
+#                                                      Reward,
+#                                                      Decision.output_states[Decision.PROBABILITY_UPPER_THRESHOLD],
+#                                                      (Decision.output_states[Decision.RESPONSE_TIME], -1, 1)])))
+#
+# TEST = True
+
+
+
+
+
+
+
+from PsyNeuLink.Scheduling.Scheduler import Scheduler
+from PsyNeuLink.Components.Projections.ModulatoryProjections.ControlProjection import ControlProjection
+
+Color_Input = TransferMechanism(name='Color Input', function=Linear(slope=0.2995))
+Word_Input = TransferMechanism(name='Word Input', function=Linear(slope=0.2995))
+
+# Processing Mechanisms (Control)
+Color_Hidden = TransferMechanism(
+    name='Colors Hidden',
+    function=Logistic(gain=(1.0, ControlProjection)),
+)
+Word_Hidden = TransferMechanism(
+    name='Words Hidden',
+    function=Logistic(gain=(1.0, ControlProjection)),
+)
+Output = TransferMechanism(
+    name='Output',
+    function=Logistic(gain=(1.0, ControlProjection)),
 )
 
-inputs = {a: [2, 2]}
-s.run(inputs)
+# Decision Mechanisms
+Decision = DDM(
+    function=BogaczEtAl(
+        drift_rate=(1.0),
+        threshold=(0.1654),
+        noise=(0.5),
+        starting_point=(0),
+        t0=0.25,
+    ),
+    name='Decision',
+)
+# Outcome Mechanisms:
+Reward = TransferMechanism(name='Reward')
+
+# Processes:
+ColorNamingProcess = process(
+    default_variable=[0],
+    pathway=[Color_Input, Color_Hidden, Output, Decision],
+    name='Color Naming Process',
+)
+
+WordReadingProcess = process(
+    default_variable=[0],
+    pathway=[Word_Input, Word_Hidden, Output, Decision],
+    name='Word Reading Process',
+)
+
+RewardProcess = process(
+    default_variable=[0],
+    pathway=[Reward],
+    name='RewardProcess',
+)
+
+# System:
+mySystem = system(
+    processes=[ColorNamingProcess, WordReadingProcess, RewardProcess],
+    controller=EVCMechanism,
+    enable_controller=True,
+    # monitor_for_control=[Reward, (PROBABILITY_UPPER_THRESHOLD, 1, -1)],
+    name='EVC Gratton System',
+)
+
+sched = Scheduler(system=mySystem)
+
+integrator_ColorInputPrediction = mySystem.execution_list[7]
+integrator_RewardPrediction = mySystem.execution_list[8]
+integrator_WordInputPrediction = mySystem.execution_list[9]
+objective_EVC_mech = mySystem.execution_list[10]
+
+expected_consideration_queue = [
+    {Color_Input, Word_Input, Reward, integrator_ColorInputPrediction, integrator_WordInputPrediction, integrator_RewardPrediction},
+    {Color_Hidden, Word_Hidden},
+    {Output},
+    {Decision},
+    {objective_EVC_mech},
+]
+
+assert sched.consideration_queue == expected_consideration_queue
 
 
+
+
+
+
+
+
+
+
+
+
+# endregion
 
 #region TEST INPUT FORMATS
 
@@ -1345,7 +1545,7 @@ s.run(inputs)
 #     # It is NOT a MonitoredOutputStatesOption specification, so assume it is a list of Mechanisms or States
 #     else:
 #         # for item in target_set[MONITOR_FOR_CONTROL]:
-#         #     self._validate_monitored_state(item, context=context)
+#         #     self._validate_monitored_state_in_system(item, context=context)
 #         # Insure that number of weights specified in WEIGHTS functionParams equals the number of monitored states
 #         print ('Validated monitored states')
 #         try:
@@ -2448,9 +2648,9 @@ s.run(inputs)
 
 # print("TEST parse_gated_state_spec")
 #
-# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.GatingMechanisms.GatingMechanism import _parse_gating_signal_spec
-# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.GatingMechanisms.GatingSignal import GatingSignal
-# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.GatingMechanisms.GatingMechanism import GatingMechanism
+# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.GatingMechanism.GatingMechanism import _parse_gating_signal_spec
+# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.GatingMechanism.GatingSignal import GatingSignal
+# from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.GatingMechanism.GatingMechanism import GatingMechanism
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.DDM import DDM
 # from PsyNeuLink.Components.Functions.Function import ModulationParam
 # from PsyNeuLink.Components.States.OutputState import OutputState
@@ -3037,6 +3237,3 @@ s.run(inputs)
 # #end
 
 # exit()
-
-
-

@@ -28,7 +28,7 @@ can reference any Component or its attributes in PsyNeuLink, thus providing cons
     Any Component that is part of a collection `specified to a Scheduler for execution <Scheduler_Creation>` can be
     associated with a Condition.  Most commonly, these are `Mechanisms <Mechanism>`.  However, in some circumstances
     `Projections <Projection>` can be included in the specification to a Scheduler (e.g., for
-    `learning <Process_Learning>`) in which case these can also be assigned Conditions.
+    `learning <Process_Learning_Sequence>`) in which case these can also be assigned Conditions.
 
 
 
@@ -45,9 +45,8 @@ Pre-specified Conditions
 `Pre-specified Conditions <Condition_Pre-Specified_List>` can be instantiated and added to a `Scheduler` at any time,
 and take effect immediately for the execution of that Scheduler. Most pre-specified Conditions have one or more
 arguments that must be specified to achieve the desired behavior. Many Conditions are also associated with an
-`owner <Condition.owner>` attribute (a `Component` to which the Condition belongs). `Scheduler`\ s maintain the data
-used to test for satisfaction of Condition, independent in different `execution_id` contexts. The Scheduler is generally
-responsible for ensuring that Conditions have access to the necessary data.
+`owner <Condition.owner>` attribute (a `Component <Component>` to which the Condition belongs), and a
+`scheduler <Condition.scheduler>` attribute (that maintains data used to test for satisfaction of the Condition).
 When pre-specified Conditions are instantiated within a call to the `add` method of a `Scheduler` or `ConditionSet`,
 the Condition's `owner <Condition.owner>` is determined through
 context and assigned automatically, as in the following example::
@@ -125,12 +124,12 @@ List of Pre-specified Conditions
 
 **Generic Conditions** (used to construct `custom Conditions <Condition_Custom>`):
 
-    * `While`\ (func, *args, **kwargs)
+    * `While`\\ (func, *args, **kwargs)
       \
       satisfied whenever the specified function (or callable) called with args and/or kwargs evaluates to `True`. \
       Equivalent to `Condition(func, *args, **kwargs)`
 
-    * `WhileNot`\ (func, *args, **kwargs)
+    * `WhileNot`\\ (func, *args, **kwargs)
       \
       satisfied whenever the specified function (or callable) called with args and/or kwargs evaluates to `False`. \
       Equivalent to `Not(Condition(func, *args, **kwargs))`
@@ -152,19 +151,19 @@ List of Pre-specified Conditions
 
 **Composite Conditions** (based on one or more other Conditions):
 
-    * `All`\ (*Conditions)
+    * `All`\\ (*Conditions)
       \
       satisfied whenever all of the specified Conditions are satisfied.
 
-    * `Any`\ (*Conditions)
+    * `Any`\\ (*Conditions)
       \
       satisfied whenever any of the specified Conditions are satisfied.
 
-    * `Not`\ (Condition)
+    * `Not`\\ (Condition)
       \
       satisfied whenever the specified Condition is not satisfied.
 
-    * `NWhen`\ (Condition, int)
+    * `NWhen`\\ (Condition, int)
       \
       satisfied the first specified number of times the specified Condition is satisfied.
 
@@ -174,41 +173,41 @@ List of Pre-specified Conditions
 **Time-Based Conditions** (based on the count of units of time at a specified `TimeScale`):
 
 
-    * `BeforePass`\ (int[, TimeScale])
+    * `BeforePass`\\ (int[, TimeScale])
       \
       satisfied any time before the specified `PASS` occurs.
 
-    * `AtPass`\ (int[, TimeScale])
+    * `AtPass`\\ (int[, TimeScale])
       \
       satisfied only during the specified `PASS`.
 
-    * `AfterPass`\ (int[, TimeScale])
+    * `AfterPass`\\ (int[, TimeScale])
       \
       satisfied any time after the specified `PASS` has occurred.
 
-    * `AfterNPasses`\ (int[, TimeScale])
+    * `AfterNPasses`\\ (int[, TimeScale])
       \
-      satisfied when or any time after the specified number of `PASS`\es has occurred.
+      satisfied when or any time after the specified number of `PASS`\\es has occurred.
 
-    * `EveryNPasses`\ (int[, TimeScale])
+    * `EveryNPasses`\\ (int[, TimeScale])
       \
-      satisfied every time the specified number of `PASS`\ es occurs.
+      satisfied every time the specified number of `PASS`\\ es occurs.
 
-    * `BeforeTrial`\ (int[, TimeScale])
+    * `BeforeTrial`\\ (int[, TimeScale])
       \
       satisfied any time before the specified `TRIAL` occurs.
 
-    * `AtTrial`\ (int[, TimeScale])
+    * `AtTrial`\\ (int[, TimeScale])
       \
       satisfied any time during the specified `TRIAL`.
 
-    * `AfterTrial`\ (int[, TimeScale])
+    * `AfterTrial`\\ (int[, TimeScale])
       \
       satisfied any time after the specified `TRIAL` occurs.
 
-    * `AfterNTrials`\ (int[, TimeScale])
+    * `AfterNTrials`\\ (int[, TimeScale])
       \
-      satisfied any time after the specified number of `TRIAL`\s has occurred.
+      satisfied any time after the specified number of `TRIAL`\\s has occurred.
 
 
 .. _Conditions_Component_Based:
@@ -216,49 +215,49 @@ List of Pre-specified Conditions
 **Component-Based Conditions** (based on the execution or state of other Components):
 
 
-    * `BeforeNCalls`\ (Component, int[, TimeScale])
+    * `BeforeNCalls`\\ (Component, int[, TimeScale])
       \
       satisfied any time before the specified Component has executed the specified number of times.
 
-    * `AtNCalls`\ (Component, int[, TimeScale])
+    * `AtNCalls`\\ (Component, int[, TimeScale])
       \
       satisfied when the specified Component has executed the specified number of times.
 
-    * `AfterCall`\ (Component, int[, TimeScale])
+    * `AfterCall`\\ (Component, int[, TimeScale])
       \
       satisfied any time after the Component has executed the specified number of times.
 
-    * `AfterNCalls`\ (Component, int[, TimeScale])
+    * `AfterNCalls`\\ (Component, int[, TimeScale])
       \
       satisfied when or any time after the Component has executed the specified number of times.
 
-    * `AfterNCallsCombined`\ (*Components, int[, TimeScale])
+    * `AfterNCallsCombined`\\ (*Components, int[, TimeScale])
       \
       satisfied when or any time after the specified Components have executed the specified number \
       of times among themselves, in total.
 
-    * `EveryNCalls`\ (Component, int[, TimeScale])
+    * `EveryNCalls`\\ (Component, int[, TimeScale])
       \
       satisfied when the specified Component has executed the specified number of times since the \
       last time `owner` has run.
 
-    * `JustRan`\ (Component)
+    * `JustRan`\\ (Component)
       \
       satisfied if the specified Component was assigned to run in the previous `TIME_STEP`.
 
-    * `AllHaveRun`\ (*Components)
+    * `AllHaveRun`\\ (*Components)
       \
       satisfied when all of the specified Components have executed at least once.
 
-    * `WhenFinished`\ (Component)
+    * `WhenFinished`\\ (Component)
       \
       satisfied when the specified Component has set its `is_finished` attribute to `True`.
 
-    * `WhenFinishedAny`\ (*Components)
+    * `WhenFinishedAny`\\ (*Components)
       \
       satisfied when any of the specified Components has set their `is_finished` attribute to `True`.
 
-    * `WhenFinishedAll`\ (*Components)
+    * `WhenFinishedAll`\\ (*Components)
       \
       satisfied when all of the specified Components have set their `is_finished` attributes to `True`.
 
@@ -298,20 +297,31 @@ class ConditionError(Exception):
 
 
 class ConditionSet(object):
-    """Used in conjunction with a `Scheduler` to store the `Conditions <Condition>` associated with a `Component`.
+    """Used in conjunction with a `Scheduler` to store the `Conditions <Condition>` associated with a `Component
+    <Component>`.
 
     Arguments
     ---------
 
-    conditions : dict{`Component`: `Condition`}
+
+    scheduler : Scheduler
+        specifies the `Scheduler` used to evaluate and maintain a record of the information required to
+        evaluate the `Conditions <Condition>`
+
+    conditions : dict{`Component <Component>`: `Condition`}
+
         specifies an iterable collection of `Components <Component>` and the `Conditions <Condition>` associated
         with each.
 
     Attributes
     ----------
 
-    conditions : dict{`Component`: `Condition`}
-        the key of each entry is a `Component`, and its value is the `Condition <Condition>` associated
+    scheduler : Scheduler
+        specifies the `Scheduler` used to evaluate and maintain a record of the information required to
+        evaluate the `Conditions <Condition>`
+
+    conditions : dict{`Component <Component>`: `Condition`}
+        the key of each entry is a `Component <Component>`, and its value is the `Condition <Condition>` associated
         with that Component.  Conditions can be added to the
         ConditionSet using the ConditionSet's `add_condition` method.
 
@@ -347,9 +357,9 @@ class ConditionSet(object):
         Arguments
         ---------
 
-        condition_set : `ConditionSet`
-            specifies another ConditionSet that will be merged to this one. Any conflicts are resolved in favor of the new
-            **condition_set**
+        conditions : dict{`Component <Component>`: `Condition`}
+            specifies an iterable collection of Conditions to be added to the ConditionSet, in the form of a dict
+            each entry of which maps a `Component <Component>` (the key) to a `Condition <Condition>` (the value).
 
         """
         for owner in condition_set.conditions:
@@ -358,7 +368,7 @@ class ConditionSet(object):
 
 class Condition(object):
     """
-    Used in conjunction with a `Scheduler` to specify the condition under which a `Component` should be
+    Used in conjunction with a `Scheduler` to specify the condition under which a `Component <Component>` should be
     allowed to execute.
 
     Arguments
@@ -377,7 +387,7 @@ class Condition(object):
     ----------
 
     owner (Component):
-        the `Component` with which the Condition is associated, and the execution of which it determines.
+        the `Component <Component>` with which the Condition is associated, and the execution of which it determines.
 
     """
     def __init__(self, func, *args, **kwargs):
@@ -660,11 +670,11 @@ class BeforePass(Condition):
 
         n(int): the 'PASS' before which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\ es (default: TimeScale.TRIAL)
+        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\\ es (default: TimeScale.TRIAL)
 
     Satisfied when:
 
-        - at most n-1 `PASS`\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
+        - at most n-1 `PASS`\\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
 
     Notes:
 
@@ -697,17 +707,17 @@ class AtPass(Condition):
 
         n(int): the `PASS` at which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\ es (default: TimeScale.TRIAL)
+        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\\ es (default: TimeScale.TRIAL)
 
     Satisfied when:
 
-        - exactly n `PASS`\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
+        - exactly n `PASS`\\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
 
     Notes:
 
         - Counts of TimeScales are zero-indexed (that is, the first 'PASS' is pass 0, the second 'PASS' is 1, etc.);
           so, `AtPass(1)` is satisfied when a single `PASS` (`PASS` 0) has occurred, and `AtPass(2) is satisfied
-          when two `PASS`\ es have occurred (`PASS` 0 and `PASS` 1), etc..
+          when two `PASS`\\ es have occurred (`PASS` 0 and `PASS` 1), etc..
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
@@ -735,16 +745,16 @@ class AfterPass(Condition):
 
         n(int): the `PASS` after which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\ es (default: TimeScale.TRIAL)
+        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\\ es (default: TimeScale.TRIAL)
 
     Satisfied when:
 
-        - at least n+1 `PASS`\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
+        - at least n+1 `PASS`\\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
 
     Notes:
 
         - Counts of TimeScales are zero-indexed (that is, the first `PASS` is 0, the second `PASS` is 1, etc.); so,
-          `AfterPass(1)` is satisfied after `PASS` 1 has occurred and thereafter (i.e., in `PASS`\ es 2, 3, 4, etc.).
+          `AfterPass(1)` is satisfied after `PASS` 1 has occurred and thereafter (i.e., in `PASS`\\ es 2, 3, 4, etc.).
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
@@ -770,14 +780,14 @@ class AfterNPasses(Condition):
 
     Parameters:
 
-        n(int): the number of `PASS`\ es after which the Condition is satisfied
+        n(int): the number of `PASS`\\ es after which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\ es (default: TimeScale.TRIAL)
+        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\\ es (default: TimeScale.TRIAL)
 
 
     Satisfied when:
 
-        - at least n `PASS`\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
+        - at least n `PASS`\\ es have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
 
     """
     def __init__(self, n, time_scale=TimeScale.TRIAL):
@@ -805,13 +815,13 @@ class EveryNPasses(Condition):
 
         n(int): the frequency of passes with which this condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\ es (default: TimeScale.TRIAL)
+        time_scale(TimeScale): the TimeScale used as basis for counting `PASS`\\ es (default: TimeScale.TRIAL)
 
     Satisfied when:
 
         - `PASS` 0
 
-        - the specified number of `PASS`\ es that has occurred within a unit of time (at the `TimeScale` specified by
+        - the specified number of `PASS`\\ es that has occurred within a unit of time (at the `TimeScale` specified by
           **time_scale**) is evenly divisible by n.
 
     """
@@ -840,11 +850,11 @@ class BeforeTrial(Condition):
 
         n(int): the `TRIAL` before which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\ s (default: TimeScale.RUN)
+        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\\ s (default: TimeScale.RUN)
 
     Satisfied when:
 
-        - at most n-1 `TRIAL`\ s have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
+        - at most n-1 `TRIAL`\\ s have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
 
     Notes:
 
@@ -877,11 +887,11 @@ class AtTrial(Condition):
 
         n(int): the `TRIAL` at which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\ s (default: TimeScale.RUN)
+        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\\ s (default: TimeScale.RUN)
 
     Satisfied when:
 
-        - exactly n `TRIAL`\ s have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
+        - exactly n `TRIAL`\\ s have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
 
     Notes:
 
@@ -914,16 +924,16 @@ class AfterTrial(Condition):
 
         n(int): the `TRIAL` after which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\ s. (default: TimeScale.RUN)
+        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\\ s. (default: TimeScale.RUN)
 
     Satisfied when:
 
-        - at least n+1 `TRIAL`\ s have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
+        - at least n+1 `TRIAL`\\ s have occurred within one unit of time at the `TimeScale` specified by **time_scale**.
 
     Notes:
 
         - Counts of TimeScales are zero-indexed (that is, the first `TRIAL` is 0, the second `TRIAL` is 1, etc.);
-          so,  `AfterPass(1)` is satisfied after `TRIAL` 1 has occurred and thereafter (i.e., in `TRIAL`\ s 2, 3, 4,
+          so,  `AfterPass(1)` is satisfied after `TRIAL` 1 has occurred and thereafter (i.e., in `TRIAL`\\ s 2, 3, 4,
           etc.).
 
     """
@@ -950,13 +960,13 @@ class AfterNTrials(Condition):
 
     Parameters:
 
-        n(int): the number of `TRIAL`\ s after which the Condition is satisfied
+        n(int): the number of `TRIAL`\\ s after which the Condition is satisfied
 
-        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\ s (default: TimeScale.RUN)
+        time_scale(TimeScale): the TimeScale used as basis for counting `TRIAL`\\ s (default: TimeScale.RUN)
 
     Satisfied when:
 
-        - at least n `TRIAL`\ s have occured  within one unit of time at the `TimeScale` specified by **time_scale**.
+        - at least n `TRIAL`\\ s have occured  within one unit of time at the `TimeScale` specified by **time_scale**.
 
     """
     def __init__(self, n, time_scale=TimeScale.RUN):

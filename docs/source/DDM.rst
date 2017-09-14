@@ -1,11 +1,6 @@
 DDM
 ===
 
-.. toctree::
-   :maxdepth: 3
-
-   ProcessingMechanisms.DDM
-
-.. automodule:: ProcessingMechanisms.DDM
+.. automodule:: Library.Mechanisms.ProcessingMechanisms.IntegratorMechanisms.DDM
    :members:
    :exclude-members: random

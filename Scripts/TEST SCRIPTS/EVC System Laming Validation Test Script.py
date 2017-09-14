@@ -1,16 +1,15 @@
 # from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.Deprecated.LinearMechanism import *
-from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.ControlMechanisms.EVCMechanism import EVCMechanism
-from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.DDM import *
+
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import *
 from PsyNeuLink.Components.Process import process
 from PsyNeuLink.Components.Projections.ModulatoryProjections.ControlProjection import ControlProjection
-from PsyNeuLink.Components.States.ModulatorySignals.ControlSignal import ControlSignal
 from PsyNeuLink.Components.System import system
 from PsyNeuLink.Globals.Keywords import *
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import *
-from PsyNeuLink.Scheduling.Condition import AfterNCalls
+from PsyNeuLink.Library.Mechanisms.AdaptiveMechanisms.ControlMechanisms.EVC.EVCMechanism import EVCMechanism
+from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.IntegratorMechanisms.DDM import *
+from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.ObjectiveMechanism import ObjectiveMechanism
 
-import random
 random.seed(0)
 np.random.seed(0)
 
@@ -28,7 +27,7 @@ process_prefs = ComponentPreferenceSet(reportOutput_pref=PreferenceEntry(False,P
 Input = TransferMechanism(name='Input')
 
 Reward = TransferMechanism(name='Reward',
-                 # params={MONITOR_FOR_CONTROL:[PROBABILITY_UPPER_THRESHOLD,(RESPONSE_TIME, -1, 1)]}
+                           # params={MONITOR_FOR_CONTROL:[PROBABILITY_UPPER_THRESHOLD,(RESPONSE_TIME, -1, 1)]},
                            output_states=[RESULT, MEAN, VARIANCE]
                   )
 
@@ -92,16 +91,49 @@ RewardProcess = process(
 
 # System:
 mySystem = system(processes=[TaskExecutionProcess, RewardProcess],
-                  controller=EVCMechanism,
-                  # controller=EVCMechanism(monitor_for_control=[Reward,
-                  #                                              Decision.PROBABILITY_UPPER_THRESHOLD,
-                  #                                              Decision.RESPONSE_TIME],
-                  #                         outcome_function=LinearCombination(exponents=[1, 1, -1])),
+
+                  # # WORKS:
+                  # controller=EVCMechanism,
+                  # monitor_for_control=[
+                  #     Reward,
+                  #     PROBABILITY_UPPER_THRESHOLD,
+                  #     (RESPONSE_TIME, 1, -1)],
+
+                  # # WORKS:
+                  # controller=EVCMechanism,
+                  # monitor_for_control=[
+                  #     Reward,
+                  #     {MECHANISM: Decision,
+                  #      OUTPUT_STATES: [PROBABILITY_UPPER_THRESHOLD,
+                  #                      (RESPONSE_TIME, 1, -1)]}],
+
+                  # # # WORKS:
+                  # controller=EVCMechanism(objective_mechanism=[
+                  #                                    Reward,
+                  #                                    Decision.output_states[PROBABILITY_UPPER_THRESHOLD],
+                  #                                    (Decision.output_states[RESPONSE_TIME], 1, -1)]),
+
+                  # # WORKS:
+                  controller=EVCMechanism(objective_mechanism=ObjectiveMechanism(monitored_values=[
+                                                     Reward,
+                                                     Decision.output_states[PROBABILITY_UPPER_THRESHOLD],
+                                                     (Decision.output_states[RESPONSE_TIME], -1, 1)])),
+
+                  # # # WORKS:
+                  # controller=EVCMechanism(objective_mechanism=[Reward,
+                  #                                              {MECHANISM: Decision,
+                  #                                               OUTPUT_STATES: [PROBABILITY_UPPER_THRESHOLD,
+                  #                                                               (RESPONSE_TIME, 1, -1)]}]),
+
+                  # # DOESN'T WORK SINCE Decision.XXX IS A STRING and name can't be resolved by ControlMechanism
+                  # controller=EVCMechanism(objective_mechanism=[Reward,
+                  #                                              PROBABILITY_UPPER_THRESHOLD,
+                  #                                              (RESPONSE_TIME, -1, 1)]),
+
                   enable_controller=True,
-                  monitor_for_control=[Reward,
-                                       Decision.PROBABILITY_UPPER_THRESHOLD,
-                                       (Decision.RESPONSE_TIME, 1, -1)],
+
                   # monitor_for_control=[Input, PROBABILITY_UPPER_THRESHOLD,(RESPONSE_TIME, -1, 1)],
+
                   # monitor_for_control=[MonitoredOutputStatesOption.ALL_OUTPUT_STATES],
                   name='EVC Test System')
 

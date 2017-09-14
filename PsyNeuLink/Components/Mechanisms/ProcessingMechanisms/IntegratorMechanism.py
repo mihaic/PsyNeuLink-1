@@ -92,12 +92,11 @@ class IntegratorMechanism(ProcessingMechanism_Base):
     default_variable=None,                               \
     size=None,                                              \
     function=AdaptiveIntegrator(rate=0.5), \
-    time_scale=TimeScale.TRIAL,                             \
     params=None,                                            \
     name=None,                                              \
     prefs=None)
 
-    Subclass of `ProcessingMechanism` that integrates its input.
+    Subclass of `ProcessingMechanism <ProcessingMechanism>` that integrates its input.
 
     COMMENT:
         Description:
@@ -107,9 +106,8 @@ class IntegratorMechanism(ProcessingMechanism_Base):
             + componentType (str): SigmoidLayer
             + classPreference (PreferenceSet): SigmoidLayer_PreferenceSet, instantiated in __init__()
             + classPreferenceLevel (PreferenceLevel): PreferenceLevel.TYPE
-            + variableClassDefault (value):  SigmoidLayer_DEFAULT_BIAS
-            + paramClassDefaults (dict): {TIME_SCALE: TimeScale.TRIAL,
-                                          FUNCTION_PARAMS:{kwSigmoidLayer_Unitst: kwSigmoidLayer_NetInput
+            + ClassDefaults.variable (value):  SigmoidLayer_DEFAULT_BIAS
+            + paramClassDefaults (dict): {FUNCTION_PARAMS:{kwSigmoidLayer_Unitst: kwSigmoidLayer_NetInput
                                                                      kwSigmoidLayer_Gain: SigmoidLayer_DEFAULT_GAIN
                                                                      kwSigmoidLayer_Bias: SigmoidLayer_DEFAULT_BIAS}}
         Class methods:
@@ -139,10 +137,6 @@ class IntegratorMechanism(ProcessingMechanism_Base):
         specifies the function used to integrate the input.  Must take a single numeric value, or a list or np.array
         of values, and return one of the same form.
 
-    time_scale :  TimeScale : TimeScale.TRIAL
-        specifies whether the Mechanism is executed on the `TIME_STEP` or `TRIAL` time scale.
-        This must be set to `TimeScale.TIME_STEP` for the :keyword:`rate` parameter to have an effect.
-
     params : Optional[Dict[param keyword, param value]]
         a `parameter dictionary <ParameterState_Specification>` that can be used to specify the parameters for
         the Mechanism, parameters for its `function <IntegratorMechanism.function>`, and/or a custom function and its
@@ -163,9 +157,6 @@ class IntegratorMechanism(ProcessingMechanism_Base):
     ----------
     variable : value: default
         the input to Mechanism's ``function``.
-
-    time_scale :  TimeScale : defaultTimeScale.TRIAL
-        specifies whether the Mechanism is executed on the TIME_STEP or TRIAL time scale.
 
     name : str : default IntegratorMechanism-<index>
         the name of the Mechanism.
@@ -189,8 +180,9 @@ class IntegratorMechanism(ProcessingMechanism_Base):
         kwPreferenceSetName: 'IntegratorMechanismCustomClassPreferences',
         kpReportOutputPref: PreferenceEntry(True, PreferenceLevel.INSTANCE)}
 
-    # Sets template for variable (input)
-    variableClassDefault = [[0]]
+    class ClassDefaults(ProcessingMechanism_Base.ClassDefaults):
+        # Sets template for variable (input)
+        variable = [[0]]
 
     paramClassDefaults = Mechanism_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -215,10 +207,10 @@ class IntegratorMechanism(ProcessingMechanism_Base):
         """
 
         if default_variable is None and size is None:
-            default_variable = self.variableClassDefault
+            default_variable = self.ClassDefaults.variable
 
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
-        # self.variableClassDefault = default_variable or [[0]]
+        # self.ClassDefaults.variable = default_variable or [[0]]
         params = self._assign_args_to_param_dicts(function=function,
                                                   params=params)
 

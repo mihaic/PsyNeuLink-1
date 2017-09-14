@@ -56,7 +56,7 @@
 
 # TASKS:
 #  0) IMPLEMENT: Composition
-#       Assign projections for ObjectiveMechanisms, LearningMechanisms, ControlMechanisms, etc.
+#       Assign projections for ObjectiveMechanisms, LearningMechanism, ControlMechanism, etc.
 #       Validate that all items are in the same Composition
 #       add_projection_to and add_projection_from methods
 #       methods in LearningAuxilliary
@@ -404,8 +404,8 @@
 #             Note: multiple GatingProjections can be assigned to the same GatingSignal to achieve "divergent gating"
 #                   (that is, gating of many states with a single value -- e.g., LC)
 # DOCUMENTATION: revise LearningMechanism docstring to include output_state attribute, and describe situation with
-#                    (multiple possible) LearningSignal entries, their relatioship to learing_signal attribute, and
-#                    the ERROR_SIGNAL OutputState.
+#                    (multiple possible) LearningSignal entries, their relatioship to learning_signal attribute, and
+#                    the OUTCOME OutputState.
 # DOCUMENTATION: add output_states to attribute in docstring for ControlMechanism and GatingMechanism
 # DOCUMENTATION: add section on LearningSignals to LearningMechanism docstring:
 #                   note that default (and most common case) is for a single LearningSignal
@@ -608,7 +608,7 @@
 # FIX: DERIVATIVE FOR SoftMax Function
 
 # FIX: ADD owner ARG TO Function CONSTRUCTOR (DEFAULT = NONE)
-# FIX: SEARCH FOR AND PURGE: monitoringMechanism and monitoring_mechanism AND monitoring_mech
+# FIX: SEARCH FOR AND PURGE: monitoringMechanism and objective_mechanism AND monitoring_mech
 # FIX: GET STRAIGHT target, self.target, self.targets and self.current_targets IN Process AND System
 # FIX: GET STRAIGHT THE HANDLING OF learning_rate for:
 #                  LearningMechanism
@@ -618,7 +618,7 @@
 #                  System
 # IMPLEMENT: runtime_params FOR learning mechanisms in system (CURRENTLY ONLY SUPPORTS learning_rate);
 #            NEED TO IMPLEMENT SOME WAY OF SPECIFYING A LearningMechanism IN A mech_tuple,
-#            (SINCE LearningMechanisms ARE NOT CURRENTLY SPECIFIABLE IN A PROCESS' pathway ATTRIBUTE)
+#            (SINCE LearningMechanism ARE NOT CURRENTLY SPECIFIABLE IN A PROCESS' pathway ATTRIBUTE)
 #            [OR DOCUMENT THAT THIS IS NOT SUPPORTED]
 
 # IMPLEMENT:  MONITORED_OUTPUT_STATES param for Mechanism --
@@ -662,12 +662,13 @@
 #    3) For system vs. process learning:
 #           Figure out why calling update_state for the matrix ParameterState works,
 #                      but executing the LearningProjection to it does not
-#    4) ObjectiveMechanisms:  MODIFY TO:
-#                                d) Revise EVCMechanism._get_monitored_states() to NOT direclty assign weights
-#                                           and exponents, but rather assign
-#                                    (see RE-WRITE TO INDICATE:  (SEE ATTRIBUTE DESCRIPTION FOR monitored_values)
-#                                f) parse MonitoredOUtputStates specification for monitored_values arg
-#                                g) Fix EVC use of ObjectiveMechanism (needs to now call for Mapping Projection
+#    4) ObjectiveMechanisms:
+#              MODIFY TO:
+#                    d) Revise EVCMechanism._get_monitored_output_states_for_system() to NOT direclty assign weights
+#                               and exponents, but rather assign
+#                        (see RE-WRITE TO INDICATE:  (SEE ATTRIBUTE DESCRIPTION FOR monitored_values)
+#                    f) parse MonitoredOUtputStates specification for monitored_values arg
+#                    g) Fix EVC use of ObjectiveMechanism (needs to now call for Mapping Projection
 #     4.5): LearningMechanism:
 #              Name input_states using input_state_names (or create them explicitly using the values of variable?)
 #              Instantiate the MappingProjection from its ObjectiveMechanism
@@ -960,7 +961,7 @@
 
 # DOCUMENTATION: MOVE DESCRIPTION OF PARAMETER SPECIFICATION DICTIONARY FROM UNDER MECHANISM TO UNDER COMPONENT
 #                  AND ADJUST ALL REFERENCES OF THE FOLLOWING TYPE ACCORDINGLY:
-#                   (see :doc:`Mechanism` for specification of a parms dict)
+#                   (see :doc:`Mechanism <Mechanism>` for specification of a parms dict)
 # DOCUMENTATION:  NEED GENERAL INTRO, INCLUDING COMMENT ABOUT SPECIFYING ARGUMENTS/PARAMETERS:
 #                    FOR ARGUMENTS OF __init__ , THERE IS USUALLY AN ATTRIBUTE OF THE OBJECT THAT CAN BE ASSIGNED A
 #                    VALUE AFTER IT IS CREATED.  (PUT THIS WHEREVER PARAMS, PARAMSCURRENT, INSTANCE DEFAULTS ETC.
@@ -1168,7 +1169,7 @@
 #                   be in EVC mechanism rather than ControlProjection?
 #                   EVCMechanism makes more sense theoretically
 #                      e.g., seems better to talk about the cost of a control signal, rather than ControlProjection
-#                   Projection is easier to manage (as it is its own object, can be parameterized, etc.)
+#                   Projection is easier to manage (as it is its own object, can be parameterzed, etc.)
 #                   Maybe they should be assigned to OutputStates of the EVCMechanism?
 #
 # QUESTION: DDM:
@@ -2045,7 +2046,7 @@
 #     FIX: GET STRAIGHT process.value vs. system.output vs. system.oputputValue
 #     FIX: IMPLEMENT .output FOR Process:  == ndarray of all outputState.variables
 #                         # FIX: THESE NEED TO BE PROPERLY MAPPED
-#                         return np.array(list(item.value for item in self.lastMechanism.outputStates.values()))
+#                         return np.array(list(item.value for item in self.last_mechanism.outputStates.values()))
 #     FIX: CHECK FOR dtype == object (I.E., MIXED LENGTH ARRAYS) FOR BOTH VARIABLE AND VALUE REPRESENTATIONS OF MECHANISM)
 #     IMPLEMENT HIERARCHICAL SETTERS AND GETTERS FOR .value AND .metavalues;  USE THEM TO:
 #                                                                             - REPRESENT OUTPUT FORMAT OF function
@@ -2218,7 +2219,7 @@
 #                                   FLAG SOURCES OF FEEDBACK PROJECTIONS AS NEEDING THIS SPECIFIED
 #                                   INCLUDE KEYWORD "IGNORE" THAT MEANS DON'T USE THAT PROJECTION ON INITIALIZATION PASS
 #
-# FIX: System.mechanismList.mechanismNames
+# FIX: System.mechanismList.mechanism_names
 # FIX: MAKE SURE THIS IS OK (IN System):
 #                                 # MODIFIED 9/15/16 NEW:
 #                                 values.append(output_state.value)
@@ -2377,9 +2378,9 @@
 #
 # FIX: SOFT CLAMP and HARD CLAMP (for clamp_input option): convert SOFT_CLAMP and HARD_CLAMP to enums and test for them
 #
-# FIX: REPLACE Process.firstMechanism and Process.lastMechanism WITH ORIGIN AND TERMINAL mechanisms THROUGHOUT PROJECT
-# FIX: *** CHANGE process.firstMechanism -> process.origin
-# FIX: *** CHANGE process.lastMechanism -> process.terminal
+# FIX: REPLACE Process.first_mechanism and Process.last_mechanism WITH ORIGIN AND TERMINAL mechanisms THROUGHOUT PROJECT
+# FIX: *** CHANGE process.first_mechanism -> process.origin
+# FIX: *** CHANGE process.last_mechanism -> process.terminal
 #
 # FIX: add learning_mech_tuples and learningMechanisms
 #
@@ -2477,7 +2478,7 @@
 #                       (outputState or mech, MonitoredOutputStatesOptions, tuple(exp, weight))
 #     FIX: MAKE MONITOR_FOR_CONTROL A REQUIRED PARAM FOR System CLASS
 #          ALLOW IT TO BE:  MonitoredOutputStatesOption, Mechanism, OutputState or list containing any of those
-#     FIX: NEED TO SOMEHOW CALL _validate_monitored_state FOR MONITOR_FOR_CONTROL IN SYSTEM.params[]
+#     FIX: NEED TO SOMEHOW CALL _validate_monitored_state_in_system FOR MONITOR_FOR_CONTROL IN SYSTEM.params[]
 #     FIX: CALL _instantiate_monitored_output_states AFTER instantiate_prediction_mechanism (SO LATTER CAN BE MONITORED)
 #     FIX: QUESTION:  WHICH SHOULD HAVE PRECEDENCE FOR MONITOR_FOR_CONTROL default: System,Mechanism or ConrolMechanism?
 #     IMPLEMENT: EVCMechanism.MonitoredOutputStates (list of each Mechanism.outputState being monitored)
@@ -2684,20 +2685,8 @@
 # FIX: self.variable:
 #      - MAKE SURE self.variable IS CONSISTENT WITH 2D np.array OF values FOR MONITOR_FOR_CONTROL
 #
-# DOCUMENT:  protocol for assigning DefaultControlMechanism
-#           Initial assignment is to SystemDefaultCcontroller
-#           When any other ControlMechanism is instantiated, if params[MAKE_DEFAULT_CONTROLLER] = True
-#                then the class's _assign_as_controller() method
-#                     is called in _instantiate_attributes_after_function
-# it moves all ControlProjections from DefaultController to itself
-#
 # FIX: IN ControlProjection._instantiate_sender:
 # FIX 6/28/16:  IF CLASS IS ControlMechanism SHOULD ONLY IMPLEMENT ONCE;  THEREAFTER, SHOULD USE EXISTING ONE
-#
-# FIX: ControlMechanism._assign_as_controller() IS NOT FULLY DELETING DefaultController.outputStates
-#
-# FIX: PROBLEM - ControlMechanism._assign_as_controller()
-# FIX:           NOT SETTING efferents IN NEW CONTROLLER (e.g., EVC)
 #
 # SOLUTIONS:
 # 1) CLEANER: use _instantiate_sender on ControlProjection to instantiate both outputState and projection
@@ -2725,7 +2714,7 @@
 # FIX: OutputState:  value as arg and value as attribute are different and therefore confusing;
 #                    rename reference_value??
 # IMPLEMENT: full _instantiate_input_states capability per _instantiate_output_states (see ObjectiveMechanism):
-#                 ??include `senders` arg (and use version of _get_monitored_states in EVC)
+#                 ??include `senders` arg (and use version of _get_monitored_output_states_for_system() in EVC)
 # IMPLEMENT: OutputState.update: INCORPORATE paramModulationOperation HERE, AS PER PARAMETER STATE
 # IMPLEMENT: REPLACE INDEXING OF Mechanism.value by OUTPUTSTATES WITH NAMES OF ITEMS IN Mechanism.value
 # FIX: ``value`` should not be used as the name of the variable arg for states
@@ -3336,7 +3325,7 @@
 #
 #     Validate ObjectiveMechanism.monitor argument:
 #         Note: parsing/validation of monitored_output_states (in EVCMechanism._get_montiored_states) and
-#               monitor (in ObjectiveMechanism._validate_monitored_states) needs to be handled in a more principled way
+#               monitor (in ObjectiveMechanism._validate_monitored_state_in_system) needs to be handled in a more principled way
 #               either in their _validate_params method, or in class function
 #
 #     Make sure add_monitored_value works
@@ -3362,8 +3351,8 @@
 #endregion
 
 #region EVCMechanism -----------------------------------------------------------------------------------
-#     Validate that EVCMechanism.input_state matches outputState from EVCMechanism.monitoring_mechanism
-#     Allow it to take monitoring_mechanism as an argument
+#     Validate that EVCMechanism.input_state matches outputState from EVCMechanism.objective_mechanism
+#     Allow it to take objective_mechanism as an argument
 #           (in which case it must be validated, but then don't bother to instantiate ObjectiveMechanism)
 #     Make sure add_monitored_value works:
 #           Needs to call ObjectiveMechanism.add_monitored_value

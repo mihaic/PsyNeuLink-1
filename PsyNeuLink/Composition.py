@@ -31,6 +31,14 @@ Composition's add methods.  However, more commonly, a Composition is created usi
 subclasses:  `System` or `Process`.  These automatically create Compositions from lists of Components.  Once created,
 Components can be added or removed from an existing Composition using its add and/or remove methods.
 
+.. _Composition_Execution:
+
+Execution
+---------
+
+See `System <System_Execution>` or `Process <Process_Execution>` for documentation concerning execution of the
+corresponding subclass.
+
 .. _Composition_Class_Reference:
 
 Class Reference
@@ -63,31 +71,31 @@ class MechanismRole(Enum):
     """
 
     - ORIGIN
-        A `ProcessingMechanism <ProcessingMechanism>` that is the first Mechanism of a `Process` and/or `System`,
-        and that receives the input to the Process or System when it is :ref:`executed or run <Run>`.  A Process may
-        have only one `ORIGIN` Mechanism, but a System may have many.  Note that the `ORIGIN`
-        Mechanism of a Process is not necessarily an `ORIGIN` of the System to which it belongs, as it may receiver
-        `Projections <Projection>` from other Processes in the System. The `ORIGIN` Mechanisms of a Process or
-        System are listed in its :keyword:`origin_mechanisms` attribute, and can be displayed using its :keyword:`show`
-        method.  For additional details about `ORIGIN` Mechanisms in Processes, see
-        `Process Mechanisms <Process_Mechanisms>` and `Process Input and Output <Process_Input_And_Output>`;
-        and for Systems see `System Mechanisms <System_Mechanisms>` and
-        `System Input and Initialization <System_Execution_Input_And_Initialization>`.
+        A `ProcessingMechanism <ProcessingMechanism>` that is the first Mechanism of a `Process` and/or `System`, and
+        that receives the input to the Process or System when it is :ref:`executed or run <Run>`.  A Process may have
+        only one `ORIGIN` Mechanism, but a System may have many.  Note that the `ORIGIN` Mechanism of a Process is not
+        necessarily an `ORIGIN` of the System to which it belongs, as it may receive `Projections <Projection>` from
+        other Processes in the System (see `example <LearningProjection_Target_vs_Terminal_Figure>`). The `ORIGIN`
+        Mechanisms of a Process or System are listed in its :keyword:`origin_mechanisms` attribute, and can be displayed
+        using its :keyword:`show` method.  For additional details about `ORIGIN` Mechanisms in Processes, see `Process
+        Mechanisms <Process_Mechanisms>` and `Process Input and Output <Process_Input_And_Output>`; and for Systems see
+        `System Mechanisms <System_Mechanisms>` and `System Input and Initialization
+        <System_Execution_Input_And_Initialization>`.
 
     - INTERNAL
         A `ProcessingMechanism <ProcessingMechanism>` that is not designated as having any other status.
 
     - CYCLE
-        A `ProcessingMechanism <ProcessingMechanism>` that is *not* an `ORIGIN` Mechanism, and receives a `Projection`
-        that closes a recurrent loop in a `Process` and/or `System`.  If it is an `ORIGIN` Mechanism, then it is simply
-        designated as such (since it will be assigned input and therefore be initialized in any event).
+        A `ProcessingMechanism <ProcessingMechanism>` that is *not* an `ORIGIN` Mechanism, and receives a `Projection
+        <Projection>` that closes a recurrent loop in a `Process` and/or `System`.  If it is an `ORIGIN` Mechanism, then
+        it is simply designated as such (since it will be assigned input and therefore be initialized in any event).
 
     - INITIALIZE_CYCLE
         A `ProcessingMechanism <ProcessingMechanism>` that is the `sender <Projection.Projection.sender>` of a
-        `Projection` that closes a loop in a `Process` or `System`, and that is not an `ORIGIN` Mechanism (since in
-        that case it will be initialized in any event). An `initial value  <Run_InitialValues>` can be assigned to such
-        Mechanisms, that will be used to initialize the Process or System when it is first run.  For additional
-        information, see `Run <Run_Initial_Values>`, `System Mechanisms <System_Mechanisms>` and
+        `Projection <Projection>` that closes a loop in a `Process` or `System`, and that is not an `ORIGIN` Mechanism
+        (since in that case it will be initialized in any event). An `initial value  <Run_InitialValues>` can be
+        assigned to such Mechanisms, that will be used to initialize the Process or System when it is first run.  For
+        additional information, see `Run <Run_Initial_Values>`, `System Mechanisms <System_Mechanisms>` and
         `System Input and Initialization <System_Execution_Input_And_Initialization>`.
 
     - TERMINAL
@@ -95,14 +103,15 @@ class MechanismRole(Enum):
         that provides the output to the Process or System when it is `executed or run <Run>`.  A Process may
         have only one `TERMINAL` Mechanism, but a System may have many.  Note that the `TERMINAL`
         Mechanism of a Process is not necessarily a `TERMINAL` Mechanism of the System to which it belongs,
-        as it may send Projections to other Processes in the System.  The `TERMINAL` Mechanisms of a Process
-        or System are listed in its :keyword:`terminalMechanisms` attribute, and can be displayed using its
-        :keyword:`show` method.  For additional details about `TERMINAL` Mechanisms in Processes, see
-        `Process_Mechanisms` and `Process_Input_And_Output`; and for Systems see `System_Mechanisms`.
+        as it may send Projections to other Processes in the System (see `example
+        <LearningProjection_Target_vs_Terminal_Figure>`).  The `TERMINAL` Mechanisms of a Process or System are listed in
+        its :keyword:`terminalMechanisms` attribute, and can be displayed using its :keyword:`show` method.  For
+        additional details about `TERMINAL` Mechanisms in Processes, see `Process_Mechanisms` and
+        `Process_Input_And_Output`; and for Systems see `System_Mechanisms`.
 
     - SINGLETON
-        A `ProcessingMechanism` that is the only Mechanism in a `Process` and/or `System`.  It can serve the
-        functions of an `ORIGIN` and/or a `TERMINAL` Mechanism.
+        A `ProcessingMechanism <ProcessingMechanism>` that is the only Mechanism in a `Process` and/or `System`.
+        It can serve the functions of an `ORIGIN` and/or a `TERMINAL` Mechanism.
 
     - MONITORED
         .
@@ -152,7 +161,7 @@ class Vertex(object):
         ---------
 
         component : Component
-            the `Component` represented by this Vertex
+            the `Component <Component>` represented by this Vertex
 
         parents : list[Vertex]
             the `Vertices <Vertex>` corresponding to the incoming edges of this `Vertex`
@@ -164,7 +173,7 @@ class Vertex(object):
         ----------
 
         component : Component
-            the `Component` represented by this Vertex
+            the `Component <Component>` represented by this Vertex
 
         parents : list[Vertex]
             the `Vertices <Vertex>` corresponding to the incoming edges of this `Vertex`
@@ -190,16 +199,16 @@ class Vertex(object):
 
 class Graph(object):
     '''
-        A Graph of vertices and edges
+        A Graph of vertices and edges/
 
         Attributes
         ----------
 
-        comp_to_vertex : dict{`Component` : `Vertex`}
-            maps `Component`\ s in the graph to the `Vertices <Vertex>` that represent them
+        comp_to_vertex : dict{`Component <Component>` : `Vertex`}
+            maps `Component` in the graph to the `Vertices <Vertex>` that represent them.
 
         vertices : list[Vertex]
-            the `Vertices <Vertex>` contained in this Graph
+            the `Vertices <Vertex>` contained in this Graph.
 
     '''
 
@@ -212,7 +221,8 @@ class Graph(object):
             Returns
             -------
 
-            A copy of the Graph. `Vertices <Vertex>` are distinct from their originals, and point to the same `Component` object : `Graph`
+            A copy of the Graph. `Vertices <Vertex>` are distinct from their originals, and point to the same
+            `Component <Component>` object : `Graph`
         '''
         g = Graph()
 
@@ -306,11 +316,11 @@ class Composition(object):
         ----------
 
         graph : `Graph`
-            The full `Graph` associated with this Composition. Contains both `Mechanism`\ s and `Projection`\ s used in processing \
-            or learning.
+            The full `Graph` associated with this Composition. Contains both `Mechanisms <Mechanism>` and `Projections
+            <Projection>` used in processing or learning.
 
         mechanisms : `list[Mechanism]`
-            A list of all `Mechanism`\ s contained in this Composition
+            A list of all `Mechanisms <Mechanism>` contained in this Composition
     '''
 
     def __init__(self):
@@ -644,7 +654,7 @@ class Composition(object):
             Returns
             -------
 
-            set of Mechanisms with `MechanismRole` `role` : set(`Mechanism`)
+            set of Mechanisms with `MechanismRole` `role` : set(`Mechanism <Mechanism>`)
         '''
         if role not in MechanismRole:
             raise CompositionError('Invalid MechanismRole: {0}'.format(role))
@@ -705,7 +715,7 @@ class Composition(object):
                 # Then, check that each input_state is receiving the right size of input
                 for i, value in enumerate(timestep):
                     val_length = len(value)
-                    state_length = len(mech.input_state.variable)
+                    state_length = len(mech.input_state.instance_defaults.variable)
                     if val_length != state_length:
                         raise ValueError("The value provided for InputState {!s} of the Mechanism \"{}\" has length "
                                          "{!s} where the InputState takes values of length {!s}".
@@ -845,7 +855,6 @@ class Composition(object):
             self.stimulus_CIM_output_states[mech.input_state].value = mech.variableInstanceDefault
 
     def _assign_values_to_target_CIM_output_states(self, targets):
-
         for mech in targets:
             # assigning target provided for this mechanism to the the target_CIM_output_state that sends to it
             self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
@@ -909,13 +918,13 @@ class Composition(object):
         clamp_input=SOFT_CLAMP,
     ):
         '''
-            Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
-            to receive and execute sets of mechanisms that are eligible to run until termination conditions are met.
+            Passes inputs to any Mechanisms receiving inputs directly from the user, then coordinates with the Scheduler
+            to receive and execute sets of Mechanisms that are eligible to run until termination conditions are met.
 
             Arguments
             ---------
 
-            inputs: { `Mechanism` : list }
+            inputs: { `Mechanism <Mechanism>` : list }
                 a dictionary containing a key-value pair for each Mechanism in the composition that receives inputs from
                 the user. For each pair, the key is the Mechanism and the value is a list of inputs.
 
@@ -1087,7 +1096,7 @@ class Composition(object):
             Arguments
             ---------
 
-            inputs: { `Mechanism` : list }
+            inputs: { `Mechanism <Mechanism>` : list }
                 a dictionary containing a key-value pair for each Mechanism in the composition that receives inputs from
                 the user. For each pair, the key is the Mechanism and the value is a list of inputs. Each input in the
                 list corresponds to a certain `TRIAL`.

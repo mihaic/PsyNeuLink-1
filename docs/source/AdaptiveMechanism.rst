@@ -1,5 +1,7 @@
-Adaptive Mechanism
-==================
+
+
+Adaptive Mechanisms
+===================
 
 .. _AdaptiveMechanism_Subtypes:
 
@@ -10,6 +12,6 @@ Adaptive Mechanism
    ControlMechanism
    GatingMechanism
 
-.. automodule:: AdaptiveMechanisms.AdaptiveMechanism
+.. automodule:: AdaptiveMechanism
    :members:
    :exclude-members: Linear, random
