@@ -585,6 +585,8 @@ class MappingProjection(PathwayProjection_Base):
 
     @property
     def matrix(self):
+        print("name = ", self.name)
+        print("matrix = ", self.function_object.matrix)
         return self.function_object.matrix
 
     @matrix.setter

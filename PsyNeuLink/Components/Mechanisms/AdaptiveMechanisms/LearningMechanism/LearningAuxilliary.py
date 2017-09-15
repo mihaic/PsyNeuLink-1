@@ -559,14 +559,14 @@ def _instantiate_learning_components(learning_projection, context=None):
     MappingProjection(sender=lc.activation_mech_input,
                       receiver=learning_mechanism.input_states[ACTIVATION_INPUT],
                       matrix=IDENTITY_MATRIX,
-                      name = lc.activation_mech_input.owner.name + ' to ' + ACTIVATION_INPUT,
+                      name=lc.activation_mech_input.owner.name + ' to ' + ACTIVATION_INPUT,
                       context=context)
 
     # Assign MappingProjection from activation_mech_output to LearningMechanism's ACTIVATION_OUTPUT inputState
     MappingProjection(sender=lc.activation_mech_output,
                       receiver=learning_mechanism.input_states[ACTIVATION_OUTPUT],
                       matrix=IDENTITY_MATRIX,
-                      name = lc.activation_mech_output.owner.name + ' to ' + ACTIVATION_OUTPUT,
+                      name=lc.activation_mech_output.owner.name + ' to ' + ACTIVATION_OUTPUT,
                       context=context)
 
     # IMPLEMENTATION NOTE: [6/4/17] THIS IS NOW DONE IN LearningMechanism._instantiate_learning_signal

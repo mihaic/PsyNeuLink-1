@@ -5,7 +5,7 @@ from timeit import timeit
 import numpy as np
 import pytest
 
-from PsyNeuLink.Components.Functions.Function import Linear, SimpleIntegrator
+from PsyNeuLink.Components.Functions.Function import Linear, SimpleIntegrator, SoftMax
 from PsyNeuLink.Components.Mechanisms.Mechanism import mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.IntegratorMechanism import IntegratorMechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
@@ -2669,9 +2669,9 @@ class TestLearning:
     def test_single_layer_learning(self):
 
         from PsyNeuLink.Composition import MechanismRole
-        from PsyNeuLink.Globals.Keywords import SAMPLE, NAME, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, TARGET, LEARNING_MECHANISM, MATRIX
+        from PsyNeuLink.Globals.Keywords import FULL_CONNECTIVITY_MATRIX, AUTO_ASSIGN_MATRIX, IDENTITY_MATRIX, SAMPLE, NAME, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, TARGET, LEARNING_MECHANISM, MATRIX, PROB
         from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningAuxilliary \
-            import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL
+            import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL, OUTCOME
         from PsyNeuLink.Components.Functions.Function import Reinforcement
         from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection
 
@@ -2679,15 +2679,16 @@ class TestLearning:
         comp = Composition()
 
         inputSourceMech = TransferMechanism(name="inputSourceMech",
-                                            default_variable= [0],
-                                            function=Linear(slope=1.0))
+                                            default_variable=[0, 0, 0])
         outputSourceMech = TransferMechanism(name="outputSourceMech",
-                                             default_variable=[0],
-                                             function=Linear(slope=1.0))
+                                             default_variable=[0, 0, 0],
+                                             function=SoftMax(output=PROB,
+                                                              gain=1.0)
+                                             )
 
         primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
                                                      receiver=outputSourceMech,
-                                                     matrix=[1],
+                                                     matrix=FULL_CONNECTIVITY_MATRIX,
                                                      name="primary_learned_projection")
 
 
@@ -2707,25 +2708,24 @@ class TestLearning:
         targetMech = ComparatorMechanism(sample=outputSourceMech.output_state,
                                                       target=TARGET,
                                                       input_states=[{NAME:SAMPLE,
-                                                                     VARIABLE: outputSourceMech.output_state.value,
+                                                                     VARIABLE: [0],
                                                                      WEIGHT:-1
                                                                      },
                                                                     {NAME:TARGET,
-                                                                     VARIABLE: outputSourceMech.output_state.value,
+                                                                     VARIABLE: [0],
                                                                      # WEIGHT:1
                                                                      }],
                                                       name="{} {}".format(outputSourceMech.name,
                                                                           COMPARATOR_MECHANISM),
                                                       context=context)
 
-
         learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate),
                                           receiver =primaryLearnedProjection._parameter_states[MATRIX])
         learningProj.receiver = primaryLearnedProjection._parameter_states[MATRIX]
-        learningMech = LearningMechanism(variable=[[0], [0], [0]],
+        learningMech = LearningMechanism(variable=[[0,0,0], [0,0,0], [0]],
                                          error_source=targetMech,
                                          function=Reinforcement(
-                                             default_variable=[activation_input, activation_output, error_signal],
+                                             default_variable=[activation_input, activation_output, [0]],
                                          activation_function=outputSourceMech.function_object,
                                          learning_rate=learning_rate),
 
@@ -2743,15 +2743,24 @@ class TestLearning:
         # input projection is handled by stimulus_CIM
 
         activationInputProjection = MappingProjection(sender=inputSourceMech,
-                                                      receiver=learningMech.input_states[ACTIVATION_INPUT])
+                                                      receiver=learningMech.input_states[ACTIVATION_INPUT],
+                                                      matrix = IDENTITY_MATRIX,
+                                                      name="activationInputProjection")
         activationOutputProjection = MappingProjection(sender=outputSourceMech,
-                                                       receiver=learningMech.input_states[ACTIVATION_OUTPUT])
+                                                       receiver=learningMech.input_states[ACTIVATION_OUTPUT],
+                                                       matrix = IDENTITY_MATRIX,
+                                                       name = "activationOutputProjection"
+        )
         sampleProjection = MappingProjection(sender=outputSourceMech,
-                                             receiver=targetMech.input_states[SAMPLE])
+                                             receiver=targetMech.input_states[SAMPLE],
+                                             matrix=IDENTITY_MATRIX,
+                                             name="sampleProjection")
         # Target projection is handled by target_CIM
 
-        errorProjection = MappingProjection(sender=targetMech.output_states[ERROR_SIGNAL],
-                                            receiver=learningMech.input_states[ERROR_SIGNAL])
+        errorProjection = MappingProjection(sender=targetMech.output_states[OUTCOME],
+                                            receiver=learningMech.input_states[ERROR_SIGNAL],
+                                            matrix=IDENTITY_MATRIX,
+                                            name="errorProjection")
 
         comp.add_projection(inputSourceMech, primaryLearnedProjection, outputSourceMech)
         comp.add_projection(inputSourceMech, activationInputProjection, learningMech)
