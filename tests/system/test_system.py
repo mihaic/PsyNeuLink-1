@@ -8,8 +8,8 @@ from PsyNeuLink.Components.System import system
 from PsyNeuLink.Composition import MechanismRole
 from PsyNeuLink.Globals.Keywords import ALLOCATION_SAMPLES
 from PsyNeuLink.Globals.Keywords import CYCLE, INITIALIZE_CYCLE, INTERNAL, ORIGIN, TERMINAL
-from PsyNeuLink.Library.Mechanisms.AdaptiveMechanisms.ControlMechanisms.EVC.EVCMechanism import EVCMechanism
 from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.IntegratorMechanisms.DDM import DDM
+from PsyNeuLink.Library.Subsystems.EVC.EVCControlMechanism import EVCControlMechanism
 
 
 def test_danglingControlledMech():
@@ -97,7 +97,7 @@ def test_danglingControlledMech():
     # System:
     mySystem = system(
         processes=[ColorNamingProcess, WordReadingProcess, RewardProcess],
-        controller=EVCMechanism,
+        controller=EVCControlMechanism,
         enable_controller=True,
         # monitor_for_control=[Reward, (DDM_PROBABILITY_UPPER_THRESHOLD, 1, -1)],
         name='EVC Gratton System',

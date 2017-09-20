@@ -329,7 +329,7 @@ LEARNING_FUNCTION_TYPE = 'LEARNING FUNCTION TYPE'
 
 # ControlMechanism:
 DEFAULT_CONTROL_MECHANISM = "DefaultControlMechanism"
-EVC_MECHANISM = "EVCMechanism"
+EVC_MECHANISM = "EVCControlMechanism"
 
 # ObjectiveMechanisms:
 OBJECTIVE_MECHANISM_OBJECT = "ObjectiveMechanism"
@@ -349,6 +349,7 @@ ARGUMENT_THERAPY_FUNCTION = "Contradiction Function"
 USER_DEFINED_FUNCTION = "USER DEFINED FUNCTION"
 REDUCE_FUNCTION = "Reduce Function"
 LINEAR_COMBINATION_FUNCTION = "LinearCombination Function"
+COMBINE_MEANS_FUNCTION = "CombineMeans Function"
 LINEAR_FUNCTION = "Linear Function"
 EXPONENTIAL_FUNCTION = "Exponential Function"
 LOGISTIC_FUNCTION = "Logistic Function"
@@ -358,6 +359,7 @@ SIMPLE_INTEGRATOR_FUNCTION = "SimpleIntegrator Function"
 CONSTANT_INTEGRATOR_FUNCTION = "ConstantIntegrator Function"
 ACCUMULATOR_INTEGRATOR_FUNCTION = "AccumulatorIntegrator Function"
 FHN_INTEGRATOR_FUNCTION = "FHNIntegrator Function"
+UTILITY_INTEGRATOR_FUNCTION = "AGTUtilityIntegrator Function"
 ACCUMULATOR_INTEGRATOR = "AccumulatorIntegrator"  # (7/19/17 CW) added for MappingProjection.py
 ADAPTIVE_INTEGRATOR_FUNCTION = "AdaptiveIntegrator Function"
 DRIFT_DIFFUSION_INTEGRATOR_FUNCTION = "DriftDiffusionIntegrator Function"
@@ -487,7 +489,7 @@ kwInitialPoint = 'initial_point'
 
 MODULATION = 'modulation'
 
-# ControlMechanism / EVCMechanism
+# ControlMechanism / EVCControlMechanism
 OBJECTIVE_MECHANISM = "objective_mechanism"
 MONITOR_FOR_CONTROL = "monitor_for_control"
 PREDICTION_MECHANISM = "Prediction Mechanism"
