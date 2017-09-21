@@ -818,11 +818,15 @@ class Composition(object):
                 interface_output_state = OutputState(owner=self.target_CIM,
                                                      variable=mech.input_states[TARGET].value,
                                                      reference_value= mech.input_states[TARGET].value,
-                                                     name="Interface to " + mech.name + " for " + mech.input_states[TARGET].name)
+                                                     name="TARGET_CIM_" + mech.name)
+
                 # self.target_CIM.add_states(interface_output_state)
                 self.target_CIM.output_states.append(interface_output_state)
                 self.target_CIM_output_states[mech.input_states[TARGET]] = interface_output_state
-                MappingProjection(sender=interface_output_state, receiver=mech.input_states[TARGET])
+                MappingProjection(sender=interface_output_state,
+                                  receiver=mech.input_states[TARGET],
+                                  name="(" + interface_output_state.name + ") to ("
+                                       + mech.name + ")")
 
         sends_to_input_states = set(self.target_CIM_output_states.keys())
         # For any output state still registered on the CIM that does not map to a corresponding TARGET mech:
