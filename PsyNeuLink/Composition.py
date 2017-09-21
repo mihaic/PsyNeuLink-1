@@ -595,6 +595,8 @@ class Composition(object):
                             next_visit_stack.append(child)
 
         self._create_stimulus_CIM_output_states()
+        self._create_target_CIM_output_states()
+        print("TARGET OSs = ", self.target_CIM_output_states)
         self.needs_update_graph = False
 
     def _update_processing_graph(self):
@@ -810,7 +812,7 @@ class Composition(object):
     def _create_target_CIM_output_states(self):
         # loop over all target mechanisms
         current_input_states = set()
-        for mech in self.get_mechanisms_by_role(MechanismRole.TARGET):
+        for mech in self.get_mechanisms_by_role(MechanismRole. TARGET):
             current_input_states.add(mech.input_states[TARGET])
 
             # if there is not a corresponding CIM output state, add one
@@ -866,6 +868,8 @@ class Composition(object):
         for mech in targets:
             # assigning target provided for this mechanism to the the target_CIM_output_state that sends to it
             self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
+            # mech.input_states[TARGET].value = targets[mech]
+            # # self.target_CIM_output_states[mech].input_states[TARGET].value = targets[mech]
 
     def _assign_execution_ids(self, execution_id=None):
         '''
@@ -924,6 +928,7 @@ class Composition(object):
         call_after_pass=None,
         execution_id=None,
         clamp_input=SOFT_CLAMP,
+        targets=None
     ):
         '''
             Passes inputs to any Mechanisms receiving inputs directly from the user, then coordinates with the Scheduler
@@ -974,7 +979,7 @@ class Composition(object):
             scheduler_learning = self.scheduler_learning
 
         self._assign_values_to_stimulus_CIM_output_states(inputs)
-
+        self._assign_values_to_target_CIM_output_states(targets)
         next_pass_before = 1
         next_pass_after = 1
         if clamp_input:
@@ -1095,7 +1100,8 @@ class Composition(object):
         call_after_pass=None,
         call_before_trial=None,
         call_after_trial=None,
-        clamp_input=SOFT_CLAMP
+        clamp_input=SOFT_CLAMP,
+        targets=None
     ):
         '''
             Passes inputs to any mechanisms receiving inputs directly from the user, then coordinates with the scheduler
@@ -1214,7 +1220,10 @@ class Composition(object):
                         execution_inputs[input_state] = inputs[mech][input_state][0 if reuse_inputs else input_index]
                 else:
                     execution_inputs[mech] = inputs[mech][0 if reuse_inputs else input_index]
+            execution_targets = {}
 
+            for mech in targets.keys():
+                execution_targets[mech] = targets[mech]
             num = self.execute(
                 execution_inputs,
                 scheduler_processing,
@@ -1224,7 +1233,8 @@ class Composition(object):
                 call_after_time_step,
                 call_after_pass,
                 execution_id,
-                clamp_input
+                clamp_input,
+                execution_targets
             )
 
             if num is not None:
@@ -1327,6 +1337,7 @@ class Pathway(Composition):
         call_after_time_step=None,
         call_after_pass=None,
         clamp_input=SOFT_CLAMP,
+        targets=None
     ):
 
         if isinstance(inputs, list):
