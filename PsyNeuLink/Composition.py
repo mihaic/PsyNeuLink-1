@@ -60,7 +60,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceM
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Components.States.OutputState import OutputState
-from PsyNeuLink.Globals.Keywords import EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP, TARGET
+from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, AUTO_ASSIGN_MATRIX, EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP, TARGET
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
 
@@ -739,11 +739,15 @@ class Composition(object):
                     interface_output_state = OutputState(owner=self.stimulus_CIM,
                                                          variable=input_state.variable,
                                                          reference_value= input_state.variable,
-                                                         name="Interface to " + mech.name + " for " + input_state.name)
+                                                         name="STIMULUS_CIM_" + mech.name + "_" + input_state.name)
                     # self.stimulus_CIM.add_states(interface_output_state)
                     self.stimulus_CIM.output_states.append(interface_output_state)
                     self.stimulus_CIM_output_states[input_state] = interface_output_state
-                    MappingProjection(sender=interface_output_state, receiver=input_state)
+                    MappingProjection(sender=interface_output_state,
+                                      receiver=input_state,
+                                      matrix= IDENTITY_MATRIX,
+                                      name="("+interface_output_state.name + ") to ("
+                                           + input_state.owner.name + "-" + input_state.name+")")
 
         sends_to_input_states = set(self.stimulus_CIM_output_states.keys())
         # For any output state still registered on the CIM that does not map to a corresponding ORIGIN mech I.S.:
