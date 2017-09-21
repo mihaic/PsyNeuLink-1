@@ -57,6 +57,8 @@ from enum import Enum
 from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceMechanism \
     import CompositionInterfaceMechanism
+from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism \
+    import ComparatorMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Components.States.OutputState import OutputState
@@ -594,9 +596,18 @@ class Composition(object):
                         elif child not in visited:
                             next_visit_stack.append(child)
 
+        # KAM hack 9/21/17 to ensure that Comparator Mechanism in learning test script is recognized as a TARGET.
+        # (Hardcoding the role into the script did not work because _analyze_graph overwrite roles, and also creates
+        # target CIM output states.)
+        # Need a permanent solution for labeling target mechs!
+        
+        for mech in self.mechanisms:
+            if isinstance(mech, ComparatorMechanism):
+                self._add_mechanism_role(mech, MechanismRole.TARGET)
+
         self._create_stimulus_CIM_output_states()
         self._create_target_CIM_output_states()
-        print("TARGET OSs = ", self.target_CIM_output_states)
+
         self.needs_update_graph = False
 
     def _update_processing_graph(self):
