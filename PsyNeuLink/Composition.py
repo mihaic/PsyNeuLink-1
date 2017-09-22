@@ -468,6 +468,88 @@ class Composition(object):
             self.needs_update_scheduler_processing = True
             self.needs_update_scheduler_learning = True
 
+    def add_single_layer_RL(self, primary_learned_proj, learning_rate):
+        '''
+            Adds a learning to a process
+        '''
+        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningAuxilliary \
+            import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL, OUTCOME
+        from PsyNeuLink.Components.Functions.Function import Reinforcement
+        from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection
+        from PsyNeuLink.Globals.Keywords import NAME, SAMPLE, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, MATRIX, LEARNING_MECHANISM
+        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningMechanism import LearningMechanism
+
+        input_source_mech = primary_learned_proj.sender.owner
+        output_source_mech = primary_learned_proj.receiver.owner
+
+        activation_input = [np.zeros_like(input_source_mech.value)]
+        activation_output = [np.zeros_like(output_source_mech.value)]
+        error_signal = [0]
+
+        targetMech = ComparatorMechanism(sample=output_source_mech.output_state,
+                                         target=TARGET,
+                                         input_states=[{NAME: SAMPLE,
+                                                        VARIABLE: error_signal,
+                                                        WEIGHT: -1
+                                                        },
+                                                       {NAME: TARGET,
+                                                        VARIABLE: error_signal,
+                                                        # WEIGHT:1
+                                                        }],
+                                         name="{} {}".format(output_source_mech.name,
+                                                             COMPARATOR_MECHANISM),
+                                         )
+
+        learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate),
+                                          receiver=primary_learned_proj._parameter_states[MATRIX])
+        learningProj.receiver = primary_learned_proj._parameter_states[MATRIX]
+        learningMech = LearningMechanism(variable=[[0, 0, 0], [0, 0, 0], error_signal],
+                                         error_source=targetMech,
+                                         function=Reinforcement(
+                                             default_variable=[activation_input, activation_output, [0]],
+                                             activation_function=output_source_mech.function_object,
+                                             learning_rate=learning_rate),
+
+                                         learning_signals=[learningProj],
+                                         name=primary_learned_proj.name + " " + LEARNING_MECHANISM,
+                                         )
+
+        # learningProj.sender = learningMech
+        self.add_mechanism(targetMech)
+        self.add_mechanism(learningMech)
+
+        # input projection is handled by stimulus_CIM
+        self._analyze_graph()
+
+        activationInputProjection = MappingProjection(sender=input_source_mech,
+                                                      receiver=learningMech.input_states[ACTIVATION_INPUT],
+                                                      matrix=IDENTITY_MATRIX,
+                                                      name="activationInputProjection",
+                                                      )
+        activationOutputProjection = MappingProjection(sender=output_source_mech,
+                                                       receiver=learningMech.input_states[ACTIVATION_OUTPUT],
+                                                       matrix=IDENTITY_MATRIX,
+                                                       name="activationOutputProjection",
+
+                                                       )
+        sampleProjection = MappingProjection(sender=output_source_mech,
+                                             receiver=targetMech.input_states[SAMPLE],
+                                             matrix=AUTO_ASSIGN_MATRIX,
+                                             name="sampleProjection")
+        # Sample Projection is created automatically by Objective Mechanism
+        # Target projection is handled by target_CIM
+
+        errorProjection = MappingProjection(sender=targetMech.output_states[OUTCOME],
+                                            receiver=learningMech.input_states[ERROR_SIGNAL],
+                                            matrix=IDENTITY_MATRIX,
+                                            name="errorProjection")
+
+        self.add_projection(input_source_mech, activationInputProjection, learningMech)
+        self.add_projection(output_source_mech, activationOutputProjection, learningMech)
+        self.add_projection(output_source_mech, sampleProjection, targetMech)
+        self.add_projection(targetMech, errorProjection, learningMech)
+
+        return targetMech
     def add_pathway(self, path):
         '''
             Adds an existing Pathway to the current Composition

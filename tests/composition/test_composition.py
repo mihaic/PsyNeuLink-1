@@ -2793,4 +2793,54 @@ class TestLearning:
             call_after_trial=show_weights
         )
 
+    def test_single_layer_learning_with_convenience(self):
+
+        from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, PROB
+
+        comp = Composition()
+
+        inputSourceMech = TransferMechanism(name="inputSourceMech",
+                                            default_variable=[0, 0, 0])
+        outputSourceMech = TransferMechanism(name="outputSourceMech",
+                                             default_variable=[0, 0, 0],
+                                             function=SoftMax(output=PROB,
+                                                              gain=1.0)
+                                             )
+
+        primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
+                                                     receiver=outputSourceMech,
+                                                     matrix=IDENTITY_MATRIX,
+                                                     name="primary_learned_projection")
+
+        reward_values = [10, 10, 10]
+
+        # Must initialize reward (won't be used, but needed for declaration of lambda function)
+        outputSourceMech.output_states.value = [0, 0, 1]
+        # Get reward value for selected action)
+        reward = lambda: [reward_values[int(np.nonzero(outputSourceMech.output_states.value)[0])]]
+
+        comp.add_mechanism(inputSourceMech)
+        comp.add_mechanism(outputSourceMech)
+        comp.add_projection(inputSourceMech, primaryLearnedProjection, outputSourceMech)
+        targetMech = comp.add_single_layer_RL(primaryLearnedProjection, 0.05)
+
+        def show_weights():
+            print('Reward prediction weights: \n', outputSourceMech.input_states[0].path_afferents[0].matrix)
+            print('\nAction selected:  {}; predicted reward: {}'.format(
+                np.nonzero(outputSourceMech.output_states.value)[0][0],
+                outputSourceMech.output_states.value[np.nonzero(outputSourceMech.output_states.value)[0][0]],))
+            print("output mech receives = ", outputSourceMech.input_state.value)
+            print("Output source mech value = ", outputSourceMech.output_state.value)
+
+
+        sched = Scheduler(composition=comp)
+        stimulus_dict = {inputSourceMech: [[1.0,1.0,1.0]]}
+        target_dict = {targetMech: reward}
+        output = comp.run(
+            inputs=stimulus_dict,
+            scheduler_processing=sched,
+            targets=target_dict,
+            num_trials=10,
+            call_after_trial=show_weights
+        )
 
