@@ -1243,7 +1243,7 @@ class Composition(object):
                     execution_targets[mech] = targets[mech][0]
                 else:
                     execution_targets[mech] = targets[mech][input_index]
-                    
+
             num = self.execute(
                 execution_inputs,
                 scheduler_processing,

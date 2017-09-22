@@ -2688,7 +2688,7 @@ class TestLearning:
 
         primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
                                                      receiver=outputSourceMech,
-                                                     matrix=FULL_CONNECTIVITY_MATRIX,
+                                                     matrix=IDENTITY_MATRIX,
                                                      name="primary_learned_projection")
 
         reward_values = [10, 10, 10]
@@ -2700,14 +2700,10 @@ class TestLearning:
 
         # ** Variables used by multiple learning components **
         activation_input = [np.zeros_like(inputSourceMech.value)]
-        print(activation_input, " = activation_input")
         activation_output = [np.zeros_like(outputSourceMech.value)]
-        print(activation_output, " = activation_output")
         error_signal = np.zeros_like(outputSourceMech.output_state.value)
-        print(error_signal, " = error_signal")
         learning_rate = 0.05
         # activation_function = []
-        context = "testing"
         # ----------------------------------------------------
 
 
@@ -2723,7 +2719,7 @@ class TestLearning:
                                                                      }],
                                                       name="{} {}".format(outputSourceMech.name,
                                                                           COMPARATOR_MECHANISM),
-                                                      context=context)
+                                                      )
 
         learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate),
                                           receiver =primaryLearnedProjection._parameter_states[MATRIX])
@@ -2737,7 +2733,7 @@ class TestLearning:
 
                                          learning_signals=[learningProj],
                                          name = primaryLearnedProjection.name + " " +LEARNING_MECHANISM,
-                                         context=context)
+                                         )
 
         # learningProj.sender = learningMech
         comp.add_mechanism(inputSourceMech)
@@ -2752,18 +2748,18 @@ class TestLearning:
                                                       receiver=learningMech.input_states[ACTIVATION_INPUT],
                                                       matrix = IDENTITY_MATRIX,
                                                       name="activationInputProjection",
-                                                      context=context)
+                                                      )
         activationOutputProjection = MappingProjection(sender=outputSourceMech,
                                                        receiver=learningMech.input_states[ACTIVATION_OUTPUT],
                                                        matrix = IDENTITY_MATRIX,
                                                        name = "activationOutputProjection",
-                                                       context=context
+
         )
         sampleProjection = MappingProjection(sender=outputSourceMech,
                                              receiver=targetMech.input_states[SAMPLE],
                                              matrix=AUTO_ASSIGN_MATRIX,
                                              name="sampleProjection")
-
+        # Sample Projection is created automatically by Objective Mechanism
         # Target projection is handled by target_CIM
 
         errorProjection = MappingProjection(sender=targetMech.output_states[OUTCOME],
@@ -2777,14 +2773,24 @@ class TestLearning:
         comp.add_projection(outputSourceMech, sampleProjection, targetMech)
         comp.add_projection(targetMech, errorProjection, learningMech)
 
+        def show_weights():
+            print('Reward prediction weights: \n', outputSourceMech.input_states[0].path_afferents[0].matrix)
+            print('\nAction selected:  {}; predicted reward: {}'.format(
+                np.nonzero(outputSourceMech.output_states.value)[0][0],
+                outputSourceMech.output_states.value[np.nonzero(outputSourceMech.output_states.value)[0][0]],))
+            print("output mech receives = ", outputSourceMech.input_state.value)
+            print("Output source mech value = ", outputSourceMech.output_state.value)
+
+
         sched = Scheduler(composition=comp)
         stimulus_dict = {inputSourceMech: [[1.0,1.0,1.0]]}
         target_dict = {targetMech: reward}
         output = comp.run(
             inputs=stimulus_dict,
             scheduler_processing=sched,
-            targets=target_dict
+            targets=target_dict,
+            num_trials=10,
+            call_after_trial=show_weights
         )
 
-        print(output)
 
