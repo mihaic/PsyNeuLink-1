@@ -600,7 +600,7 @@ class Composition(object):
         # (Hardcoding the role into the script did not work because _analyze_graph overwrite roles, and also creates
         # target CIM output states.)
         # Need a permanent solution for labeling target mechs!
-        
+
         for mech in self.mechanisms:
             if isinstance(mech, ComparatorMechanism):
                 self._add_mechanism_role(mech, MechanismRole.TARGET)
@@ -904,6 +904,7 @@ class Composition(object):
         #     self.input_mechanisms[k]._execution_id = execution_id
 
         self.stimulus_CIM._execution_id = execution_id
+        self.target_CIM._execution_id = execution_id
 
         self._execution_id = execution_id
         return execution_id
