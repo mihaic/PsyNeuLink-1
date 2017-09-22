@@ -878,9 +878,10 @@ class Composition(object):
     def _assign_values_to_target_CIM_output_states(self, targets):
         for mech in targets:
             # assigning target provided for this mechanism to the the target_CIM_output_state that sends to it
-            self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
-            # mech.input_states[TARGET].value = targets[mech]
-            # # self.target_CIM_output_states[mech].input_states[TARGET].value = targets[mech]
+            if callable(targets[mech]):
+                self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]()
+            else:
+                self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
 
     def _assign_execution_ids(self, execution_id=None):
         '''
@@ -1232,10 +1233,17 @@ class Composition(object):
                         execution_inputs[input_state] = inputs[mech][input_state][0 if reuse_inputs else input_index]
                 else:
                     execution_inputs[mech] = inputs[mech][0 if reuse_inputs else input_index]
+
             execution_targets = {}
 
             for mech in targets.keys():
-                execution_targets[mech] = targets[mech]
+                if callable(targets[mech]):
+                    execution_targets[mech] = targets[mech]
+                elif len(targets[mech]) == 1:
+                    execution_targets[mech] = targets[mech][0]
+                else:
+                    execution_targets[mech] = targets[mech][input_index]
+                    
             num = self.execute(
                 execution_inputs,
                 scheduler_processing,

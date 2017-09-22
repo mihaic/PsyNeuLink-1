@@ -2691,6 +2691,12 @@ class TestLearning:
                                                      matrix=FULL_CONNECTIVITY_MATRIX,
                                                      name="primary_learned_projection")
 
+        reward_values = [10, 10, 10]
+
+        # Must initialize reward (won't be used, but needed for declaration of lambda function)
+        outputSourceMech.output_states.value = [0, 0, 1]
+        # Get reward value for selected action)
+        reward = lambda: [reward_values[int(np.nonzero(outputSourceMech.output_states.value)[0])]]
 
         # ** Variables used by multiple learning components **
         activation_input = [np.zeros_like(inputSourceMech.value)]
@@ -2739,22 +2745,25 @@ class TestLearning:
         comp.add_mechanism(targetMech)
         comp.add_mechanism(learningMech)
 
-        comp._add_mechanism_role(targetMech, MechanismRole.TARGET)
         # input projection is handled by stimulus_CIM
+        comp._analyze_graph()
 
         activationInputProjection = MappingProjection(sender=inputSourceMech,
                                                       receiver=learningMech.input_states[ACTIVATION_INPUT],
                                                       matrix = IDENTITY_MATRIX,
-                                                      name="activationInputProjection")
+                                                      name="activationInputProjection",
+                                                      context=context)
         activationOutputProjection = MappingProjection(sender=outputSourceMech,
                                                        receiver=learningMech.input_states[ACTIVATION_OUTPUT],
                                                        matrix = IDENTITY_MATRIX,
-                                                       name = "activationOutputProjection"
+                                                       name = "activationOutputProjection",
+                                                       context=context
         )
         sampleProjection = MappingProjection(sender=outputSourceMech,
                                              receiver=targetMech.input_states[SAMPLE],
-                                             matrix=IDENTITY_MATRIX,
+                                             matrix=AUTO_ASSIGN_MATRIX,
                                              name="sampleProjection")
+
         # Target projection is handled by target_CIM
 
         errorProjection = MappingProjection(sender=targetMech.output_states[OUTCOME],
@@ -2769,10 +2778,12 @@ class TestLearning:
         comp.add_projection(targetMech, errorProjection, learningMech)
 
         sched = Scheduler(composition=comp)
-        stimulus_dict = {inputSourceMech: [[1]]}
+        stimulus_dict = {inputSourceMech: [[1.0,1.0,1.0]]}
+        target_dict = {targetMech: reward}
         output = comp.run(
             inputs=stimulus_dict,
             scheduler_processing=sched,
+            targets=target_dict
         )
 
         print(output)
