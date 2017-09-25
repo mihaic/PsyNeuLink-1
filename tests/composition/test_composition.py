@@ -2793,9 +2793,10 @@ class TestLearning:
             call_after_trial=show_weights
         )
 
-    def test_single_layer_learning_with_convenience(self):
+    def test_single_layer_RL_with_convenience(self):
 
         from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, PROB
+        from PsyNeuLink.Scheduling.Condition import AfterNCalls
 
         comp = Composition()
 
@@ -2822,7 +2823,7 @@ class TestLearning:
         comp.add_mechanism(inputSourceMech)
         comp.add_mechanism(outputSourceMech)
         comp.add_projection(inputSourceMech, primaryLearnedProjection, outputSourceMech)
-        targetMech = comp.add_single_layer_RL(primaryLearnedProjection, 0.05)
+        targetMech, learningMech = comp.add_single_layer_RL(primaryLearnedProjection, 0.05)
 
         def show_weights():
             print('Reward prediction weights: \n', outputSourceMech.input_states[0].path_afferents[0].matrix)
@@ -2832,8 +2833,9 @@ class TestLearning:
             print("output mech receives = ", outputSourceMech.input_state.value)
             print("Output source mech value = ", outputSourceMech.output_state.value)
 
-
         sched = Scheduler(composition=comp)
+        sched.add_condition(targetMech, AfterNCalls(outputSourceMech, 1))
+        sched.add_condition(learningMech, AfterNCalls(targetMech, 1))
         stimulus_dict = {inputSourceMech: [[1.0,1.0,1.0]]}
         target_dict = {targetMech: reward}
         output = comp.run(

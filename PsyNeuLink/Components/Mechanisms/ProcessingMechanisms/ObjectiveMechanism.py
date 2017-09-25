@@ -1124,8 +1124,10 @@ def _instantiate_monitoring_projections(owner,
                                                          receiver.path_afferents[0].function_params[MATRIX]))
                 receiver.path_afferents[0].init_args[SENDER] = sender
                 receiver.path_afferents[0]._deferred_init()
-            else:
-                MappingProjection(sender=sender,
-                                  receiver=receiver,
-                                  matrix=projection_spec,
-                                  name = sender.name + ' monitor')
+            # else:
+                # KAM commenting out this creation of mapping projection so that
+                # composition's learning method can handle it
+                # MappingProjection(sender=sender,
+                #                   receiver=receiver,
+                #                   matrix=projection_spec,
+                #                   name = sender.name + ' monitor')

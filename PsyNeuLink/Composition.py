@@ -59,6 +59,7 @@ from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceM
     import CompositionInterfaceMechanism
 from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism \
     import ComparatorMechanism
+from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningMechanism import LearningMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Components.States.OutputState import OutputState
@@ -470,13 +471,13 @@ class Composition(object):
 
     def add_single_layer_RL(self, primary_learned_proj, learning_rate):
         '''
-            Adds a learning to a process
+            Adds single layer learning learning to a process
         '''
         from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningAuxilliary \
             import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL, OUTCOME
         from PsyNeuLink.Components.Functions.Function import Reinforcement
         from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection
-        from PsyNeuLink.Globals.Keywords import NAME, SAMPLE, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, MATRIX, LEARNING_MECHANISM
+        from PsyNeuLink.Globals.Keywords import LEARNING_SIGNAL, NAME, SAMPLE, VARIABLE, WEIGHT, COMPARATOR_MECHANISM, MATRIX, LEARNING_MECHANISM
         from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningMechanism import LearningMechanism
 
         input_source_mech = primary_learned_proj.sender.owner
@@ -518,9 +519,6 @@ class Composition(object):
         self.add_mechanism(targetMech)
         self.add_mechanism(learningMech)
 
-        # input projection is handled by stimulus_CIM
-        self._analyze_graph()
-
         activationInputProjection = MappingProjection(sender=input_source_mech,
                                                       receiver=learningMech.input_states[ACTIVATION_INPUT],
                                                       matrix=IDENTITY_MATRIX,
@@ -539,17 +537,19 @@ class Composition(object):
         # Sample Projection is created automatically by Objective Mechanism
         # Target projection is handled by target_CIM
 
-        errorProjection = MappingProjection(sender=targetMech.output_states[OUTCOME],
-                                            receiver=learningMech.input_states[ERROR_SIGNAL],
-                                            matrix=IDENTITY_MATRIX,
-                                            name="errorProjection")
+        # errorProjection = MappingProjection(sender=targetMech.output_states[OUTCOME],
+        #                                     receiver=learningMech.input_states[ERROR_SIGNAL],
+        #                                     matrix=IDENTITY_MATRIX,
+        #                                     name="errorProjection")
 
         self.add_projection(input_source_mech, activationInputProjection, learningMech)
         self.add_projection(output_source_mech, activationOutputProjection, learningMech)
         self.add_projection(output_source_mech, sampleProjection, targetMech)
-        self.add_projection(targetMech, errorProjection, learningMech)
+        self.add_projection(targetMech, learningMech.input_states[ERROR_SIGNAL].path_afferents[0], learningMech)
+        self._analyze_graph()
+        return targetMech, learningMech
 
-        return targetMech
+
     def add_pathway(self, path):
         '''
             Adds an existing Pathway to the current Composition
@@ -821,10 +821,13 @@ class Composition(object):
             builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
             corresponding OutputState on the CompositionInterfaceMechanism
         '''
+        # FIX BUG: stimulus CIM output states are not properly destroyed when analyze graph is run multiple times
+        # (extra mechanisms are marked as CIMs when graph is analyzed too early, so they create CIM output states)
 
         # loop over all origin mechanisms
         current_input_states = set()
         for mech in self.get_mechanisms_by_role(MechanismRole.ORIGIN):
+
             for input_state in mech.input_states:
                 # add it to our set of current input states
                 current_input_states.add(input_state)
@@ -1134,6 +1137,14 @@ class Composition(object):
                     num = mechanism.execute(context=EXECUTING + "composition")
                     print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
                     print("result = ", num)
+
+                    if isinstance(mechanism, LearningMechanism):
+                        for proj in mechanism.learning_projections:
+                            print("before: ", proj.receiver.variable)
+                            num2 = proj.execute(num, context=EXECUTING + "composition")
+                            proj.receiver.execute(num2)
+                            print("after: ", proj.receiver.variable)
+                            # proj.receiver._execute(context=EXECUTING + "composition")
 
                 if mechanism in origin_mechanisms:
                     if clamp_input:
