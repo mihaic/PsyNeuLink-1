@@ -1067,6 +1067,9 @@ class Composition(object):
 
             output value of the final Mechanism executed in the Composition : various
         '''
+
+        if targets is None:
+            targets = {}
         execution_id = self._assign_execution_ids(execution_id)
         origin_mechanisms = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
 
@@ -1283,6 +1286,9 @@ class Composition(object):
         else:
             inputs = {}
             len_inputs = 1
+
+        if targets is None:
+            targets = {}
 
         # check whether the num trials given in the input dict matches the num_trials param
         if num_trials is not None:
