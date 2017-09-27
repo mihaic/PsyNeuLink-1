@@ -512,7 +512,7 @@ class Composition(object):
                                              learning_rate=learning_rate),
 
                                          learning_signals=[learningProj],
-                                         name=primary_learned_proj.name + " " + LEARNING_MECHANISM,
+                                         name=primary_learned_proj.name + " " + LEARNING_MECHANISM
                                          )
 
         # learningProj.sender = learningMech
@@ -1135,19 +1135,13 @@ class Composition(object):
                             # self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
-                    # for proj in mechanism.input_states[0].path_afferents:
-                    #     proj.execute(context=EXECUTING + "composition")
-                    num = mechanism.execute(context=EXECUTING + "composition")
-                    print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
-                    print("result = ", num)
+                    current_context = EXECUTING + "composition "
+                    # if isinstance(mechanism, LearningMechanism) or isinstance(mechanism, ComparatorMechanism):
+                    #     current_context += "LEARNING "
+                    if any(isinstance(m, LearningMechanism) for m in self.mechanisms):
+                        current_context += " LEARNING "
+                    num = mechanism.execute(context=current_context)
 
-                    if isinstance(mechanism, LearningMechanism):
-                        for proj in mechanism.learning_projections:
-                            print("before: ", proj.receiver.variable)
-                            num2 = proj.execute(num, context=EXECUTING + "composition")
-                            proj.receiver.execute(num2)
-                            print("after: ", proj.receiver.variable)
-                            # proj.receiver._execute(context=EXECUTING + "composition")
 
                 if mechanism in origin_mechanisms:
                     if clamp_input:
