@@ -339,6 +339,9 @@ class Composition(object):
 
         self._scheduler_processing = None
         self._scheduler_learning = None
+        self.learning_comparator = None
+        self.learning_mechanisms = None
+        self.learning_projections = None
 
         # status attributes
         self.graph_consistent = True  # Tracks if the Composition is in a state that can be run (i.e. no dangling projections, (what else?))
@@ -1014,6 +1017,15 @@ class Composition(object):
     #     # [[[1.0]]] --> one trial, one input state
     #
     #     # [[1.0], [1.0]]
+    def _execute_learning(self):
+        # First, execute comparator mechanism
+        self.learning_comparator.execute(context="LEARNING")
+
+        # Then, procedure depends (at least) on how many learning mechanisms you have (single layer vs multilayer)
+
+        # if single layer learning:
+        self.learning_mechanisms[0].execute(context="LEARNING")
+        self.learning_projections[0].execute()
 
     def execute(
         self,
@@ -1309,7 +1321,8 @@ class Composition(object):
 
         # TBI: Handle runtime params?
         result = None
-        # loop over the length of the list of inputs (# of trials)
+
+        # loop over the length of the list of inputs - each input represents a trial
         for input_index in input_indices:
 
             if call_before_trial:
@@ -1317,6 +1330,7 @@ class Composition(object):
             if scheduler_processing.termination_conds[TimeScale.RUN].is_satisfied(scheduler=scheduler_processing, execution_id=execution_id):
                 break
 
+            # PHASE 1: ASSIGN VALUES TO STIMULUS_CIM OUTPUT STATES
             execution_inputs = {}
 
             # loop over all mechanisms that receive inputs from the outside world
@@ -1327,6 +1341,7 @@ class Composition(object):
                 else:
                     execution_inputs[mech] = inputs[mech][0 if reuse_inputs else input_index]
 
+            # TBI: Move assignment of targets to the beginning of the learning phase
             execution_targets = {}
 
             for mech in targets.keys():
@@ -1337,6 +1352,7 @@ class Composition(object):
                 else:
                     execution_targets[mech] = targets[mech][input_index]
 
+            # PHASE 2: ASSIGN VALUES TO STIMULUS_CIM OUTPUT STATES
             num = self.execute(
                 execution_inputs,
                 scheduler_processing,
@@ -1352,6 +1368,8 @@ class Composition(object):
 
             if num is not None:
                 result = num
+            # PHASE 3 [TBI]: EXECUTE LEARNING
+            # self._execute_learning()
 
             if call_after_trial:
                 call_after_trial()
