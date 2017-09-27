@@ -1132,8 +1132,8 @@ class Composition(object):
                             # self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
-                    for proj in mechanism.input_states[0].path_afferents:
-                        proj.execute(context=EXECUTING + "composition")
+                    # for proj in mechanism.input_states[0].path_afferents:
+                    #     proj.execute(context=EXECUTING + "composition")
                     num = mechanism.execute(context=EXECUTING + "composition")
                     print(" -------------- EXECUTING ", mechanism.name, " -------------- ")
                     print("result = ", num)
