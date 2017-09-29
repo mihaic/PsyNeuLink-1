@@ -328,7 +328,9 @@ from PsyNeuLink.Globals.Log import LogEntry, LogLevel
 from PsyNeuLink.Globals.Preferences.ComponentPreferenceSet import kpVerbosePref
 from PsyNeuLink.Globals.Preferences.PreferenceSet import PreferenceLevel
 from PsyNeuLink.Globals.Registry import register_category
-from PsyNeuLink.Globals.Utilities import ContentAddressableList, MODULATION_OVERRIDE, Modulation, append_type_to_name, convert_to_np_array, get_class_attributes, is_value_spec, iscompatible, merge_param_dicts, type_match
+from PsyNeuLink.Globals.Utilities import ContentAddressableList, MODULATION_OVERRIDE, Modulation, \
+    append_type_to_name, convert_to_np_array, get_class_attributes, is_value_spec, iscompatible, is_numeric, \
+    merge_param_dicts, type_match
 from PsyNeuLink.Scheduling.TimeScale import CurrentTime, TimeScale
 
 state_keywords = component_keywords.copy()
@@ -784,7 +786,7 @@ class State_Base(State):
             #     ParameterState, projection, 2-item tuple or value
         """
 
-        if PROJECTIONS in request_set and request_set[PROJECTIONS]:
+        if PROJECTIONS in request_set and request_set[PROJECTIONS] is not None:
             # if projection specification is an object or class reference, needs to be wrapped in a list
             # - to be consistent with paramClassDefaults
             # - for consistency of treatment below
@@ -1123,7 +1125,8 @@ class State_Base(State):
                 # If the projection was specified with a keyword or attribute value
                 #     then move it to the relevant entry of the params dict for the projection
                 # If projection_spec was in the form of a matrix keyword, move it to a matrix entry in the params dict
-                if issubclass(projection_type, PathwayProjection_Base) and projection_spec in MATRIX_KEYWORD_SET:
+                if (issubclass(projection_type, PathwayProjection_Base)
+                    and (is_numeric(projection_spec) or projection_spec in MATRIX_KEYWORD_SET)):
                     kwargs.update({MATRIX:projection_spec})
                 # If projection_spec was in the form of a ModulationParam value,
                 #    move it to a MODULATION entry in the params dict
@@ -2610,18 +2613,13 @@ def _is_legal_state_spec_tuple(owner, state_spec, state_type_name=None):
     if len(state_spec) != 2:
         raise StateError("Tuple provided as state_spec for {} of {} ({}) must have exactly two items".
                          format(state_type_name, owner.name, state_spec))
-    # MODIFIED 9/17/17 OLD:
-    # # IMPLEMENTATION NOTE: Mechanism allowed in tuple to accommodate specification of param for ControlSignal
-    # if not (_is_projection_spec(state_spec[1]) or isinstance(state_spec[1], (Mechanism, State))):
-    # MODIFIED 9/17/17 NEW:
     if not (_is_projection_spec(state_spec[1]) or
                 # IMPLEMENTATION NOTE: Mechanism or State allowed as 2nd item of tuple or
-                #                      Mechanism as 2st item and string (parameter name) as 1st
+                #                      string (parameter name) as 1st and Mechanism as 2nd
                 #                      to accommodate specification of param for ControlSignal
                 isinstance(state_spec[1], (Mechanism, State))
                            or (isinstance(state_spec[0], Mechanism) and
                                        state_spec[1] in state_spec[0]._parameter_states)):
-    # MODIFIED 9/17/17 END
 
         raise StateError("2nd item of tuple in state_spec for {} of {} ({}) must be a specification "
                          "for a Mechanism, State, or Projection".

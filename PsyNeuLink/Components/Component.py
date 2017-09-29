@@ -27,8 +27,9 @@ Creating a Component
 A Component is never created by calling the constructor for the Component base class.  However, its ``__init__()``
 method is always called when a Component subclass is instantiated; that, in turn, calls a standard set of methods
 (listed `below <Component_Methods>`) as part of the initialization procedure.  Every Component has a core set of
-configurable parameters that can be specified in the arguments of the constructor, as well as additional attributes
-that provide information about its contents and/or state (see `Component_Attributes` below).
+`configurable parameters <Component_User_Params>` that can be specified in the arguments of the constructor, as well
+as additional attributes that provide information about its contents and/or state (see
+`Component_Informational_Attributes` below).
 
 .. _Component_Deferred_Init:
 
@@ -512,7 +513,7 @@ class Component(object):
              it can be referenced either as self.function, self.params[FUNCTION] or self.paramsCurrent[FUNCTION]
          - function_object (Function): the object to which function belongs (and that defines it's parameters)
          - output (value: self.value)
-         - output_values (return from self.execute: concatenated set of values of outputStates)
+         - output_values (return from self.execute: concatenated set of values of output_states)
          - class and instance variable defaults
          - class and instance param defaults
         The Components's execute method (<subclass>.execute is the Component's primary method
@@ -669,6 +670,7 @@ class Component(object):
             return vardict
 
     class ClassDefaults(Defaults):
+        exclude_from_parameter_states = [INPUT_STATES, OUTPUT_STATES]
         pass
 
     class InstanceDefaults(Defaults):
@@ -1080,11 +1082,12 @@ class Component(object):
             try:
                 return defaults_dict[val]
             except KeyError:
-                raise ComponentError("PROGRAM ERROR: \'{}\' not declared in {}.__init__() "
-                                     "but expected by its parent class ({}).".
-                                     format(val,
-                                            self.__class__.__name__,
-                                            self.__class__.__bases__[0].__name__))
+                # raise ComponentError("PROGRAM ERROR: \'{}\' not declared in {}.__init__() "
+                #                      "but expected by its parent class ({}).".
+                #                      format(val,
+                #                             self.__class__.__name__,
+                #                             self.__class__.__bases__[0].__name__))
+                pass
 
         def parse_arg(arg):
             # Resolve the string value of any args that use keywords as their name
@@ -1438,7 +1441,7 @@ class Component(object):
             variable = self._update_variable(variable())
 
         # Validate variable if parameter_validation is set and the function was called with a variable
-        if self.prefs.paramValidationPref and not variable is None:
+        if self.prefs.paramValidationPref and variable is not None:
             if context:
                 context = context + SEPARATOR_BAR + FUNCTION_CHECK_ARGS
             else:
