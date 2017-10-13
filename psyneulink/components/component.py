@@ -371,7 +371,7 @@ from psyneulink.globals.keywords import COMMAND_LINE, COMPONENT_INIT, CONTEXT, C
 from psyneulink.globals.preferences.componentpreferenceset import ComponentPreferenceSet, kpVerbosePref
 from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel, PreferenceSet
 from psyneulink.globals.registry import register_category
-from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_all_elements_to_np_array, convert_to_np_array, is_instance_or_subclass, is_matrix, is_same_function_spec, iscompatible, kwCompatibilityLength, object_has_single_value
+from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_all_elements_to_np_array, convert_to_np_array, is_instance_or_subclass, is_matrix, is_same_function_spec, iscompatible, kwCompatibilityLength, object_has_single_value, prune_unused_args
 
 __all__ = [
     'Component', 'COMPONENT_BASE_CLASS', 'component_keywords', 'ComponentError', 'ComponentLog', 'ExecutionStatus',
@@ -2488,7 +2488,9 @@ class Component(object):
                 self.function_object = copy.deepcopy(function)
             self.function_object.instance_defaults.variable = function_variable
         elif inspect.isclass(function) and issubclass(function, Function):
-            self.function_object = function(default_variable=function_variable)
+            kwargs_to_instantiate = function.ClassDefaults.values().copy()
+            _, kwargs = prune_unused_args(function.__init__, args=[], kwargs=kwargs_to_instantiate)
+            self.function_object = function(default_variable=function_variable, **kwargs)
 
         self.function_object.owner = self
         self.function_params = self.function_object.user_params
