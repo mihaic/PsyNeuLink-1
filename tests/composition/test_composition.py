@@ -2665,53 +2665,80 @@ class TestInputSpecifications:
         assert 125 == output[0][0]
 
 class TestLearning:
-
-    def test_single_layer_RL_with_convenience(self):
-
-        from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, PROB
-        from PsyNeuLink.Scheduling.Condition import AfterNCalls
-
+    def test_store_learning(self):
         comp = Composition()
+        A = TransferMechanism(name="TransferMechanismA")
+        B = TransferMechanism(name="TransferMechanismB")
+        C = TransferMechanism(name="TransferMechanismC")
+        D = TransferMechanism(name="TransferMechanismD")
+        E = TransferMechanism(name="TransferMechanismE")
+        F = TransferMechanism(name="TransferMechanismF")
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_mechanism(E)
+        comp.add_mechanism(F)
+        ab = MappingProjection(name="a --> b")
+        bc = MappingProjection(name="b --> c")
+        cd = MappingProjection(name="c --> d")
+        de = MappingProjection(name="d --> e")
+        ef = MappingProjection(name="e --> f")
+        comp.add_projection(A, ab, B)
+        comp.add_projection(B, bc, C)
+        comp.add_projection(C, cd, D)
+        comp.add_projection(D, de, E)
+        comp.add_projection(E, ef, F)
+        comp.add_learning([ab])
+        print(comp.learning)
 
-        inputSourceMech = TransferMechanism(name="inputSourceMech",
-                                            default_variable=[0, 0, 0])
-        outputSourceMech = TransferMechanism(name="outputSourceMech",
-                                             default_variable=[0, 0, 0],
-                                             function=SoftMax(output=PROB,
-                                                              gain=1.0)
-                                             )
 
-        primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
-                                                     receiver=outputSourceMech,
-                                                     matrix=IDENTITY_MATRIX,
-                                                     name="primary_learned_projection")
-
-        reward_values = [10, 10, 10]
-
-        # Must initialize reward (won't be used, but needed for declaration of lambda function)
-        outputSourceMech.output_states.value = [0, 0, 1]
-        # Get reward value for selected action)
-        reward = lambda: [reward_values[int(np.nonzero(outputSourceMech.output_states.value)[0])]]
-
-        comp.add_mechanism(inputSourceMech)
-        comp.add_mechanism(outputSourceMech)
-        comp.add_projection(inputSourceMech, primaryLearnedProjection, outputSourceMech)
-        targetMech, learningMech = comp.add_single_layer_RL(primaryLearnedProjection, 0.05)
-
-        def show_weights():
-            print('Reward prediction weights: \n', outputSourceMech.input_states[0].path_afferents[0].matrix)
-            print('\nAction selected:  {}; predicted reward: {}'.format(
-                np.nonzero(outputSourceMech.output_states.value)[0][0],
-                outputSourceMech.output_states.value[np.nonzero(outputSourceMech.output_states.value)[0][0]],))
-
-        # sched = Scheduler(composition=comp)
-        stimulus_dict = {inputSourceMech: [[1.0,1.0,1.0]]}
-        target_dict = {targetMech: reward}
-        output = comp.run(
-            inputs=stimulus_dict,
-            # scheduler_processing=sched,
-            targets=target_dict,
-            num_trials=10,
-            call_after_trial=show_weights
-        )
-
+    # def test_single_layer_RL_with_convenience(self):
+        #
+        # from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, PROB
+        # from PsyNeuLink.Scheduling.Condition import AfterNCalls
+        #
+        # comp = Composition()
+        #
+        # inputSourceMech = TransferMechanism(name="inputSourceMech",
+        #                                     default_variable=[0, 0, 0])
+        # outputSourceMech = TransferMechanism(name="outputSourceMech",
+        #                                      default_variable=[0, 0, 0],
+        #                                      function=SoftMax(output=PROB,
+        #                                                       gain=1.0)
+        #                                      )
+        #
+        # primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
+        #                                              receiver=outputSourceMech,
+        #                                              matrix=IDENTITY_MATRIX,
+        #                                              name="primary_learned_projection")
+        #
+        # reward_values = [10, 10, 10]
+        #
+        # # Must initialize reward (won't be used, but needed for declaration of lambda function)
+        # outputSourceMech.output_states.value = [0, 0, 1]
+        # # Get reward value for selected action)
+        # reward = lambda: [reward_values[int(np.nonzero(outputSourceMech.output_states.value)[0])]]
+        #
+        # comp.add_mechanism(inputSourceMech)
+        # comp.add_mechanism(outputSourceMech)
+        # comp.add_projection(inputSourceMech, primaryLearnedProjection, outputSourceMech)
+        # targetMech, learningMech = comp.add_single_layer_RL(primaryLearnedProjection, 0.05)
+        #
+        # def show_weights():
+        #     print('Reward prediction weights: \n', outputSourceMech.input_states[0].path_afferents[0].matrix)
+        #     print('\nAction selected:  {}; predicted reward: {}'.format(
+        #         np.nonzero(outputSourceMech.output_states.value)[0][0],
+        #         outputSourceMech.output_states.value[np.nonzero(outputSourceMech.output_states.value)[0][0]],))
+        #
+        # # sched = Scheduler(composition=comp)
+        # stimulus_dict = {inputSourceMech: [[1.0,1.0,1.0]]}
+        # target_dict = {targetMech: reward}
+        # output = comp.run(
+        #     inputs=stimulus_dict,
+        #     # scheduler_processing=sched,
+        #     targets=target_dict,
+        #     num_trials=10,
+        #     call_after_trial=show_weights
+        # )
+        #

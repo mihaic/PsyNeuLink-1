@@ -57,16 +57,18 @@ from enum import Enum
 from PsyNeuLink.Components.Mechanisms.Mechanism import Mechanism
 from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.CompositionInterfaceMechanism \
     import CompositionInterfaceMechanism
-from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism \
-    import ComparatorMechanism
-from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningMechanism import LearningMechanism
+from PsyNeuLink.Components.Mechanisms.ProcessingMechanisms.TransferMechanism import TransferMechanism
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.Projections.Projection import Projection
 from PsyNeuLink.Components.States.OutputState import OutputState
 from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, AUTO_ASSIGN_MATRIX, EXECUTING, HARD_CLAMP, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP, TARGET
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale
-
+from PsyNeuLink.Library.Mechanisms.ProcessingMechanisms.ObjectiveMechanisms.ComparatorMechanism import \
+    ComparatorMechanism
+from PsyNeuLink.Globals.Keywords import NAME, SAMPLE, VARIABLE, COMPARATOR_MECHANISM, WEIGHT
+from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningMechanism import \
+    LearningMechanism
 logger = logging.getLogger(__name__)
 
 
@@ -339,9 +341,10 @@ class Composition(object):
 
         self._scheduler_processing = None
         self._scheduler_learning = None
-        self.learning_comparator = None
-        self.learning_mechanisms = None
-        self.learning_projections = None
+
+        # key = learned projection
+        # value = [ error source, learning mechanism ]
+        self.learning = {}
 
         # status attributes
         self.graph_consistent = True  # Tracks if the Composition is in a state that can be run (i.e. no dangling projections, (what else?))
@@ -471,6 +474,70 @@ class Composition(object):
             self.needs_update_graph_processing = True
             self.needs_update_scheduler_processing = True
             self.needs_update_scheduler_learning = True
+
+    def _assemble_learning(self, learned_projections):
+        # assemble projections to connect learning components according to the relationships outlined in self.learning
+        for learned_projection in learned_projections:
+            input_source = learned_projection.sender.owner
+            output_source = learned_projection.receiver.owner
+        self._learning_assembled = True
+
+    def _store_learning(self, learned_projection, merge=True):
+        # adds & replaces elements of the self.learning data structure as needed
+
+        output_source = learned_projection.receiver.owner
+
+        # FIRST, create or locate error source
+
+        # Case 1: learning DOES NOT yet exist in the composition --> we need to create a comparator mechanism
+        #   OR
+        # Case 2: Learning DOES exist, but we need to start a new learning sequence (create a comparator mechanism!)
+
+        if self.target_mechanisms == [] or not merge:
+            # create PNL Comparator Mechanism
+            # error_source = ComparatorMechanism(sample=output_source.output_state,
+            #                              target=TARGET,
+            #                              input_states=[{NAME: SAMPLE,
+            #                                             VARIABLE: output_source.value,
+            #                                             WEIGHT: -1
+            #                                             },
+            #                                            {NAME: TARGET,
+            #                                             VARIABLE: output_source.value,
+            #                                             # WEIGHT:1
+            #                                             }],
+            #                              name="{} {}".format(output_source.name,
+            #                                                  COMPARATOR_MECHANISM),
+            #                              )
+            error_source = TransferMechanism(name="ComparatorMechanism on "+output_source.name)
+
+            self.target_mechanisms.append(error_source)
+
+        # Case 3: Learning DOES exist -- There is only one learning sequence and we want to extend it
+        elif len(self.target_mechanisms) == 1:
+            # find the END of the existing learning chain -- this is your error source
+            end_of_chain = False
+            error_source = self.target_mechanisms[0]
+            while not end_of_chain:
+                for proj in self.learning:
+                    if self.learning[proj][0] == error_source:
+                        error_source = self.learning[proj][1]
+                        break
+                end_of_chain = True
+
+        # Case 4: Learning DOES exist and we need to identify WHICH learning sequence to extend [TBI]
+        else:
+            error_source = "TBI"
+        # SECOND, create PNL Learning Mechanism
+        learner = TransferMechanism(name="Learning Mechanism on " + learned_projection.name)
+        self.learning[learned_projection] = [error_source, learner]
+
+    def add_learning(self, learned_projections, learning_rate=0.5):
+        # First, update the learning data structure
+        for learned_projection in learned_projections:
+            self._store_learning(learned_projection)
+
+        # Then, follow each learn sequence and add or adjust projections where needed
+        # self._assemble_learning(learned_projections)
 
     def add_single_layer_RL(self, primary_learned_proj, learning_rate):
         '''
