@@ -531,10 +531,10 @@ class Composition(object):
         learner = TransferMechanism(name="Learning Mechanism on " + learned_projection.name)
         self.learning[learned_projection] = [error_source, learner]
 
-    def add_learning(self, learned_projections, learning_rate=0.5):
+    def add_learning(self, learned_projections, learning_rate=0.5, merge=False):
         # First, update the learning data structure
         for learned_projection in learned_projections:
-            self._store_learning(learned_projection)
+            self._store_learning(learned_projection, merge)
 
         # Then, follow each learn sequence and add or adjust projections where needed
         # self._assemble_learning(learned_projections)

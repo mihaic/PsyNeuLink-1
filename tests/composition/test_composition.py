@@ -1,7 +1,7 @@
 import functools
 import logging
 from timeit import timeit
-
+from pprint import pprint
 import numpy as np
 import pytest
 
@@ -2665,7 +2665,7 @@ class TestInputSpecifications:
         assert 125 == output[0][0]
 
 class TestLearning:
-    def test_store_learning(self):
+    def test_store_learning_merge_false(self):
         comp = Composition()
         A = TransferMechanism(name="TransferMechanismA")
         B = TransferMechanism(name="TransferMechanismB")
@@ -2689,11 +2689,44 @@ class TestLearning:
         comp.add_projection(C, cd, D)
         comp.add_projection(D, de, E)
         comp.add_projection(E, ef, F)
-        comp.add_learning([ab])
-        print(comp.learning)
+        comp.add_learning([ab, bc], merge=False)
+
+        assert "Comparator" in comp.learning[ab][0].name
+        assert "Comparator" in comp.learning[bc][0].name
+
+    def test_store_learning_merge_true(self):
+        comp = Composition()
+        A = TransferMechanism(name="TransferMechanismA")
+        B = TransferMechanism(name="TransferMechanismB")
+        C = TransferMechanism(name="TransferMechanismC")
+        D = TransferMechanism(name="TransferMechanismD")
+        E = TransferMechanism(name="TransferMechanismE")
+        F = TransferMechanism(name="TransferMechanismF")
+        comp.add_mechanism(A)
+        comp.add_mechanism(B)
+        comp.add_mechanism(C)
+        comp.add_mechanism(D)
+        comp.add_mechanism(E)
+        comp.add_mechanism(F)
+        ab = MappingProjection(name="a --> b")
+        bc = MappingProjection(name="b --> c")
+        cd = MappingProjection(name="c --> d")
+        de = MappingProjection(name="d --> e")
+        ef = MappingProjection(name="e --> f")
+        comp.add_projection(A, ab, B)
+        comp.add_projection(B, bc, C)
+        comp.add_projection(C, cd, D)
+        comp.add_projection(D, de, E)
+        comp.add_projection(E, ef, F)
+        comp.add_learning([ab, bc], merge=True)
+        assert "Comparator" in comp.learning[ab][0].name
+        assert "Learning" in comp.learning[bc][0].name
 
 
-    # def test_single_layer_RL_with_convenience(self):
+
+
+
+            # def test_single_layer_RL_with_convenience(self):
         #
         # from PsyNeuLink.Globals.Keywords import IDENTITY_MATRIX, PROB
         # from PsyNeuLink.Scheduling.Condition import AfterNCalls
