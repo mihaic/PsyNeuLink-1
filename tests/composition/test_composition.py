@@ -2691,7 +2691,10 @@ class TestLearning:
         comp.add_projection(E, ef, F)
         comp.add_learning([ab, bc], merge=False)
 
+        # The error source for the learning over ab is a comparator
         assert "Comparator" in comp.learning[ab][0].name
+
+        # The error source for the learning over bc is a comparator
         assert "Comparator" in comp.learning[bc][0].name
 
     def test_store_learning_merge_true(self):
@@ -2719,8 +2722,12 @@ class TestLearning:
         comp.add_projection(D, de, E)
         comp.add_projection(E, ef, F)
         comp.add_learning([ab, bc], merge=True)
+
+        # The error source for the learning over ab is a comparator
         assert "Comparator" in comp.learning[ab][0].name
-        assert "Learning" in comp.learning[bc][0].name
+
+        # The error source for the learning over bc is the learning mechanism from ab
+        assert "Learning" in comp.learning[bc][0].name and ab.name in comp.learning[bc][0].name
 
 
 
