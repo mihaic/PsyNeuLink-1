@@ -475,7 +475,7 @@ from PsyNeuLink.Globals.Registry import register_category
 from PsyNeuLink.Globals.Utilities import append_type_to_name, convert_to_np_array, iscompatible, parameter_spec
 from PsyNeuLink.Scheduling.TimeScale import CentralClock, TimeScale
 
-from PsyNeuLink.Composition import Pathway
+from PsyNeuLink.composition import Pathway
 # *****************************************    PROCESS CLASS    ********************************************************
 
 # ProcessRegistry ------------------------------------------------------------------------------------------------------

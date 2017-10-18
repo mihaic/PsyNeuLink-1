@@ -458,7 +458,7 @@ from PsyNeuLink.Globals.Utilities import ContentAddressableList, append_type_to_
     iscompatible, parameter_spec
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
 from PsyNeuLink.Scheduling.TimeScale import TimeScale, CentralClock
-from PsyNeuLink.Composition import Systemm
+from PsyNeuLink.composition import Systemm
 
 logger = logging.getLogger(__name__)
 

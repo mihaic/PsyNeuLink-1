@@ -1,4 +1,4 @@
-from PsyNeuLink.Composition import Graph, Vertex
+from PsyNeuLink.composition import Graph, Vertex
 
 
 class TestGraph:

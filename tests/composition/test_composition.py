@@ -16,7 +16,7 @@ from PsyNeuLink.Components.Process import process
 from PsyNeuLink.Components.Projections.PathwayProjections.MappingProjection import MappingProjection
 from PsyNeuLink.Components.States.InputState import InputState
 from PsyNeuLink.Components.System import system
-from PsyNeuLink.Composition import Composition, CompositionError, MechanismRole, Pathway, Systemm
+from PsyNeuLink.composition import Composition, CompositionError, MechanismRole, Pathway, Systemm
 from PsyNeuLink.Globals.Keywords import HARD_CLAMP, INPUT_STATE, NAME, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
 from PsyNeuLink.Scheduling.Condition import AfterNCalls, EveryNCalls, EveryNPasses
 from PsyNeuLink.Scheduling.Scheduler import Scheduler
