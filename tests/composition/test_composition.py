@@ -2734,6 +2734,129 @@ class TestLearning:
         # What is the expected behavior here??
         comp.add_learning([de], merge=True)
 
+    def test_learning_composition_single_layer(self):
+
+        from PsyNeuLink.Globals.Keywords import AUTO_ASSIGN_MATRIX, IDENTITY_MATRIX, SAMPLE, NAME, VARIABLE, WEIGHT, \
+            COMPARATOR_MECHANISM, TARGET, LEARNING_MECHANISM, MATRIX, PROB
+        from PsyNeuLink.Components.Mechanisms.AdaptiveMechanisms.LearningMechanism.LearningAuxilliary \
+            import ACTIVATION_INPUT, ACTIVATION_OUTPUT, ERROR_SIGNAL, OUTCOME
+        from PsyNeuLink.Components.Functions.Function import Reinforcement
+        from PsyNeuLink.Components.Projections.ModulatoryProjections.LearningProjection import LearningProjection
+
+        # Assemble processing composition -----------------------------------------------------
+        comp = Composition()
+        inputSourceMech = TransferMechanism(name="inputSourceMech",
+                                            default_variable=[0, 0, 0])
+        outputSourceMech = TransferMechanism(name="outputSourceMech",
+                                             default_variable=[0, 0, 0],
+                                             function=SoftMax(output=PROB,
+                                                              gain=1.0)
+                                             )
+        primaryLearnedProjection = MappingProjection(sender=inputSourceMech,
+                                                     receiver=outputSourceMech,
+                                                     matrix=IDENTITY_MATRIX,
+                                                     name="primary_learned_projection")
+        comp.add_mechanism(inputSourceMech)
+        comp.add_mechanism(outputSourceMech)
+        comp.add_projection(inputSourceMech,
+                            primaryLearnedProjection,
+                            outputSourceMech)
+        comp._analyze_graph()
+        reward_values = [10, 10, 10]
+        # -------------------------------------------------------------------------------------
+
+        # Misc. values that we will need for learning -----------------------------------------
+        # Must initialize reward (won't be used, but needed for declaration of lambda function)
+        outputSourceMech.output_states.value = [0, 0, 1]
+        # Get reward value for selected action)
+        reward = lambda: [reward_values[int(np.nonzero(outputSourceMech.output_states.value)[0])]]
+
+        # ** Variables used by multiple learning components **
+        activation_input = [np.zeros_like(inputSourceMech.value)]
+        activation_output = [np.zeros_like(outputSourceMech.value)]
+        error_signal = np.zeros_like(outputSourceMech.output_state.value)
+        learning_rate = 0.05
+        # -------------------------------------------------------------------------------------
+
+        # Assemble learning composition -------------------------------------------------------
+        targetMech = ComparatorMechanism(sample=outputSourceMech.output_state,
+                                         target=TARGET,
+                                         input_states=[{NAME:SAMPLE,
+                                                        VARIABLE: [0],
+                                                        WEIGHT:-1
+                                                       },
+                                                       {NAME:TARGET,
+                                                        VARIABLE: [0],
+                                                        # WEIGHT:1
+                                                       }],
+                                         name="{} {}".format(outputSourceMech.name,
+                                                          COMPARATOR_MECHANISM),
+                                         )
+
+        learningProj = LearningProjection(learning_function=Reinforcement(learning_rate=learning_rate),
+                                          receiver =primaryLearnedProjection._parameter_states[MATRIX])
+        learningProj.receiver = primaryLearnedProjection._parameter_states[MATRIX]
+        learningMech = LearningMechanism(variable=[[0,0,0], [0,0,0], [0]],
+                                         error_source=targetMech,
+                                         function=Reinforcement(
+                                             default_variable=[activation_input, activation_output, [0]],
+                                         activation_function=outputSourceMech.function_object,
+                                         learning_rate=learning_rate),
+
+                                         learning_signals=[learningProj],
+                                         name = primaryLearnedProjection.name + " " +LEARNING_MECHANISM,
+                                         )
+        errorProjection = MappingProjection(sender=targetMech.output_states[OUTCOME],
+                                            receiver=learningMech.input_states[ERROR_SIGNAL],
+                                            matrix=IDENTITY_MATRIX,
+                                            name="errorProjection")
+
+        comp.learning_composition.add_mechanism(targetMech)
+        comp.learning_composition.add_mechanism(learningMech)
+        comp.learning_composition.add_projection(targetMech, errorProjection, learningMech)
+        comp.learning_composition._analyze_graph()
+        # ---------------------------------------------------------------------------------
+
+        # Connect processing composition to learning composition --------------------------
+        activationInputProjection = MappingProjection(sender=inputSourceMech,
+                                                      receiver=learningMech.input_states[ACTIVATION_INPUT],
+                                                      matrix = IDENTITY_MATRIX,
+                                                      name="activationInputProjection",
+                                                      )
+        activationOutputProjection = MappingProjection(sender=outputSourceMech,
+                                                       receiver=learningMech.input_states[ACTIVATION_OUTPUT],
+                                                       matrix = IDENTITY_MATRIX,
+                                                       name = "activationOutputProjection",
+
+        )
+        sampleProjection = MappingProjection(sender=outputSourceMech,
+                                             receiver=targetMech.input_states[SAMPLE],
+                                             matrix=AUTO_ASSIGN_MATRIX,
+                                             name="sampleProjection")
+        # Sample Projection is created automatically by Objective Mechanism
+        # Target projection is handled by target_CIM
+
+
+
+        def show_weights():
+            print('Reward prediction weights: \n', outputSourceMech.input_states[0].path_afferents[0].matrix)
+            print('\nAction selected:  {}; predicted reward: {}'.format(
+                np.nonzero(outputSourceMech.output_states.value)[0][0],
+                outputSourceMech.output_states.value[np.nonzero(outputSourceMech.output_states.value)[0][0]],))
+            print("output mech receives = ", outputSourceMech.input_state.value)
+            print("Output source mech value = ", outputSourceMech.output_state.value)
+
+
+        sched = Scheduler(composition=comp)
+        stimulus_dict = {inputSourceMech: [[1.0,1.0,1.0]]}
+        target_dict = {targetMech: reward}
+        output = comp.run(
+            inputs=stimulus_dict,
+            scheduler_processing=sched,
+            targets=target_dict,
+            num_trials=10,
+            call_after_trial=show_weights
+        )
 
 
 
