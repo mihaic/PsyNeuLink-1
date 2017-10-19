@@ -491,7 +491,7 @@ class Composition(object):
 
         # Case 1: learning DOES NOT yet exist in the composition --> we need to create a comparator mechanism
         #   OR
-        # Case 2: Learning DOES exist, but we need to start a new learning sequence (create a comparator mechanism!)
+        # Case 2: Learning DOES exist, but we need create a new comparator mechanism
 
         if self.target_mechanisms == [] or not merge:
             # create PNL Comparator Mechanism
@@ -512,7 +512,8 @@ class Composition(object):
 
             self.target_mechanisms.append(error_source)
 
-        # Case 3: Learning DOES exist -- There is only one learning sequence and we want to extend it
+        # Case 3: Learning DOES exist
+        # There's ONE comparator AND it's downstream from the new learned projection, so we want to extend that branch
         elif len(self.target_mechanisms) == 1:
             # find the END of the existing learning chain -- this is your error source
             end_of_chain = False
@@ -525,6 +526,7 @@ class Composition(object):
                 end_of_chain = True
 
         # Case 4: Learning DOES exist and we need to identify WHICH learning sequence to extend [TBI]
+        # Case 5: Learning DOES exist, but it starts upstream
         else:
             error_source = "TBI"
         # SECOND, create PNL Learning Mechanism

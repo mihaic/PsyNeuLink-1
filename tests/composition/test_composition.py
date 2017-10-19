@@ -2697,6 +2697,8 @@ class TestLearning:
         # The error source for the learning over bc is a comparator
         assert "Comparator" in comp.learning[bc][0].name
 
+        comp.add_learning([de], merge=False)
+
     def test_store_learning_merge_true(self):
         comp = Composition()
         A = TransferMechanism(name="TransferMechanismA")
@@ -2729,6 +2731,8 @@ class TestLearning:
         # The error source for the learning over bc is the learning mechanism from ab
         assert "Learning" in comp.learning[bc][0].name and ab.name in comp.learning[bc][0].name
 
+        # What is the expected behavior here??
+        comp.add_learning([de], merge=True)
 
 
 
