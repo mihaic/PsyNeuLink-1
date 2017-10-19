@@ -333,10 +333,10 @@ class Composition(object):
         self.graph = Graph()  # Graph of the Composition
         self._graph_processing = None
         self.mechanisms = []
-        self.stimulus_CIM = CompositionInterfaceMechanism(name="stimulus_CIM")
-        self.target_CIM = CompositionInterfaceMechanism(name="target_CIM")
-        self.stimulus_CIM_output_states = {}
-        self.target_CIM_output_states = {}
+        self.CIM = CompositionInterfaceMechanism(name="Stimulus_CIM")
+        # self.target_CIM = CompositionInterfaceMechanism(name="target_CIM")
+        self.CIM_output_states = {}
+        # self.target_CIM_output_states = {}
         self.execution_ids = []
 
         self._scheduler_processing = None
@@ -345,6 +345,7 @@ class Composition(object):
         # key = learned projection
         # value = [ error source, learning mechanism ]
         self.learning = {}
+        self.learning_composition = LearningComposition()
 
         # status attributes
         self.graph_consistent = True  # Tracks if the Composition is in a state that can be run (i.e. no dangling projections, (what else?))
@@ -759,8 +760,7 @@ class Composition(object):
             if isinstance(mech, ComparatorMechanism):
                 self._add_mechanism_role(mech, MechanismRole.TARGET)
 
-        self._create_stimulus_CIM_output_states()
-        self._create_target_CIM_output_states()
+        self._create_CIM_output_states()
 
         self.needs_update_graph = False
 
@@ -888,7 +888,7 @@ class Composition(object):
                                          "{!s} where the InputState takes values of length {!s}".
                                          format(i, mech.name, val_length, state_length))
 
-    def _create_stimulus_CIM_output_states(self):
+    def _create_CIM_output_states(self):
         '''
             builds a dictionary of { Mechanism : OutputState } pairs where each origin mechanism has at least one
             corresponding OutputState on the CompositionInterfaceMechanism
@@ -905,34 +905,34 @@ class Composition(object):
                 current_input_states.add(input_state)
 
                 # if there is not a corresponding CIM output state, add one
-                if input_state not in set(self.stimulus_CIM_output_states.keys()):
-                    interface_output_state = OutputState(owner=self.stimulus_CIM,
+                if input_state not in set(self.CIM_output_states.keys()):
+                    interface_output_state = OutputState(owner=self.CIM,
                                                          variable=input_state.variable,
                                                          reference_value= input_state.variable,
                                                          name="STIMULUS_CIM_" + mech.name + "_" + input_state.name)
-                    # self.stimulus_CIM.add_states(interface_output_state)
-                    self.stimulus_CIM.output_states.append(interface_output_state)
-                    self.stimulus_CIM_output_states[input_state] = interface_output_state
+                    # self.CIM.add_states(interface_output_state)
+                    self.CIM.output_states.append(interface_output_state)
+                    self.CIM_output_states[input_state] = interface_output_state
                     MappingProjection(sender=interface_output_state,
                                       receiver=input_state,
                                       matrix= IDENTITY_MATRIX,
                                       name="("+interface_output_state.name + ") to ("
                                            + input_state.owner.name + "-" + input_state.name+")")
 
-        sends_to_input_states = set(self.stimulus_CIM_output_states.keys())
+        sends_to_input_states = set(self.CIM_output_states.keys())
         # For any output state still registered on the CIM that does not map to a corresponding ORIGIN mech I.S.:
         for input_state in sends_to_input_states.difference(current_input_states):
             for projection in input_state.path_afferents:
-                if projection.sender == self.stimulus_CIM_output_states[input_state]:
+                if projection.sender == self.CIM_output_states[input_state]:
                     # remove the corresponding projection from the ORIGIN mechanism's path afferents
                     input_state.path_afferents.remove(projection)
                     projection = None
 
             # remove the output state associated with this input state (this iteration) from the CIM output states
-            self.stimulus_CIM.output_states.remove(self.stimulus_CIM_output_states[input_state])
+            self.CIM.output_states.remove(self.CIM_output_states[input_state])
 
             # and from the dictionary of CIM output state/input state pairs
-            del self.stimulus_CIM_output_states[input_state]
+            del self.CIM_output_states[input_state]
 
 
 
@@ -977,51 +977,15 @@ class Composition(object):
     #             name=self.name+'_Input Projection to '+target_mech_target.name)
 
 
-    def _create_target_CIM_output_states(self):
-        # loop over all target mechanisms
-        current_input_states = set()
-        for mech in self.get_mechanisms_by_role(MechanismRole. TARGET):
-            current_input_states.add(mech.input_states[TARGET])
 
-            # if there is not a corresponding CIM output state, add one
-            if mech.input_states[TARGET] not in set(self.target_CIM_output_states.keys()):
-                interface_output_state = OutputState(owner=self.target_CIM,
-                                                     variable=mech.input_states[TARGET].value,
-                                                     reference_value= mech.input_states[TARGET].value,
-                                                     name="TARGET_CIM_" + mech.name)
-
-                # self.target_CIM.add_states(interface_output_state)
-                self.target_CIM.output_states.append(interface_output_state)
-                self.target_CIM_output_states[mech.input_states[TARGET]] = interface_output_state
-                MappingProjection(sender=interface_output_state,
-                                  receiver=mech.input_states[TARGET],
-                                  name="(" + interface_output_state.name + ") to ("
-                                       + mech.name + ")")
-
-        sends_to_input_states = set(self.target_CIM_output_states.keys())
-        # For any output state still registered on the CIM that does not map to a corresponding TARGET mech:
-        for input_state in sends_to_input_states.difference(current_input_states):
-            for projection in input_state.path_afferents:
-                if projection.sender == self.target_CIM_output_states[input_state]:
-                    # remove the corresponding projection from the ORIGIN mechanism's path afferents
-                    input_state.path_afferents.remove(projection)
-                    projection = None
-
-            # remove the output state associated with this input state (this iteration) from the CIM output states
-            self.target_CIM.output_states.remove(self.target_CIM_output_states[input_state])
-
-            # and from the dictionary of CIM output state/input state pairs
-            del self.target_CIM_output_states[input_state]
-
-    def _assign_values_to_stimulus_CIM_output_states(self, inputs):
-        
+    def _assign_values_to_CIM_output_states(self, inputs):
         current_mechanisms = set()
         for key in inputs:
             if isinstance(key, Mechanism):
-                self.stimulus_CIM_output_states[key.input_state].value = inputs[key]
+                self.CIM_output_states[key.input_state].value = inputs[key]
                 current_mechanisms.add(key)
             else:
-                self.stimulus_CIM_output_states[key].value = inputs[key]
+                self.CIM_output_states[key].value = inputs[key]
                 current_mechanisms.add(key.owner)
 
         origins = self.get_mechanisms_by_role(MechanismRole.ORIGIN)
@@ -1030,15 +994,15 @@ class Composition(object):
         # is stored -- the point is that if an input is not supplied for an origin mechanism, the mechanism should use
         # its default variable value
         for mech in origins.difference(set(current_mechanisms)):
-            self.stimulus_CIM_output_states[mech.input_state].value = mech.instance_defaults.variable
+            self.CIM_output_states[mech.input_state].value = mech.instance_defaults.variable
 
-    def _assign_values_to_target_CIM_output_states(self, targets):
-        for mech in targets:
-            # assigning target provided for this mechanism to the the target_CIM_output_state that sends to it
-            if callable(targets[mech]):
-                self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]()
-            else:
-                self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
+    # def _assign_values_to_target_CIM_output_states(self, targets):
+    #     for mech in targets:
+    #         # assigning target provided for this mechanism to the the target_CIM_output_state that sends to it
+    #         if callable(targets[mech]):
+    #             self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]()
+    #         else:
+    #             self.target_CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
 
     def _assign_execution_ids(self, execution_id=None):
         '''
@@ -1061,8 +1025,8 @@ class Composition(object):
         # for k in self.input_mechanisms.keys():
         #     self.input_mechanisms[k]._execution_id = execution_id
 
-        self.stimulus_CIM._execution_id = execution_id
-        self.target_CIM._execution_id = execution_id
+        self.CIM._execution_id = execution_id
+        # self.target_CIM._execution_id = execution_id
 
         self._execution_id = execution_id
         return execution_id
@@ -1086,15 +1050,16 @@ class Composition(object):
     #     # [[[1.0]]] --> one trial, one input state
     #
     #     # [[1.0], [1.0]]
-    def _execute_learning(self):
-        # First, execute comparator mechanism
-        self.learning_comparator.execute(context="LEARNING")
 
-        # Then, procedure depends (at least) on how many learning mechanisms you have (single layer vs multilayer)
-
-        # if single layer learning:
-        self.learning_mechanisms[0].execute(context="LEARNING")
-        self.learning_projections[0].execute()
+    # def _execute_learning(self):
+    #     # First, execute comparator mechanism
+    #     self.learning_comparator.execute(context="LEARNING")
+    #
+    #     # Then, procedure depends (at least) on how many learning mechanisms you have (single layer vs multilayer)
+    #
+    #     # if single layer learning:
+    #     self.learning_mechanisms[0].execute(context="LEARNING")
+    #     self.learning_projections[0].execute()
 
     def execute(
         self,
@@ -1160,8 +1125,8 @@ class Composition(object):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
-        self._assign_values_to_stimulus_CIM_output_states(inputs)
-        self._assign_values_to_target_CIM_output_states(targets)
+        self._assign_values_to_CIM_output_states(inputs)
+        # self._assign_values_to_target_CIM_output_states(targets)
         next_pass_before = 1
         next_pass_after = 1
         if clamp_input:
@@ -1212,7 +1177,7 @@ class Composition(object):
                                 mechanism.recurrent_projection.sender.value = [0.0]
                         elif mechanism in no_clamp_inputs:
                             for input_state in mechanism.input_states:
-                                self.stimulus_CIM_output_states[input_state].value = 0.0
+                                self.CIM_output_states[input_state].value = 0.0
                             # self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(mechanism, Mechanism):
@@ -1230,7 +1195,7 @@ class Composition(object):
                             for input_state in mechanism.input_states:
                             # clamp = None --> "turn off" input mechanism
                             # self.input_mechanisms[mechanism]._output_states[0].value = 0
-                                self.stimulus_CIM_output_states[input_state].value = 0
+                                self.CIM_output_states[input_state].value = 0
 
             if call_after_time_step:
                 call_after_time_step()
@@ -1386,44 +1351,38 @@ class Composition(object):
         scheduler_processing._reset_counts_total(TimeScale.RUN, execution_id)
         scheduler_processing._reset_time(TimeScale.RUN, execution_id)
 
-        # TBI: Handle learning graph
-
         # TBI: Handle runtime params?
         result = None
 
-        # loop over the length of the list of inputs - each input represents a trial
+        # --- RESET FOR NEXT TRIAL ---
+        # by looping over the length of the list of inputs - each input represents a TRIAL
         for input_index in input_indices:
 
+            # Execute call before trial "hook" (user defined function)
             if call_before_trial:
                 call_before_trial()
-            if scheduler_processing.termination_conds[TimeScale.RUN].is_satisfied(scheduler=scheduler_processing, execution_id=execution_id):
+
+            if scheduler_processing.termination_conds[TimeScale.RUN].is_satisfied(scheduler=scheduler_processing,
+                                                                                  execution_id=execution_id):
                 break
 
-            # PHASE 1: ASSIGN VALUES TO STIMULUS_CIM OUTPUT STATES
-            execution_inputs = {}
+        # PROCESSING ------------------------------------------------------------------------
 
-            # loop over all mechanisms that receive inputs from the outside world
+            # Prepare stimuli from the outside world  -- collect the inputs for this TRIAL and store them in a dict
+            execution_stimuli = {}
+
+            # loop over all mechanisms that receive stimuli from the outside world
             for mech in inputs.keys():
                 if isinstance(inputs[mech], dict):
                     for input_state in inputs[mech].keys():
-                        execution_inputs[input_state] = inputs[mech][input_state][0 if reuse_inputs else input_index]
+                        execution_stimuli[input_state] = inputs[mech][input_state][0 if reuse_inputs else input_index]
                 else:
-                    execution_inputs[mech] = inputs[mech][0 if reuse_inputs else input_index]
+                    execution_stimuli[mech] = inputs[mech][0 if reuse_inputs else input_index]
 
-            # TBI: Move assignment of targets to the beginning of the learning phase
-            execution_targets = {}
-
-            for mech in targets.keys():
-                if callable(targets[mech]):
-                    execution_targets[mech] = targets[mech]
-                elif len(targets[mech]) == 1:
-                    execution_targets[mech] = targets[mech][0]
-                else:
-                    execution_targets[mech] = targets[mech][input_index]
-
-            # PHASE 2: ASSIGN VALUES TO STIMULUS_CIM OUTPUT STATES
+            # execute processing
+            # pass along the stimuli for this trial
             num = self.execute(
-                execution_inputs,
+                execution_stimuli,
                 scheduler_processing,
                 scheduler_learning,
                 call_before_time_step,
@@ -1432,17 +1391,43 @@ class Composition(object):
                 call_after_pass,
                 execution_id,
                 clamp_input,
-                execution_targets
             )
 
+        # ---------------------------------------------------------------------------------
+            # store the result of this execute in case it will be the final result
             if num is not None:
                 result = num
-            # PHASE 3 [TBI]: EXECUTE LEARNING
-            # self._execute_learning()
+
+        # LEARNING ------------------------------------------------------------------------
+            # Prepare targets from the outside world  -- collect the targets for this TRIAL and store them in a dict
+            execution_targets = {}
+
+            # loop over all mechanisms that receive targets from the outside world
+            for mech in targets.keys():
+                if callable(targets[mech]):
+                    execution_targets[mech] = targets[mech]
+                elif len(targets[mech]) == 1:
+                    execution_targets[mech] = targets[mech][0]
+                else:
+                    execution_targets[mech] = targets[mech][input_index]
+
+            # execute learning
+            # pass along the targets for this trial
+            self.learning_composition.execute(execution_targets,
+                                              scheduler_processing,
+                                              scheduler_learning,
+                                              call_before_time_step,
+                                              call_before_pass,
+                                              call_after_time_step,
+                                              call_after_pass,
+                                              execution_id,
+                                              clamp_input,
+                                              )
 
             if call_after_trial:
                 call_after_trial()
 
+            # ---------------------------------------------------------------------------------
         scheduler_processing._increment_time(TimeScale.RUN, execution_id=execution_id)
 
         # return the output of the LAST mechanism executed in the composition
@@ -1544,6 +1529,122 @@ class Pathway(Composition):
             inputs = {self.get_mechanisms_by_role(MechanismRole.ORIGIN).pop(): inputs}
 
         output = super(Pathway, self).execute(
+            inputs,
+            scheduler_processing,
+            scheduler_learning,
+            execution_id,
+            call_after_time_step,
+            call_before_pass,
+            call_after_time_step,
+            call_after_pass,
+            clamp_input,
+        )
+        return output
+
+class LearningComposition(Composition):
+
+    def __init__(self):
+        # core attributes
+        self.graph = Graph()  # Graph of the Composition
+        self._graph_processing = None
+        self.mechanisms = []
+        self.CIM = CompositionInterfaceMechanism(name="Target_CIM")
+        # self.target_CIM = CompositionInterfaceMechanism(name="target_CIM")
+        self.CIM_output_states = {}
+        # self.target_CIM_output_states = {}
+        self.execution_ids = []
+
+        self._scheduler_processing = None
+        self._scheduler_learning = None
+
+        # key = learned projection
+        # value = [ error source, learning mechanism ]
+        self.learning = {}
+        self.learning_composition = None
+
+        # status attributes
+        self.graph_consistent = True  # Tracks if the Composition is in a state that can be run (i.e. no dangling projections, (what else?))
+        self.needs_update_graph = True  # Tracks if the Composition graph has been analyzed to assign roles to components
+        self.needs_update_graph_processing = True  # Tracks if the processing graph is current with the full graph
+        self.needs_update_scheduler_processing = True  # Tracks if the processing scheduler needs to be regenerated
+
+        # helper attributes
+        self.mechanisms_to_roles = OrderedDict()
+
+        # Create lists to track identity of certain mechanism classes within the
+        # composition.
+        # Explicit classes:
+        self.explicit_input_mechanisms = []  # Need to track to know which to leave untouched
+        self.all_input_mechanisms = []
+        self.explicit_output_mechanisms = []  # Need to track to know which to leave untouched
+        self.all_output_mechanisms = []
+        self.target_mechanisms = []  # Do not need to track explicit as they mush be explicit
+
+        # TBI: update self.sched whenever something is added to the composition
+        self.sched = Scheduler(composition=self)
+
+    def _create_target_CIM_output_states(self):
+        # loop over all target mechanisms
+        current_input_states = set()
+        for mech in self.get_mechanisms_by_role(MechanismRole. TARGET):
+            current_input_states.add(mech.input_states[TARGET])
+
+            # if there is not a corresponding CIM output state, add one
+            if mech.input_states[TARGET] not in set(self.CIM_output_states.keys()):
+                interface_output_state = OutputState(owner=self.CIM,
+                                                     variable=mech.input_states[TARGET].value,
+                                                     reference_value= mech.input_states[TARGET].value,
+                                                     name="TARGET_CIM_" + mech.name)
+
+                # self.CIM.add_states(interface_output_state)
+                self.CIM.output_states.append(interface_output_state)
+                self.CIM_output_states[mech.input_states[TARGET]] = interface_output_state
+                MappingProjection(sender=interface_output_state,
+                                  receiver=mech.input_states[TARGET],
+                                  name="(" + interface_output_state.name + ") to ("
+                                       + mech.name + ")")
+
+        sends_to_input_states = set(self.CIM_output_states.keys())
+        # For any output state still registered on the CIM that does not map to a corresponding TARGET mech:
+        for input_state in sends_to_input_states.difference(current_input_states):
+            for projection in input_state.path_afferents:
+                if projection.sender == self.CIM_output_states[input_state]:
+                    # remove the corresponding projection from the ORIGIN mechanism's path afferents
+                    input_state.path_afferents.remove(projection)
+                    projection = None
+
+            # remove the output state associated with this input state (this iteration) from the CIM output states
+            self.CIM.output_states.remove(self.CIM_output_states[input_state])
+
+            # and from the dictionary of CIM output state/input state pairs
+            del self.CIM_output_states[input_state]
+
+    def _assign_values_to_CIM_output_states(self, targets):
+        for mech in targets:
+            # assigning target provided for this mechanism to the the CIM_output_state that sends to it
+            if callable(targets[mech]):
+                self.CIM_output_states[mech.input_states[TARGET]].value = targets[mech]()
+            else:
+                self.CIM_output_states[mech.input_states[TARGET]].value = targets[mech]
+
+    def execute(
+        self,
+        inputs,
+        scheduler_processing=None,
+        scheduler_learning=None,
+        execution_id=None,
+        call_before_time_step=None,
+        call_before_pass=None,
+        call_after_time_step=None,
+        call_after_pass=None,
+        clamp_input=SOFT_CLAMP,
+        targets=None
+    ):
+
+        if isinstance(inputs, list):
+            inputs = {self.get_mechanisms_by_role(MechanismRole.ORIGIN).pop(): inputs}
+
+        output = super(LearningComposition, self).execute(
             inputs,
             scheduler_processing,
             scheduler_learning,
