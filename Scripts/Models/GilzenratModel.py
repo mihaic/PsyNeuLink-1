@@ -68,8 +68,9 @@ output_weights = np.array([[1.84], [0]])
 
 # Implement response layer with a single, self-excitatory connection
 #To do Markus: specify recurrent self-connrection weight for response unit to 2.00
-response = GilzenratTransferMechanism(size=1,
-                                      matrix=np.matrix([[2.0]]),
+response = GilzenratTransferMechanism(initial_value=np.array([[2.0]]),
+                                      size=1,
+                                      matrix=np.matrix([[0.5]]),
                                       function=Logistic(bias=2),
                                       time_step_size=time_step_size,
                                       noise=NormalDist(mean=0.0,standard_dev=standard_deviation).function,
@@ -105,9 +106,6 @@ LC = LCControlMechanism(
         modulated_mechanisms=[decision_layer, response],
         name='LC')
 
-for signal in LC._control_signals:
-    signal._intensity = k*initial_w + G
-
 # ELICITS WARNING:
 decision_process = Process(pathway=[input_layer,
                                     input_weights,
@@ -127,9 +125,11 @@ task = System(processes=[decision_process, lc_process])
 
 # stimulus
 stim_list_dict = {input_layer: np.repeat(np.array([[0,0],[1,0]]),10/time_step_size,axis=0)}
+
 initial_values = {decision_layer: 0.5,
                   response: 0.5,
-                  LC: 1.0}
+                  LC: k*initial_w + G}
+
 def h_v(v,C,d):
     return C*v + (1-C)*d
 
@@ -146,9 +146,17 @@ def record_step():
     decision_layer_target.append(decision_layer.value[0][0])
     decision_layer_distractor.append(decision_layer.value[0][1])
     response_layer.append(response.value[0][0])
+def check_output_states():
+    print("- - - - - - OUTPUT STATES - - - - - - ")
+    print("decision")
+    print(decision_layer.output_states)
+    print("response")
+    print(response.output_states)
+    print("LC")
+    print(LC.output_states)
 task.show_graph()
 
-task.run(stim_list_dict, num_trials= number_of_trials, call_after_trial=record_step, initial_values=initial_values)
+task.run(stim_list_dict, num_trials= number_of_trials, call_before_trial=check_output_states, call_after_trial=record_step, initial_values=initial_values)
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -164,6 +172,11 @@ plt.legend(loc='upper left')
 plt.ylim((-0.2,1.2))
 plt.show()
 
+print("LC, h(v) --> ", LC_results_v)
+print("LC, w --> ", LC_results_w)
+print("decision, target --> ", decision_layer_target)
+print("decision, distractor --> ", decision_layer_distractor)
+print("response --> ", response_layer)
 # This prints information about the System,
 # including its execution list indicating the order in which the Mechanisms will execute
 # IMPLEMENTATION NOTE:

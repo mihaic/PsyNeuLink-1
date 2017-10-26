@@ -566,7 +566,6 @@ def run(object,
 
     # EXECUTE
     for execution in range(num_trials):
-
         execution_id = _get_unique_id()
 
         if call_before_trial:
