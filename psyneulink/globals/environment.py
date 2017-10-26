@@ -458,6 +458,7 @@ def run(object,
         list of the values, for each `TRIAL`, of the OutputStates for a Mechanism run directly,
         or of the OutputStates of the `TERMINAL` Mechanisms for the Process or System run.
     """
+    _assign_initial_values(object, initial_values)
 
     inputs = _construct_stimulus_sets(object, inputs)
 
@@ -696,6 +697,41 @@ def _construct_stimulus_sets(object, stimuli, is_target=False):
 
     stim_list_array = np.array(stim_list)
     return stim_list_array
+
+
+def _assign_initial_values(sys, initial_values):
+    # zero all output state values, which may have values leftover from initialization
+    # if another initial value was provided it, add it
+    # this is a quick fix which by passes some validation, but will be improved on Composition
+    if initial_values:
+        for mechanism in sys.mechanisms:
+            # first zero out the value of all output states on this mechanism
+            for output_state in mechanism.output_states:
+                output_state._value *= 0.0
+                # if a value was specified for the whole mechanism, add it to each output state
+                if mechanism in initial_values:
+                    output_state._value += initial_values[output_state.owner]
+                # if a value was specified for this output state, add it to this output state
+                elif output_state in initial_values:
+                    output_state._value += initial_values[output_state]
+            # then zero out all control signals on this mechanism
+            if hasattr(mechanism, "_control_signals"):
+                for signal in mechanism._control_signals:
+                    signal._intensity *= 0.0
+                    # if a value was specified for the whole mechanism, add it to each control signal
+                    if mechanism in initial_values:
+                        signal._intensity += initial_values[output_state.owner]
+                    # if a value was specified for this control signal, add it to this control signal
+                    elif signal in initial_values:
+                        signal._intensity += initial_values[signal]
+
+
+
+        for mechanism in sys.mechanisms:
+            print("RESULTS: ")
+            print(mechanism.output_states)
+            if hasattr(mechanism, "_control_signals"):
+                print(mechanism._control_signals)
 
 def _construct_from_stimulus_list(object, stimuli, is_target, context=None):
     object_type = _get_object_type(object)
