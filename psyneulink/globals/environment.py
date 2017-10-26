@@ -725,14 +725,6 @@ def _assign_initial_values(sys, initial_values):
                     elif signal in initial_values:
                         signal._intensity += initial_values[signal]
 
-
-
-        for mechanism in sys.mechanisms:
-            print("RESULTS: ")
-            print(mechanism.output_states)
-            if hasattr(mechanism, "_control_signals"):
-                print(mechanism._control_signals)
-
 def _construct_from_stimulus_list(object, stimuli, is_target, context=None):
     object_type = _get_object_type(object)
 

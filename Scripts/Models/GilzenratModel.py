@@ -98,7 +98,7 @@ LC = LCControlMechanism(
                         threshold_FHN=0.5,        #Parameter describing shape of the FitzHugh–Nagumo cubic nullcline for the fast excitation variable v
         objective_mechanism=ObjectiveMechanism(
                                     function=Linear,
-                                    monitored_output_states=[(decision_layer, None, None, np.array([[0.3],[0.0]]))],
+                                    # monitored_output_states=[(decision_layer, None, None, np.array([[0.3],[0.0]]))],
                                     input_states=[[0]],
                                     name='LC ObjectiveMechanism'
         ),
@@ -127,7 +127,9 @@ task = System(processes=[decision_process, lc_process])
 
 # stimulus
 stim_list_dict = {input_layer: np.repeat(np.array([[0,0],[1,0]]),10/time_step_size,axis=0)}
-
+initial_values = {decision_layer: 0.5,
+                  response: 0.5,
+                  LC: 1.0}
 def h_v(v,C,d):
     return C*v + (1-C)*d
 
@@ -144,8 +146,9 @@ def record_step():
     decision_layer_target.append(decision_layer.value[0][0])
     decision_layer_distractor.append(decision_layer.value[0][1])
     response_layer.append(response.value[0][0])
+task.show_graph()
 
-task.run(stim_list_dict, num_trials= number_of_trials, call_after_trial=record_step)
+task.run(stim_list_dict, num_trials= number_of_trials, call_after_trial=record_step, initial_values=initial_values)
 
 from matplotlib import pyplot as plt
 import numpy as np
