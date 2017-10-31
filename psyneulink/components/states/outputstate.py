@@ -540,7 +540,7 @@ from psyneulink.components.component import Component, InitStatus
 from psyneulink.components.functions.function import Linear, is_function_type
 from psyneulink.components.shellclasses import Mechanism
 from psyneulink.components.states.state import ADD_STATES, State_Base, _instantiate_state_list, state_type_keywords
-from psyneulink.globals.keywords import ALL, CALCULATE, COMMAND_LINE, GATING_SIGNAL, INDEX, INPUT_STATE, INPUT_STATES, MAPPING_PROJECTION, MEAN, MECHANISM_VALUE, MEDIAN, NAME, OUTPUT_STATE, OUTPUT_STATE_PARAMS, PARAMS, PROJECTION, PROJECTIONS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, RESULT, STANDARD_DEVIATION, STANDARD_OUTPUT_STATES, STATE, VARIANCE
+from psyneulink.globals.keywords import ALL, CALCULATE, COMMAND_LINE, GATING_SIGNAL, INDEX, INPUT_STATE, INPUT_STATES, MAPPING_PROJECTION, MEAN, MECHANISM_VALUE, MEDIAN, NAME, OUTPUT_STATE, OUTPUT_STATE_PARAMS, PARAMS, PROJECTION, PROJECTIONS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, RESULT, STANDARD_DEVIATION, STANDARD_OUTPUT_STATES, STATE, SUM, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import UtilitiesError, is_numeric, iscompatible, type_match

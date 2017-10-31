@@ -723,13 +723,14 @@ Class Reference
 import inspect
 import numbers
 import warnings
+
 from collections import Iterable
 
 import numpy as np
 import typecheck as tc
 
 from psyneulink.components.component import Component, ComponentError, InitStatus, component_keywords, function_type
-from psyneulink.components.functions.function import LinearCombination, ModulationParam, _get_modulated_param, get_param_value_for_keyword
+from psyneulink.components.functions.function import Linear, LinearCombination, ModulationParam, _get_modulated_param, get_param_value_for_keyword
 from psyneulink.components.shellclasses import Mechanism, Process_Base, Projection, State
 from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMMAND_LINE, CONTEXT, CONTROL_PROJECTION_PARAMS, CONTROL_SIGNAL_SPECS, DEFERRED_INITIALIZATION, EXPONENT, FUNCTION, FUNCTION_PARAMS, GATING_PROJECTION_PARAMS, GATING_SIGNAL_SPECS, INITIALIZING, INPUT_STATES, LEARNING, LEARNING_PROJECTION_PARAMS, LEARNING_SIGNAL_SPECS, MAPPING_PROJECTION_PARAMS, MATRIX, MECHANISM, MODULATORY_PROJECTIONS, MODULATORY_SIGNAL, NAME, OUTPUT_STATES, OWNER, PARAMETER_STATES, PARAMS, PATHWAY_PROJECTIONS, PREFS_ARG, PROJECTIONS, PROJECTION_PARAMS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, REFERENCE_VALUE_NAME, SENDER, SIZE, STANDARD_OUTPUT_STATES, STATE, STATE_PARAMS, STATE_TYPE, STATE_VALUE, VALUE, VARIABLE, WEIGHT, kwStateComponentCategory, kwStateContext, kwStateName, kwStatePrefs
 from psyneulink.globals.preferences.componentpreferenceset import kpVerbosePref
@@ -982,6 +983,9 @@ class State_Base(State):
     className = STATE
     suffix = " " + className
     paramsType = None
+
+    class ClassDefaults(State.ClassDefaults):
+        function = Linear
 
     stateAttributes = {FUNCTION, FUNCTION_PARAMS, PROJECTIONS}
 

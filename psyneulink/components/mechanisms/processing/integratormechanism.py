@@ -69,6 +69,7 @@ Class Reference
 """
 import typecheck as tc
 
+from psyneulink.components.functions.function import AdaptiveIntegrator
 from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism_Base
 from psyneulink.globals.keywords import INTEGRATOR_MECHANISM, OUTPUT_STATES, PREDICTION_MECHANISM_OUTPUT, kwPreferenceSetName
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set, kpReportOutputPref
@@ -178,6 +179,9 @@ class IntegratorMechanism(ProcessingMechanism_Base):
     classPreferences = {
         kwPreferenceSetName: 'IntegratorMechanismCustomClassPreferences',
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
+
+    class ClassDefaults(ProcessingMechanism_Base.ClassDefaults):
+        function = AdaptiveIntegrator(rate=0.5)
 
     paramClassDefaults = ProcessingMechanism_Base.paramClassDefaults.copy()
     paramClassDefaults.update({

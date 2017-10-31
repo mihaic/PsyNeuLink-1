@@ -206,9 +206,10 @@ Class Reference
 """
 
 from psyneulink.components.component import InitStatus, component_keywords
+from psyneulink.components.functions.function import LinearCombination
 from psyneulink.components.states.outputstate import OutputState
 from psyneulink.components.states.state import State_Base
-from psyneulink.globals.keywords import MECHANISM, MODULATION, MODULATORY_SIGNAL
+from psyneulink.globals.keywords import MECHANISM, MODULATION, MODULATORY_SIGNAL, SUM
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 
 __all__ = [
