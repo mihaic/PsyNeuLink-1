@@ -959,7 +959,7 @@ T = pnl.TransferMechanism(input_states=[[[0],[0]],'b','c'],
 # print(T.variable)
 # assert T.output_states[MECHANISM_VALUE].value == WHAT IT DOES
 # GET NAME RIGHT FOR ALL AS WELL
-print(T.execute([[[1],[4]],[2],[3]]))
+print(T.execute([[[1], [4]], [2], [3]]))
 # print(T.execute([[[[1],[4]],[[[5],[6]]]],[2],[3]]))
 print(T.output_states)
 for i, o in enumerate(T.output_states):

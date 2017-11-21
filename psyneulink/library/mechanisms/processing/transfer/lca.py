@@ -541,15 +541,11 @@ class LCA(RecurrentTransferMechanism):
                                             rate=self.beta,
                                             owner=self)
 
-            current_input = self.integrator_function.execute(variable,
-                                                        # Should we handle runtime params?
-                                                              params={INITIALIZER: self.initial_value,
-                                                                      NOISE: self.noise,
-                                                                      RATE: self.beta,
-                                                                      TIME_STEP_SIZE: self.time_step_size},
-                                                              context=context
-
-                                                             )
+            current_input = self.integrator_function.execute(variable, params={INITIALIZER: self.initial_value,
+                                                                               NOISE: self.noise,
+                                                                               RATE: self.beta,
+                                                                               TIME_STEP_SIZE: self.time_step_size},
+                                                             context=context)
         else:
         # elif time_scale is TimeScale.TRIAL:
             noise = self._try_execute_param(self.noise, variable)

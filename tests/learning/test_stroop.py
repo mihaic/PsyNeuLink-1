@@ -116,8 +116,8 @@ class TestStroop:
         ]
 
         for i in range(10):
-            cr = color_naming_process.execute(input=[1, 1], target=[0, 1])
-            wr = word_reading_process.execute(input=[1, 1], target=[1, 0])
+            cr = color_naming_process.execute(input=[1, 1])
+            wr = word_reading_process.execute(input=[1, 1])
 
             np.testing.assert_allclose(cr, expected_color_results[i], atol=1e-08, err_msg='Failed on expected_color_results[{0}]'.format(i))
             np.testing.assert_allclose(wr, expected_word_results[i], atol=1e-08, err_msg='Failed on expected_word_results[{0}]'.format(i))

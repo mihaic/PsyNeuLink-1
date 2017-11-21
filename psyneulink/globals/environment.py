@@ -659,13 +659,7 @@ def run(object,
             if RUN in context and not EVC_SIMULATION in context:
                 context = RUN + ": EXECUTING " + object_type.upper() + " " + object.name
                 object.execution_status = ExecutionStatus.EXECUTING
-            result = object.execute(input=execution_inputs,
-                                    execution_id=execution_id,
-                                    clock=clock,
-                                    time_scale=time_scale,
-                                    termination_processing=termination_processing,
-                                    termination_learning=termination_learning,
-                                    context=context)
+            result = object.execute(input=execution_inputs, context=context)
 
             if call_after_time_step:
                 call_after_time_step()

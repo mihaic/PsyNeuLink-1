@@ -250,7 +250,7 @@ class AutoAssociativeProjection(MappingProjection):
                          prefs=prefs,
                          context=context)
 
-    def execute(self, input=None, clock=CentralClock, time_scale=None, params=None, context=None):
+    def execute(self, input=None, params=None, context=None):
         """
         Based heavily on the execute() method for MappingProjection.
 
@@ -349,7 +349,7 @@ class AutoAssociativeProjection(MappingProjection):
         #
         # return self.function(self.sender.value, params=params, context=context)
         # MODIFIED 9/23/17 NEW:
-        return super().execute(input=input, clock=clock, time_scale=time_scale, params=params, context=context)
+        return super().execute(input=input, params=params, context=context)
         # MODIFIED 9/23/17 END:
 
     def _update_auto_and_hetero(self, owner_mech=None, runtime_params=None, time_scale=TimeScale.TRIAL, context=None):

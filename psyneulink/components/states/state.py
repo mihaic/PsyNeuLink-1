@@ -1942,9 +1942,7 @@ class State_Base(State):
                 # projection_value = projection.value
                 projection_value = projection.value * 0.0
             else:
-                projection_value = projection.execute(params=projection_params,
-                                                      time_scale=time_scale,
-                                                      context=context)
+                projection_value = projection.execute(params=projection_params, context=context)
 
             # If this is initialization run and projection initialization has been deferred, pass
             if INITIALIZING in context and projection.init_status is InitStatus.DEFERRED_INITIALIZATION:
@@ -2008,7 +2006,7 @@ class State_Base(State):
             function_params = None
         self.value = self._execute(function_params=function_params, context=context)
 
-    def execute(self, input=None, time_scale=None, params=None, context=None):
+    def execute(self, input=None, params=None, context=None):
         return self.function(variable=input, params=params, time_scale=time_scale, context=context)
 
     @property

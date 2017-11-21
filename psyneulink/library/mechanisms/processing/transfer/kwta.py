@@ -623,18 +623,11 @@ class KWTA(RecurrentTransferMechanism):
                     raise KWTAError("k-value parameter ({}) for {} must be a single number".
                                     format(threshold_param, self))
 
-    def execute(self,
-                input=None,
-                runtime_params=None,
-                clock=CentralClock,
-                time_scale=TimeScale.TRIAL,
-                ignore_execution_id=False,
-                context=None):
+    def execute(self, input=None, params=None, context=None):
         if isinstance(input, str) or (isinstance(input, (list, np.ndarray)) and isinstance(input[0], str)):
             raise KWTAError("input ({}) to {} was a string, which is not supported for {}".
                             format(input, self, self.__class__.__name__))
-        return super().execute(input=input, runtime_params=runtime_params, clock=clock, time_scale=time_scale,
-                               ignore_execution_id=ignore_execution_id, context=context)
+        return super().execute(input=input, context=context)
 
     def _execute(self,
                 variable=None,

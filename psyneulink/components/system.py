@@ -2373,16 +2373,7 @@ class System(System_Base):
         for mech, value in self.initial_values.items():
             mech.initialize(value)
 
-    def execute(self,
-                input=None,
-                target=None,
-                execution_id=None,
-                clock=CentralClock,
-                time_scale=None,
-                termination_processing=None,
-                termination_learning=None,
-                # time_scale=TimeScale.TRIAL
-                context=None):
+    def execute(self, input=None, params=None, context=None):
         """Execute mechanisms in System at specified :ref:`phases <System_Execution_Phase>` in order \
         specified by the :py:data:`execution_graph <System.execution_graph>` attribute.
 
@@ -2537,10 +2528,7 @@ class System(System_Base):
         if not EVC_SIMULATION in context and self.enable_controller:
             try:
                 if self.controller.phaseSpec == (clock.time_step % self.numPhases):
-                    self.controller.execute(clock=clock,
-                                            time_scale=TimeScale.TRIAL,
-                                            runtime_params=None,
-                                            context=context)
+                    self.controller.execute(context=context)
                     if self._report_system_output:
                         print("{0}: {1} executed".format(self.name, self.controller.name))
 
@@ -2581,11 +2569,7 @@ class System(System_Base):
                 process_keys_sorted = sorted(processes, key=lambda i : processes[processes.index(i)].name)
                 process_names = list(p.name for p in process_keys_sorted)
 
-                mechanism.execute(clock=clock,
-                                  time_scale=self.timeScale,
-                                  # time_scale=time_scale,
-                                  runtime_params=rt_params,
-                                  context=context +
+                mechanism.execute(context=context +
                                           "| Mechanism: " + mechanism.name +
                                           " [in processes: " + str(process_names) + "]")
 
@@ -2670,13 +2654,7 @@ class System(System_Base):
                                          re.sub(r'[\[,\],\n]','',str(process_names))))
 
                 # Note:  DON'T include input arg, as that will be resolved by mechanism from its sender projections
-                component.execute(
-                    clock=clock,
-                    time_scale=self.timeScale,
-                    runtime_params=params,
-                    # time_scale=time_scale,
-                    context=context_str
-                )
+                component.execute(context=context_str)
                 # # TEST PRINT:
                 # print ("EXECUTING LEARNING UPDATES: ", component.name)
 

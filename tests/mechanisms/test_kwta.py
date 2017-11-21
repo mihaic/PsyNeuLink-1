@@ -109,7 +109,7 @@ class TestKWTAFunction:
             function=Logistic(gain=2),
             k_value=2
         )
-        val = K.execute(input = [1, 2, 3])
+        val = K.execute(input=[1, 2, 3])
         assert np.allclose(val, [[0.2689414213699951, 0.7310585786300049, 0.9525741268224334]])
 
     def test_kwta_log_offset(self):
@@ -130,7 +130,7 @@ class TestKWTAFunction:
             function=Logistic(gain=-.2, offset=4),
             k_value=1
         )
-        val = K.execute(input = [.1, -4])
+        val = K.execute(input=[.1, -4])
         assert np.allclose(val, [[0.017636340339722684, 0.039165722796764356]])
 
     def test_kwta_linear(self): # inhibition would be positive: so instead it is set to zero

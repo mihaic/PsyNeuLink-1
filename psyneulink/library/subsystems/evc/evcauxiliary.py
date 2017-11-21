@@ -543,14 +543,7 @@ def _compute_EVC(args):
                         time_scale=time_scale,
                         context=context)
 
-    EVC_current = ctlr.paramsCurrent[VALUE_FUNCTION].function(controller=ctlr,
-                                                              # MODIFIED 5/7/17 OLD:
-                                                              # outcome=ctlr.input_values,
-                                                              # MODIFIED 5/7/17 NEW:
-                                                              outcome=outcome,
-                                                              # MODIFIED 5/7/17 END
-                                                              costs=ctlr.control_signal_costs,
-                                                              context=context)
+    EVC_current = ctlr.paramsCurrent[VALUE_FUNCTION].function(context=context)
 
 
     if PY_MULTIPROCESSING:

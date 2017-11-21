@@ -495,14 +495,9 @@ class GilzenratTransferMechanism(RecurrentTransferMechanism):
                                         time_step_size=self.time_step_size,
                                         owner=self)
 
-        current_input=self.integrator_function.execute(variable,
-                                                    # Should we handle runtime params?
-                                                          params={INITIALIZER: self.initial_value,
-                                                                  NOISE: self.noise,
-                                                                  RATE: -1.0},
-                                                          context=context
-
-                                                         )
+        current_input= self.integrator_function.execute(variable, params={INITIALIZER: self.initial_value,
+                                                                          NOISE: self.noise,
+                                                                          RATE: -1.0}, context=context)
 
         # Apply TransferMechanism function
         output_vector = self.function(variable=current_input,

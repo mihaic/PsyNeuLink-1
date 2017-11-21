@@ -641,7 +641,7 @@ class Function_Base(Function):
                          prefs=prefs,
                          context=context)
 
-    def execute(self, variable=None, params=None, context=None):
+    def execute(self, input=None, params=None , variable=None, context=None):
         return self.function(variable=variable, params=params, context=context)
 
     @property
@@ -1240,11 +1240,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
                                 format(self.__class__.__name__))
         return variable
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 time_scale=TimeScale.TRIAL,
-                 context=None):
+    def function(self, variable=None, params=None, context=None):
         """
         Calculate sum or product of the elements for each array in `variable <Reduce.variable>`,
         apply `scale <Reduce.scale>` and/or `offset <Reduce.offset>`, and return array of resulting values.

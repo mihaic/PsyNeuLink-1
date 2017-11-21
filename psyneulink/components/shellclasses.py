@@ -69,7 +69,7 @@ class System_Base(ShellClass):
                          prefs=prefs,
                          context=context)
 
-    def execute(self, variable=None, time_scale=None, context=None):
+    def execute(self, input=None, params=None, variable=None, context=None):
         raise ShellClassError("Must implement execute in {0}".format(self.__class__.__name__))
 
 
@@ -114,7 +114,7 @@ class Mechanism(ShellClass):
     def _validate_params(self, request_set, target_set=None, context=None):
         raise ShellClassError("Must implement _validate_params in {0}".format(self))
 
-    def execute(self, variable, params, time_scale, context):
+    def execute(self, input=None, params=None, context=None):
         raise ShellClassError("Must implement execute in {0}".format(self))
 
     def adjust_function(self, params, context):
@@ -177,5 +177,5 @@ class Projection(ShellClass):
 
 class Function(ShellClass):
 
-    def execute(self, variable, params, context):
+    def execute(self, input=None, params=None, variable=None, context=None):
         raise ShellClassError("Must implement function in {0}".format(self))

@@ -2063,19 +2063,7 @@ class Process(Process_Base):
         for mech, value in self.initial_values.items():
             mech.initialize(value)
 
-    def execute(self,
-                input=None,
-                # params=None,
-                target=None,
-                execution_id=None,
-                clock=CentralClock,
-                time_scale=None,
-                # time_scale=TimeScale.TRIAL,
-                runtime_params=None,
-                termination_processing=None,
-                termination_learning=None,
-                context=None
-                ):
+    def execute(self, input=None, params=None, context=None):
         """Execute the Mechanisms specified in the process` `pathway` attribute.
 
         COMMENT:
@@ -2173,11 +2161,7 @@ class Process(Process_Base):
                 continue
 
             # Note:  DON'T include input arg, as that will be resolved by mechanism from its sender projections
-            mechanism.execute(clock=clock,
-                              time_scale=self.timeScale,
-                              # time_scale=time_scale,
-                              # runtime_params=params,
-                              context=context)
+            mechanism.execute(context=context)
             if report_output:
                 # FIX: USE clamp_input OPTION HERE, AND ADD HARD_CLAMP AND SOFT_CLAMP
                 self._report_mechanism_execution(mechanism)
@@ -2242,10 +2226,7 @@ class Process(Process_Base):
 
         # THEN, execute ComparatorMechanism and LearningMechanism
         for mechanism in self._learning_mechs:
-            mechanism.execute(clock=clock,
-                              time_scale=self.timeScale,
-                              # runtime_params=params,
-                              context=context)
+            mechanism.execute(context=context)
 
         # FINALLY, execute LearningProjections to MappingProjections in the process' pathway
         for mech in self._mechs:
