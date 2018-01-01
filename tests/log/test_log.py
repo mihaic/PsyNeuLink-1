@@ -99,7 +99,7 @@ class TestLog:
 
     def test_log_initialization(self):
         T = pnl.TransferMechanism(
-                prefs={pnl.LOG_PREF: pnl.PreferenceEntry(pnl.LogCondition.INITIALIZATION, pnl.PreferenceLevel.INSTANCE)}
+                prefs={pnl.LOG_PREF: pnl.PreferenceEntry(pnl.ContextState.INITIALIZATION, pnl.PreferenceLevel.INSTANCE)}
         )
         assert T.logged_items == {'value': 'INITIALIZATION'}
 

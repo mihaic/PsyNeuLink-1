@@ -54,18 +54,18 @@ A Log has several attributes and methods that make it easy to manage how and whe
 to access its `entries <Log.entries>`:
 
     * `loggable_items <Log.loggable_items>` -- a dictionary with the items that can be logged in a Component's `log
-      <Component.log>`;  the key for each entry is the name of a Component,  and the value is it current `LogCondition`.
+      <Component.log>`;  the key for each entry is the name of a Component,  and the value is it current `ContextState`.
     ..
-    * `set_log_conditions <Log.set_log_conditions>` -- used to assign the LogCondition for one or more Components.
+    * `set_log_conditions <Log.set_log_conditions>` -- used to assign the ContextState for one or more Components.
       Components can be specified by their names, a reference to the Component object, in a tuple that specifies the
-      `LogCondition` to assign to that Component, or in a list with a `LogCondition` to be applied to multiple items
+      `ContextState` to assign to that Component, or in a list with a `ContextState` to be applied to multiple items
       at once.
     ..
     * `log_values <Log.log_values>` -- used to the `value <Component.value>` of one or more Components in the Log
       programmatically ("manually").  Components can be specified by their names or references to the objects.
     ..
     * `logged_items <Log.logged_items>` -- a dictionary with the items that currently have entries in a Component's
-      `log <Component.log>`; the key for each entry is the name of a Component, and the value is its current `LogCondition`.
+      `log <Component.log>`; the key for each entry is the name of a Component, and the value is its current `ContextState`.
     ..
     * `print_entries <Log.print_entries>` -- this prints a formatted list of the `entries <Log.entries>` in the Log.
     ..
@@ -105,44 +105,44 @@ the Logs of their `States <State>`.  Specifically the Logs of these Components c
 
 .. _Log_LogLevels:
 
-LogConditions
+ContextStates
 ~~~~~~~~~~~~~
 
-Configuring a Component to be logged is done using a `LogCondition`, that specifies the conditions under which its
+Configuring a Component to be logged is done using a `ContextState`, that specifies the conditions under which its
 `value <Component.value>` should be entered in its Log.  These can be specified in the `set_log_conditions
-<Log.set_log_conditions>` method of a Log, or directly by specifying a LogCondition for the value a Component's
+<Log.set_log_conditions>` method of a Log, or directly by specifying a ContextState for the value a Component's
 `logPref  <Compnent.logPref>` item of its `prefs <Component.prefs>` attribute.  The former is easier, and allows
 multiple Components to be specied at once, while the latter affords more control over the specification (see
-`Preferences`).  LogConditions are treated as binary "flags", and can be combined to permit logging under more than
-one condition using bitwise operators on LogConditions.  For convenience, they can also be referred to by their
+`Preferences`).  ContextStates are treated as binary "flags", and can be combined to permit logging under more than
+one condition using bitwise operators on ContextStates.  For convenience, they can also be referred to by their
 names, and combined by specifying a list.  For example, all of the following specify that the `value
 <Mechanism_Base.value>` of ``my_mech`` be logged both during execution and learning::
 
     >>> import psyneulink as pnl
     >>> my_mech = pnl.TransferMechanism()
-    >>> my_mech.set_log_conditions('value', pnl.LogCondition.EXECUTION | pnl.LogCondition.LEARNING)
-    >>> my_mech.set_log_conditions('value', pnl.LogCondition.EXECUTION + pnl.LogCondition.LEARNING)
+    >>> my_mech.set_log_conditions('value', pnl.ContextState.EXECUTION | pnl.ContextState.LEARNING)
+    >>> my_mech.set_log_conditions('value', pnl.ContextState.EXECUTION + pnl.ContextState.LEARNING)
     >>> my_mech.set_log_conditions('value', [pnl.EXECUTION, LEARNING])
 
 
 .. note::
-   Currently, the `VALIDATION` `LogCondition` is not implemented.
+   Currently, the `VALIDATION` `ContextState` is not implemented.
    COMMENT:
    `VALUE_ASSIGNMENT` AND `FINAL` are also not yet implemented, but these do not appear in the HTML documentation
    COMMENT
 
 .. note::
-   Using `LogCondition.INITIALIZATION` to log the `value <Component.value>` of a Component during its initialization
+   Using `ContextState.INITIALIZATION` to log the `value <Component.value>` of a Component during its initialization
    requires that it be assigned in the **prefs** argument of the Component's constructor.  For example::
 
    COMMENT:
    FIX: THIS EXAMPLE CAN'T CURRENTLY BE EXECUTED AS IT PERMANENTLY SETS THE LogPref FOR ALL TransferMechanism
    COMMENT
     >>> my_mech = pnl.TransferMechanism(
-    ...        prefs={pnl.LOG_PREF: pnl.PreferenceEntry(pnl.LogCondition.INITIALIZATION, pnl.PreferenceLevel.INSTANCE)})
+    ...        prefs={pnl.LOG_PREF: pnl.PreferenceEntry(pnl.ContextState.INITIALIZATION, pnl.PreferenceLevel.INSTANCE)})
 
 .. hint::
-   `LogCondition.TRIAL` logs the `value <Component.value>` of a Component at the end of a `TRIAL`.  To log its
+   `ContextState.TRIAL` logs the `value <Component.value>` of a Component at the end of a `TRIAL`.  To log its
    `value <Component.value>` at the start of a `TRIAL`, use its `log_values <Component.log_values>` method in the
    **call_before_trial** argument of the System's `run <System.run>` method.
 
@@ -152,7 +152,7 @@ Execution
 ---------
 
 The value of a Component is recorded to a Log when the condition assigned to its `logPref <Component.logPref>` is met.
-This specified as a `LogCondition`.  The default LogCondition is `OFF`.
+This specified as a `ContextState`.  The default ContextState is `OFF`.
 
 .. _Log_Examples:
 
@@ -173,7 +173,7 @@ another, and logs the `noise <TransferMechanism.noise>` and *RESULTS* `OutputSta
     COMMENT:
     FIX: THESE EXAMPLES CAN'T BE EXECUTED AS THEY RETURN DICT ENTRIES IN UNRELIABLE ORDERS
     COMMENT
-    # Show the loggable items (and their current LogConditions) of each Mechanism and the Projection between them:
+    # Show the loggable items (and their current ContextStates) of each Mechanism and the Projection between them:
     >> my_mech_A.loggable_items
     {'InputState-0': 'OFF', 'slope': 'OFF', 'RESULTS': 'OFF', 'smoothing_factor': 'OFF', 'intercept': 'OFF', 'noise': 'OFF'}
     >> my_mech_B.loggable_items
@@ -185,7 +185,7 @@ another, and logs the `noise <TransferMechanism.noise>` and *RESULTS* `OutputSta
     >>> my_mech_A.set_log_conditions([pnl.NOISE, pnl.RESULTS])
     >>> proj_A_to_B.set_log_conditions(pnl.MATRIX)
 
-Note that since no LogCondition was specified, the default (LogCondition.EXECUTION) is used. Executing the Process
+Note that since no ContextState was specified, the default (ContextState.EXECUTION) is used. Executing the Process
 generates entries in the Logs, that can then be displayed in several ways::
 
     # Execute the System twice (to generate some values in the logs):
@@ -302,7 +302,7 @@ COMMENT:
 IMPLEMENTATION NOTE: Name of owner Component is aliases to VALUE in loggable_items and logged_items,
 but is the Component's actual name in log_entries
 
-Entries are made to the Log based on the `LogCondition` specified in the
+Entries are made to the Log based on the `ContextState` specified in the
 `logPref` item of the component's `prefs <Component.prefs>` attribute.
 
 Adding an item to prefs.logPref will validate and add an entry for that attribute to the Log dict
@@ -314,7 +314,7 @@ An attribute is logged if:
 * it is included in the *LOG_ENTRIES* entry of a `parameter specification dictionary <ParameterState_Specification>`
   assigned to the **params** argument of the constructor for the Component;
 ..
-* the context of the assignment is above the LogCondition specified in the logPref setting of the owner Component
+* the context of the assignment is above the ContextState specified in the logPref setting of the owner Component
 
 Entry values are added by the setter method for the attribute being logged.
 
@@ -325,7 +325,7 @@ The following entries are automatically included in self.entries for a `Mechanis
     - any variables listed in the params[LOG_ENTRIES] of a Mechanism
 
 
-DEFAULT LogCondition FOR ALL COMPONENTS IS *OFF*
+DEFAULT ContextState FOR ALL COMPONENTS IS *OFF*
 
 
 Structure
@@ -339,13 +339,13 @@ Each entry of `entries <Log.entries>` has:
         - context (str): the context in which it was recorded (i.e., where the attribute value was assigned)
         - value (value): the value assigned to the attribute
 
-The LogCondition class (see declaration above) defines six levels of logging:
+The ContextState class (see declaration above) defines six levels of logging:
     + OFF: No logging for attributes of the owner object
     + VALUE_ASSIGNMENT: Log values only when final value assignment has been made during execution
     + EXECUTION: Log values for all assignments during execution (e.g., including aggregation of projections)
     + VALIDATION: Log value assignments during validation as well as execution and initialization
     + ALL_ASSIGNMENTS:  Log all value assignments (e.g., including initialization)
-    Note: LogCondition is an IntEnum, and thus its values can be used directly in numerical comparisons
+    Note: ContextState is an IntEnum, and thus its values can be used directly in numerical comparisons
 
 Entries can also be added programmatically by:
     - including them in the logPref of a PreferenceSet
@@ -390,7 +390,7 @@ from psyneulink.scheduling.time import TimeScale
 from psyneulink.globals.utilities import ContentAddressableList, AutoNumber, is_component
 from psyneulink.globals.keywords \
     import INITIALIZING, EXECUTING, VALIDATE, CONTROL, LEARNING, TRIAL, RUN, COMMAND_LINE, CONTEXT, VALUE, TIME, ALL
-from psyneulink.globals.context import LogCondition, _get_log_context
+from psyneulink.globals.context import ContextState, _get_context
 
 
 __all__ = [
@@ -521,20 +521,20 @@ class Log:
         An attribute is recorded if:
             - it is one automatically included in logging (see below)
             - it is included in params[LOG_ENTRIES] of the owner object
-            - the context of the assignment is above the LogCondition specified in the logPref setting of the owner object
+            - the context of the assignment is above the ContextState specified in the logPref setting of the owner object
         Entry values are added by the setter method for the attribute being logged
         The following entries are automatically included in self.entries for a Mechanism object:
             - the value attribute of every State for which the Mechanism is an owner
             [TBI: - value of every projection that sends to those States]
             - the system variables defined in SystemLogEntries (see declaration above)
             - any variables listed in the params[LOG_ENTRIES] of a Mechanism
-        The LogCondition class (see declaration above) defines five levels of logging:
+        The ContextState class (see declaration above) defines five levels of logging:
             + OFF: No logging for attributes of the owner object
             + VALUE_ASSIGNMENT: Log values only when final value assignment has been during execution
             + EXECUTION: Log values for all assignments during exeuction (e.g., including aggregation of projections)
             + VALIDATION: Log value assignments during validation as well as execution
             + ALL_ASSIGNMENTS:  Log all value assignments (e.g., including initialization)
-            Note: LogCondition is an IntEnum, and thus its values can be used directly in numerical comparisons
+            Note: ContextState is an IntEnum, and thus its values can be used directly in numerical comparisons
 
         # Entries can also be added programmtically by:
         #     - including them in the logPref of a PreferenceSet
@@ -591,7 +591,7 @@ class Log:
 
     loggable_items : Dict[Component.name: List[LogEntry]]
         identifies Components that can be logged by the owner; the key of each entry is the name of a Component,
-        and the value is its currently assigned `LogCondition`.
+        and the value is its currently assigned `ContextState`.
 
     entries : Dict[Component.name: List[LogEntry]]
         contains the logged information for `loggable_components <Log.loggable_components>`; the key of each entry
@@ -600,7 +600,7 @@ class Log:
 
     logged_items : Dict[Component.name: List[LogEntry]]
         identifies Components that currently have entries in the Log; the key for each entry is the name
-        of a Component, and the value is its currently assigned `LogCondition`.
+        of a Component, and the value is its currently assigned `ContextState`.
 
     """
 
@@ -620,8 +620,8 @@ class Log:
         if entries is None:
             return
 
-    def set_log_conditions(self, items, log_condition=LogCondition.EXECUTION):
-        """Specifies items to be logged at the specified `LogCondition`\\(s).
+    def set_log_conditions(self, items, log_condition=ContextState.EXECUTION):
+        """Specifies items to be logged at the specified `ContextState`\\(s).
 
         Arguments
         ---------
@@ -631,12 +631,12 @@ class Log:
             Each item must be a:
             * string that is the name of a `loggable_item` <Log.loggable_item>` of the Log's `owner <Log.owner>`;
             * a reference to a Component;
-            * tuple, the first item of which is one of the above, and the second a `LogCondition` to use for the item.
+            * tuple, the first item of which is one of the above, and the second a `ContextState` to use for the item.
 
-        log_condition : LogCondition : default LogCondition.EXECUTION
-            specifies `LogCondition` to use as the default for items not specified in tuples (see above).
-            For convenience, the name of a LogCondition can be used in place of its full specification
-            (e.g., *EXECUTION* instead of `LogCondition.EXECUTION`).
+        log_condition : ContextState : default ContextState.EXECUTION
+            specifies `ContextState` to use as the default for items not specified in tuples (see above).
+            For convenience, the name of a ContextState can be used in place of its full specification
+            (e.g., *EXECUTION* instead of `ContextState.EXECUTION`).
 
         params_set : list : default None
             list of parameters to include as loggable items;  these must be attributes of the `owner <Log.owner>`
@@ -649,16 +649,16 @@ class Log:
 
         def assign_log_level(item, level):
 
-            # Handle multiple level assignments (as LogConditions or strings in a list)
+            # Handle multiple level assignments (as ContextStates or strings in a list)
             if not isinstance(level, list):
                 level = [level]
-            levels = LogCondition.OFF
+            levels = ContextState.OFF
             for l in level:
                 try:
-                    l = LogCondition[l.upper()] if isinstance(l, str) else l
+                    l = ContextState[l.upper()] if isinstance(l, str) else l
                 except KeyError:
                     raise LogError("\'{}\' is not a value of {}".
-                                   format(l, LogCondition.__name__))
+                                   format(l, ContextState.__name__))
                 levels |= l
             level = levels
 
@@ -669,7 +669,7 @@ class Log:
                 component = next(c for c in self.loggable_components if self._alias_owner_name(c.name) == item)
                 component.logPref=PreferenceEntry(level, PreferenceLevel.INSTANCE)
             except AttributeError:
-                raise LogError("PROGRAM ERROR: Unable to set LogCondition for {} of {}".format(item, self.owner.name))
+                raise LogError("PROGRAM ERROR: Unable to set ContextState for {} of {}".format(item, self.owner.name))
 
         if items is ALL:
             for component in self.loggable_components:
@@ -692,8 +692,8 @@ class Log:
         """Add LogEntry to an entry in the Log
 
         If **value** is a LogEntry, it is assigned to the entry
-        If **context** is a LogCondition, it is used to determine whether the entry should be made;
-           **time** must be passed;  the name of the LogCondition(s) specified are assigned to the context of LogEntry
+        If **context** is a ContextState, it is used to determine whether the entry should be made;
+           **time** must be passed;  the name of the ContextState(s) specified are assigned to the context of LogEntry
         Otherwise, uses string (or Component) passed in **context**, or searches stack (see note) to determine the
         context, and uses that to determine the scheduler and, from that, the time;
         If value is None, uses owner's `value <Component.value>` attribute.
@@ -713,11 +713,11 @@ class Log:
 
         else:
 
-            if isinstance(context, LogCondition):
+            if isinstance(context, ContextState):
                 context_flags = context
-                context = LogCondition._get_condition_string(context)
+                context = ContextState._get_condition_string(context)
                 if not time:
-                    raise LogError("Use of LogCondition ({}) by {} to specify context requires specification of time".
+                    raise LogError("Use of ContextState ({}) by {} to specify context requires specification of time".
                                    format(context, self.owner.name ))
 
             # Get context
@@ -763,12 +763,12 @@ class Log:
                     # context = self.owner.prev_context + "FROM " + COMMAND_LINE
                     # context = self.owner.prev_context
 
-                context_flags = _get_log_context(context)
+                context_flags = _get_context(context)
 
             log_pref = self.owner.prefs.logPref if self.owner.prefs else None
 
             # Get time and log value if logging condition is satisfied or called for programmatically
-            if (log_pref and log_pref & context_flags) or context_flags & LogCondition.COMMAND_LINE:
+            if (log_pref and log_pref & context_flags) or context_flags & ContextState.COMMAND_LINE:
                 time = time or self._get_time(context, context_flags)
                 self.entries[self.owner.name] = LogEntry(time, context, value)
 
@@ -824,10 +824,10 @@ class Log:
         # Get System in which it is being (or was last) executed (if any):
 
         # If called from COMMAND_LINE, get context for last time value was assigned:
-        # if context_flags & LogCondition.COMMAND_LINE:
-        if context_flags & (LogCondition.COMMAND_LINE | LogCondition.RUN | LogCondition.TRIAL):
+        # if context_flags & ContextState.COMMAND_LINE:
+        if context_flags & (ContextState.COMMAND_LINE | ContextState.RUN | ContextState.TRIAL):
             execution_context = self.owner.prev_context
-            context_flags = _get_log_context(execution_context)
+            context_flags = _get_context(execution_context)
         else:
             execution_context = context
         try:
@@ -844,20 +844,20 @@ class Log:
 
         if system:
             # FIX: Add VALIDATE?
-            if context_flags == LogCondition.EXECUTION:
+            if context_flags == ContextState.EXECUTION:
                 time = system.scheduler_processing.clock.simple_time
                 time = (time.run, time.trial, time.time_step)
-            elif context_flags == LogCondition.CONTROL:
+            elif context_flags == ContextState.CONTROL:
                 time = system.scheduler_processing.clock.simple_time
                 time = (time.run, time.trial, time.time_step)
-            elif context_flags == LogCondition.LEARNING:
+            elif context_flags == ContextState.LEARNING:
                 time = system.scheduler_learning.clock.simple_time
                 time = (time.run, time.trial, time.time_step)
             else:
                 time = None
 
         # GETS TIME OF LAST RUN OF SYSTEM, BUT NOT NECESSARILY THE COMPONENT (E.G., MECHANISM AND LEARNING)
-        # elif systems and (context_flags & LogCondition.COMMAND_LINE):
+        # elif systems and (context_flags & ContextState.COMMAND_LINE):
         #     # # Search for the most recently run Scheduler within any of the Systems to which the ref_mech belongs
         #     # # and get its time
         #     # run_times = []
@@ -1043,7 +1043,7 @@ class Log:
                     if long_context:
                         context = datum.context
                     else:
-                        context = LogCondition._get_condition_string(_get_log_context(datum.context))
+                        context = ContextState._get_condition_string(_get_context(datum.context))
                     c_width = max(c_width, len(context))
             context_width = min(context_width, c_width)
 
@@ -1108,8 +1108,8 @@ class Log:
                             # Use context from LogEntry
                             context = repr(context)
                         else:
-                            # Get names of LogCondition flag(s) from parse of context string
-                            context = LogCondition._get_condition_string(_get_log_context(context))
+                            # Get names of ContextState flag(s) from parse of context string
+                            context = ContextState._get_condition_string(_get_context(context))
                         if len(context) > context_width:
                             context = context[:context_width-3] + "..."
                         data_str = data_str + context.ljust(context_width, spacer)
@@ -1393,7 +1393,7 @@ class Log:
     def loggable_items(self):
         """Return dict of loggable items.
 
-        Keys are names of the Components, values their LogConditions
+        Keys are names of the Components, values their ContextStates
         """
         # FIX: The following crashes during init as prefs have not all been assigned
         # return {key: value for (key, value) in [(c.name, c.logPref.name) for c in self.loggable_components]}
@@ -1403,10 +1403,10 @@ class Log:
             name = self._alias_owner_name(c.name)
             try:
                 # log_pref_names = c.logPref.name
-                log_pref_names = LogCondition._get_condition_string(c.logPref)
+                log_pref_names = ContextState._get_condition_string(c.logPref)
             except:
                 log_pref_names = None
-                # log_pref_names = LogCondition._get_condition_string(c.logPref)
+                # log_pref_names = ContextState._get_condition_string(c.logPref)
             loggable_items[name] = log_pref_names
         return loggable_items
 
@@ -1428,10 +1428,10 @@ class Log:
 
     @property
     def logged_items(self):
-        """Dict of items that have logged `entries <Log.entries>`, indicating their specified `LogCondition`.
+        """Dict of items that have logged `entries <Log.entries>`, indicating their specified `ContextState`.
         """
-        log_condition = 'LogCondition.'
-        # Return LogCondition for items in log.entries
+        log_condition = 'ContextState.'
+        # Return ContextState for items in log.entries
 
         logged_items = {key: value for (key, value) in
                         # [(l, self.loggable_components[l].logPref.name)
@@ -1450,7 +1450,7 @@ class Log:
     # def save_log(self):
     #     print("Saved")
 
-def _log_trials_and_runs(composition, curr_condition:tc.enum(LogCondition.TRIAL, LogCondition.RUN), context):
+def _log_trials_and_runs(composition, curr_condition:tc.enum(ContextState.TRIAL, ContextState.RUN), context):
     # FIX: ALSO CHECK TIME FOR scheduler_learning, AND CHECK DATE FOR BOTH, AND USE WHICHEVER IS LATEST
     # FIX:  BUT WHAT IF THIS PARTICULAR COMPONENT WAS RUN IN THE LAST TIME_STEP??
     for mech in composition.mechanisms:

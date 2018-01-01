@@ -15,8 +15,8 @@ from psyneulink.globals.keywords import INITIALIZING, VALIDATE, EXECUTING, CONTR
 
 __all__ = [
     'Context',
-    'LogCondition',
-    '_get_log_context'
+    'ContextState',
+    '_get_context'
 ]
 
 class Context():
@@ -25,7 +25,7 @@ class Context():
 
 
 # FIX: REPLACE WITH Flags and auto IF/WHEN MOVE TO Python 3.6
-class LogCondition(IntEnum):
+class ContextState(IntEnum):
     """Specifies levels of logging, as descrdibed below."""
     OFF = 0
     """No recording."""
@@ -57,7 +57,7 @@ class LogCondition(IntEnum):
 
     # @classmethod
     # def _log_level_max(cls):
-    #     return max([cls[i].value for i in list(cls.__members__) if cls[i] is not LogCondition.ALL_ASSIGNMENTS])
+    #     return max([cls[i].value for i in list(cls.__members__) if cls[i] is not ContextState.ALL_ASSIGNMENTS])
 
     @classmethod
     def _get_condition_string(cls, condition, string=None):
@@ -68,38 +68,38 @@ class LogCondition(IntEnum):
             string = ""
         flagged_items = []
         # If OFF or ALL_ASSIGNMENTS, just return that
-        if condition in (LogCondition.ALL_ASSIGNMENTS, LogCondition.OFF):
+        if condition in (ContextState.ALL_ASSIGNMENTS, ContextState.OFF):
             return condition.name
         # Otherwise, append each flag's name to the string
         for c in list(cls.__members__):
             # Skip ALL_ASSIGNMENTS (handled above)
-            if c is LogCondition.ALL_ASSIGNMENTS.name:
+            if c is ContextState.ALL_ASSIGNMENTS.name:
                 continue
-            if LogCondition[c] & condition:
+            if ContextState[c] & condition:
                flagged_items.append(c)
         string += ", ".join(flagged_items)
         return string
 
 
-def _get_log_context(context):
+def _get_context(context):
 
-    if isinstance(context, LogCondition):
+    if isinstance(context, ContextState):
         return context
-    context_flag = LogCondition.OFF
+    context_flag = ContextState.OFF
     if INITIALIZING in context:
-        context_flag |= LogCondition.INITIALIZATION
+        context_flag |= ContextState.INITIALIZATION
     if VALIDATE in context:
-        context_flag |= LogCondition.VALIDATION
+        context_flag |= ContextState.VALIDATION
     if EXECUTING in context:
-        context_flag |= LogCondition.EXECUTION
+        context_flag |= ContextState.EXECUTION
     if CONTROL in context:
-        context_flag |= LogCondition.CONTROL
+        context_flag |= ContextState.CONTROL
     if LEARNING in context:
-        context_flag |= LogCondition.LEARNING
-    if context == LogCondition.TRIAL.name:
-        context_flag |= LogCondition.TRIAL
-    if context == LogCondition.RUN.name:
-        context_flag |= LogCondition.RUN
-    if context == LogCondition.COMMAND_LINE.name:
-        context_flag |= LogCondition.COMMAND_LINE
+        context_flag |= ContextState.LEARNING
+    if context == ContextState.TRIAL.name:
+        context_flag |= ContextState.TRIAL
+    if context == ContextState.RUN.name:
+        context_flag |= ContextState.RUN
+    if context == ContextState.COMMAND_LINE.name:
+        context_flag |= ContextState.COMMAND_LINE
     return context_flag
