@@ -715,7 +715,7 @@ class Log:
 
             if isinstance(context, ContextState):
                 context_flags = context
-                context = ContextState._get_condition_string(context)
+                context = ContextState._get_context_string(context)
                 if not time:
                     raise LogError("Use of ContextState ({}) by {} to specify context requires specification of time".
                                    format(context, self.owner.name ))
@@ -1043,7 +1043,7 @@ class Log:
                     if long_context:
                         context = datum.context
                     else:
-                        context = ContextState._get_condition_string(_get_context(datum.context))
+                        context = ContextState._get_context_string(_get_context(datum.context))
                     c_width = max(c_width, len(context))
             context_width = min(context_width, c_width)
 
@@ -1109,7 +1109,7 @@ class Log:
                             context = repr(context)
                         else:
                             # Get names of ContextState flag(s) from parse of context string
-                            context = ContextState._get_condition_string(_get_context(context))
+                            context = ContextState._get_context_string(_get_context(context))
                         if len(context) > context_width:
                             context = context[:context_width-3] + "..."
                         data_str = data_str + context.ljust(context_width, spacer)
@@ -1403,7 +1403,7 @@ class Log:
             name = self._alias_owner_name(c.name)
             try:
                 # log_pref_names = c.logPref.name
-                log_pref_names = ContextState._get_condition_string(c.logPref)
+                log_pref_names = ContextState._get_context_string(c.logPref)
             except:
                 log_pref_names = None
                 # log_pref_names = ContextState._get_condition_string(c.logPref)

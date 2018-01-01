@@ -10,6 +10,7 @@
 
 
 from enum import IntEnum
+import psyneulink as pnl
 
 from psyneulink.globals.keywords import INITIALIZING, VALIDATE, EXECUTING, CONTROL, LEARNING
 
@@ -19,12 +20,15 @@ __all__ = [
     '_get_context'
 ]
 
+
 class Context():
-    composition = None
-    string = ""
+    def __init__(self, composition:pnl.Composition, current:pnl.ContextState, string:str=''):
+        self.composition=composition
+        self.current = current
+        self.string = string
 
 
-# FIX: REPLACE WITH Flags and auto IF/WHEN MOVE TO Python 3.6
+# FIX: REPLACE IntEnum WITH Flags and auto IF/WHEN MOVE TO Python 3.6
 class ContextState(IntEnum):
     """Specifies levels of logging, as descrdibed below."""
     OFF = 0
@@ -41,11 +45,11 @@ class ContextState(IntEnum):
     """Record all value assignments during learning phase of Composition execution."""
     CONTROL =            1<<6       # 64
     """Record all value assignments during control phase of Composition execution."""
-    # FIX: TRIAL, RUN, VALUE_ASSIGNMENT & FINAL NOT YET IMPLEMENTED:
     TRIAL =              1<<7       # 128
     """Record value at the end of a TRIAL."""
     RUN =                1<<8       # 256
     """Record value at the end of a RUN."""
+    # FIX: VALUE_ASSIGNMENT & FINAL NOT YET IMPLEMENTED:
     VALUE_ASSIGNMENT =   1<<9       # 512
     # """Record final value assignments during Composition execution."""
     FINAL =             1<<10       # 1024
@@ -60,7 +64,7 @@ class ContextState(IntEnum):
     #     return max([cls[i].value for i in list(cls.__members__) if cls[i] is not ContextState.ALL_ASSIGNMENTS])
 
     @classmethod
-    def _get_condition_string(cls, condition, string=None):
+    def _get_context_string(cls, condition, string=None):
         """Return string with the names of all flags that are set in **condition**, prepended by **string**"""
         if string:
             string += ": "
