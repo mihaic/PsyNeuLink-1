@@ -8,10 +8,16 @@
 #
 # ********************************************  System Defaults ********************************************************
 
+
 from enum import IntEnum
 
 from psyneulink.globals.keywords import INITIALIZING, VALIDATE, EXECUTING, CONTROL, LEARNING
 
+__all__ = [
+    'Context',
+    'LogCondition',
+    '_get_log_context'
+]
 
 class Context():
     composition = None
