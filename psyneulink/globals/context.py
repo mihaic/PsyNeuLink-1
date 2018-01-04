@@ -10,9 +10,10 @@
 
 
 from enum import IntEnum
-import psyneulink as pnl
 
 from psyneulink.globals.keywords import INITIALIZING, VALIDATE, EXECUTING, CONTROL, LEARNING
+# from psyneulink.composition import Composition
+
 
 __all__ = [
     'Context',
@@ -22,46 +23,42 @@ __all__ = [
 
 
 class Context():
-    def __init__(self, composition:pnl.Composition, current:pnl.ContextState, string:str=''):
-        self.composition=composition
+    # def __init__(self, composition:Composition, current:pnl.ContextState, string:str=''):
+    def __init__(self, composition, current, string:str=''):
+        self.composition = composition
         self.current = current
         self.string = string
 
 
 # FIX: REPLACE IntEnum WITH Flags and auto IF/WHEN MOVE TO Python 3.6
 class ContextState(IntEnum):
-    """Specifies levels of logging, as descrdibed below."""
+    """Used to identify the context in which the value of a `Component` or its attribute is being accessed.
+    Also used to specify the conditions under which a value of the Component or its attribute is `logged
+    <Log_Conditions>`.
+    """
     OFF = 0
-    """No recording."""
+    # """No recording."""
     INITIALIZATION =     1<<1       # 2
-    """Record value during initial assignment."""
+    """Set during execution of the Component's constructor."""
     VALIDATION =         1<<2       # 4
-    """Record value during validation."""
+    """Set during validation of the value of a Component or its attribute."""
     EXECUTION =          1<<3       # 8
-    """Record all value assignments during any execution of the Component."""
+    """Set during any execution of the Component."""
     PROCESSING =         1<<4       # 16
-    """Record all value assignments during processing phase of Composition execution."""
+    """Set during the `processing phase <System_Execution_Processing>` of execution of a Composition."""
     LEARNING =           1<<5       # 32
-    """Record all value assignments during learning phase of Composition execution."""
+    """Set during the `learning phase <System_Execution_Learning>` of execution of a Composition."""
     CONTROL =            1<<6       # 64
-    """Record all value assignments during control phase of Composition execution."""
+    """Set during the `control phase System_Execution_Control>` of execution of a Composition."""
     TRIAL =              1<<7       # 128
-    """Record value at the end of a TRIAL."""
+    """Set at the end of a `TRIAL`."""
     RUN =                1<<8       # 256
-    """Record value at the end of a RUN."""
-    # FIX: VALUE_ASSIGNMENT & FINAL NOT YET IMPLEMENTED:
-    VALUE_ASSIGNMENT =   1<<9       # 512
-    # """Record final value assignments during Composition execution."""
-    FINAL =             1<<10       # 1024
-    # """Synonym of VALUE_ASSIGNMENT."""
-    COMMAND_LINE =      1<<11       # 2048
+    """Set at the end of a `RUN`."""
+    COMMAND_LINE =      1<<9        # 512
+    # Component accessed by user
     ALL_ASSIGNMENTS = \
-        INITIALIZATION | VALIDATION | EXECUTION | PROCESSING | LEARNING | CONTROL | VALUE_ASSIGNMENT | FINAL
-    """Record all value assignments."""
-
-    # @classmethod
-    # def _log_level_max(cls):
-    #     return max([cls[i].value for i in list(cls.__members__) if cls[i] is not ContextState.ALL_ASSIGNMENTS])
+        INITIALIZATION | VALIDATION | EXECUTION | PROCESSING | LEARNING | CONTROL
+    """Specifies all contexts."""
 
     @classmethod
     def _get_context_string(cls, condition, string=None):

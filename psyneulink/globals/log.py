@@ -18,15 +18,15 @@ A Log object is used to record the `value <Component.value>` of PsyNeuLink Compo
 when they are created, validated, and/or executed).  Every Component has a Log object, assigned to its `log
 <Component.log>` attribute when the Component is created, that can be used to record its value and/or that of other
 Components that belong to it.  These are stored in `entries <Log.entries>` of the Log, that contain a sequential list
-of the recorded values, along with the time and context of the recording.  The conditions under which values are
-recorded is specified by the `logPref <Component.logPref>` property of a Component.  While these can be set directly,
-they are most easily specified using the Log's `set_log_conditions <Log.set_log_conditions>` method, together with its
-`loggable_items <Log.loggable_items>` and `logged_items <Log.logged_items>` attributes that identify and track the
-items to be logged, respectively. Entries can also be made by the user programmatically, using the `log_values
-<Log.log_values>` method. Logging can be useful not only for observing the behavior of a Component in a model, but also
-in debugging the model during construction. The entries of a Log can be displayed in a "human readable" table using
-its `print_entries <Log.print_entries>` method, and returned in CSV and numpy array formats using its and `nparray
-<Log.nparray>` and `csv <Log.csv>`  methods.
+of the recorded values, along with the time and context of the recording.  The `conditions <Log_Conditions>` under
+which values are recorded is specified by the `logPref <Component.logPref>` property of a Component.  While these can
+be set directly, they are most easily specified using the Log's `set_log_conditions <Log.set_log_conditions>` method,
+together with its `loggable_items <Log.loggable_items>` and `logged_items <Log.logged_items>` attributes that
+identify and track the items to be logged, respectively. Entries can also be made by the user programmatically,
+using the `log_values <Log.log_values>` method. Logging can be useful not only for observing the behavior of a
+Component in a model, but also in debugging the model during construction. The entries of a Log can be displayed in a
+"human readable" table using its `print_entries <Log.print_entries>` method, and returned in CSV and numpy array
+formats using its and `nparray <Log.nparray>` and `csv <Log.csv>`  methods.
 
 .. _Log_Creation:
 
@@ -54,18 +54,20 @@ A Log has several attributes and methods that make it easy to manage how and whe
 to access its `entries <Log.entries>`:
 
     * `loggable_items <Log.loggable_items>` -- a dictionary with the items that can be logged in a Component's `log
-      <Component.log>`;  the key for each entry is the name of a Component,  and the value is it current `ContextState`.
+      <Component.log>`;  the key for each entry is the name of a Component,  and the value is the currently assigned
+      `condition(s) <Log_Conditions>` under which it will be logged.
     ..
-    * `set_log_conditions <Log.set_log_conditions>` -- used to assign the ContextState for one or more Components.
-      Components can be specified by their names, a reference to the Component object, in a tuple that specifies the
-      `ContextState` to assign to that Component, or in a list with a `ContextState` to be applied to multiple items
-      at once.
+    * `set_log_conditions <Log.set_log_conditions>` -- used to assign the `condition <Log_Conditions>` for logging one
+      or more Components. Components can be specified by their names, a reference to the Component object,
+      in a tuple that specifies the `condition(s) <Log_Conditions>` for logging that Component, or in a list with a
+      condition to be assigned to multiple items at once.
     ..
     * `log_values <Log.log_values>` -- used to the `value <Component.value>` of one or more Components in the Log
       programmatically ("manually").  Components can be specified by their names or references to the objects.
     ..
     * `logged_items <Log.logged_items>` -- a dictionary with the items that currently have entries in a Component's
-      `log <Component.log>`; the key for each entry is the name of a Component, and the value is its current `ContextState`.
+      `log <Component.log>`; the key for each entry is the name of a Component, and the `condition(s)
+      <Log_Conditions>` under which it is being logged.
     ..
     * `print_entries <Log.print_entries>` -- this prints a formatted list of the `entries <Log.entries>` in the Log.
     ..
@@ -103,20 +105,20 @@ the Logs of their `States <State>`.  Specifically the Logs of these Components c
   * *matrix* -- the value of the `matrix <MappingProjection.matrix>` parameter (for `MappingProjections
     <MappingProjection>` only).
 
-.. _Log_LogLevels:
+.. _Log_Conditions:
 
-ContextStates
-~~~~~~~~~~~~~
+Logging Conditions
+~~~~~~~~~~~~~~~~~~
 
-Configuring a Component to be logged is done using a `ContextState`, that specifies the conditions under which its
+Configuring a Component to be logged is done using a condition, that specifies a `ContextState` under which its
 `value <Component.value>` should be entered in its Log.  These can be specified in the `set_log_conditions
-<Log.set_log_conditions>` method of a Log, or directly by specifying a ContextState for the value a Component's
+<Log.set_log_conditions>` method of a Log, or directly by specifying a `ContextState` for the value a Component's
 `logPref  <Compnent.logPref>` item of its `prefs <Component.prefs>` attribute.  The former is easier, and allows
 multiple Components to be specied at once, while the latter affords more control over the specification (see
-`Preferences`).  ContextStates are treated as binary "flags", and can be combined to permit logging under more than
-one condition using bitwise operators on ContextStates.  For convenience, they can also be referred to by their
-names, and combined by specifying a list.  For example, all of the following specify that the `value
-<Mechanism_Base.value>` of ``my_mech`` be logged both during execution and learning::
+`Preferences`).  `ContextStates <ContextState>` are treated as binary "flags", and can be combined to permit logging
+under more than one condition using bitwise operators on the `ContextStates <ContextState>`.  For convenience, they
+can also be referred to by their names, and combined by specifying a list.  For example, all of the following specify
+that the `value <Mechanism_Base.value>` of ``my_mech`` be logged both during execution and learning::
 
     >>> import psyneulink as pnl
     >>> my_mech = pnl.TransferMechanism()
@@ -127,9 +129,6 @@ names, and combined by specifying a list.  For example, all of the following spe
 
 .. note::
    Currently, the `VALIDATION` `ContextState` is not implemented.
-   COMMENT:
-   `VALUE_ASSIGNMENT` AND `FINAL` are also not yet implemented, but these do not appear in the HTML documentation
-   COMMENT
 
 .. note::
    Using `ContextState.INITIALIZATION` to log the `value <Component.value>` of a Component during its initialization
@@ -152,7 +151,8 @@ Execution
 ---------
 
 The value of a Component is recorded to a Log when the condition assigned to its `logPref <Component.logPref>` is met.
-This specified as a `ContextState`.  The default ContextState is `OFF`.
+This is specified as a `ContextState` or a boolean combination of them (see `Log_Conditions`).  The default ContextState
+is `OFF`.
 
 .. _Log_Examples:
 
@@ -173,7 +173,7 @@ another, and logs the `noise <TransferMechanism.noise>` and *RESULTS* `OutputSta
     COMMENT:
     FIX: THESE EXAMPLES CAN'T BE EXECUTED AS THEY RETURN DICT ENTRIES IN UNRELIABLE ORDERS
     COMMENT
-    # Show the loggable items (and their current ContextStates) of each Mechanism and the Projection between them:
+    # Show the loggable items (and current condition assignments) for each Mechanism and the Projection between them:
     >> my_mech_A.loggable_items
     {'InputState-0': 'OFF', 'slope': 'OFF', 'RESULTS': 'OFF', 'smoothing_factor': 'OFF', 'intercept': 'OFF', 'noise': 'OFF'}
     >> my_mech_B.loggable_items
@@ -185,8 +185,8 @@ another, and logs the `noise <TransferMechanism.noise>` and *RESULTS* `OutputSta
     >>> my_mech_A.set_log_conditions([pnl.NOISE, pnl.RESULTS])
     >>> proj_A_to_B.set_log_conditions(pnl.MATRIX)
 
-Note that since no ContextState was specified, the default (ContextState.EXECUTION) is used. Executing the Process
-generates entries in the Logs, that can then be displayed in several ways::
+Note that since no `condition <Log_Conditions>` was specified, the default (ContextState.EXECUTION) is used.
+Executing the Process generates entries in the Logs, that can then be displayed in several ways::
 
     # Execute the System twice (to generate some values in the logs):
     >>> my_system.execute()
@@ -314,13 +314,14 @@ An attribute is logged if:
 * it is included in the *LOG_ENTRIES* entry of a `parameter specification dictionary <ParameterState_Specification>`
   assigned to the **params** argument of the constructor for the Component;
 ..
-* the context of the assignment is above the ContextState specified in the logPref setting of the owner Component
+* the current `ContextState` is one specified in the logPref setting of the owner Component
 
 Entry values are added by the setter method for the attribute being logged.
 
-The following entries are automatically included in self.entries for a `Mechanism` object:
+The following entries are automatically included in the `loggable_items` of a `Mechanism` object:
+    - the `value <Mechanism_Base.value>` of the Mechanism;
     - the value attribute of every State for which the Mechanism is an owner
-    [TBI: - value of every projection that sends to those States]
+    - value of every projection that sends to those States]
     - the system variables defined in SystemLogEntries (see declaration above)
     - any variables listed in the params[LOG_ENTRIES] of a Mechanism
 
@@ -341,7 +342,6 @@ Each entry of `entries <Log.entries>` has:
 
 The ContextState class (see declaration above) defines six levels of logging:
     + OFF: No logging for attributes of the owner object
-    + VALUE_ASSIGNMENT: Log values only when final value assignment has been made during execution
     + EXECUTION: Log values for all assignments during execution (e.g., including aggregation of projections)
     + VALIDATION: Log value assignments during validation as well as execution and initialization
     + ALL_ASSIGNMENTS:  Log all value assignments (e.g., including initialization)
@@ -530,7 +530,6 @@ class Log:
             - any variables listed in the params[LOG_ENTRIES] of a Mechanism
         The ContextState class (see declaration above) defines five levels of logging:
             + OFF: No logging for attributes of the owner object
-            + VALUE_ASSIGNMENT: Log values only when final value assignment has been during execution
             + EXECUTION: Log values for all assignments during exeuction (e.g., including aggregation of projections)
             + VALIDATION: Log value assignments during validation as well as execution
             + ALL_ASSIGNMENTS:  Log all value assignments (e.g., including initialization)
@@ -647,7 +646,7 @@ class Log:
         from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
         from psyneulink.globals.keywords import ALL
 
-        def assign_log_level(item, level):
+        def assign_log_condition(item, level):
 
             # Handle multiple level assignments (as ContextStates or strings in a list)
             if not isinstance(level, list):
@@ -684,9 +683,9 @@ class Log:
             if isinstance(item, (str, Component)):
                 if isinstance(item, Component):
                     item = item.name
-                assign_log_level(item, log_condition)
+                assign_log_condition(item, log_condition)
             else:
-                assign_log_level(item[0], item[1])
+                assign_log_condition(item[0], item[1])
 
     def _log_value(self, value, time=None, context=None):
         """Add LogEntry to an entry in the Log
