@@ -1695,10 +1695,11 @@ class LinearCombination(CombinationFunction):  # -------------------------------
             #    make sure there are no zeros for an element that is assigned a negative exponent
             # Allow during initialization because 0s are common in default_variable argument
             if context is not None and INITIALIZING in context:
-                try:
-                    variable = self._update_variable(variable ** exponents)
-                except ZeroDivisionError:
-                    variable = self._update_variable(np.ones_like(variable))
+                with np.errstate(divide='ignore'):
+                    try:
+                        variable = self._update_variable(variable ** exponents)
+                    except ZeroDivisionError:
+                        variable = self._update_variable(np.ones_like(variable))
             else:
                 # if this fails with ZeroDivisionError it should not be caught outside of initialization
                 variable = self._update_variable(variable ** exponents)
