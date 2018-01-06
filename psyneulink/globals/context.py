@@ -9,7 +9,9 @@
 # ********************************************  System Defaults ********************************************************
 
 
+from uuid import UUID
 from enum import IntEnum
+
 
 from psyneulink.globals.keywords import INITIALIZING, VALIDATE, EXECUTING, CONTROL, LEARNING
 # from psyneulink.composition import Composition
@@ -22,11 +24,28 @@ __all__ = [
 ]
 
 
+class ContextError(Exception):
+    def __init__(self, error_value):
+        self.error_value = error_value
+
+
 class Context():
-    # def __init__(self, composition:Composition, current:pnl.ContextState, string:str=''):
-    def __init__(self, composition, current, string:str=''):
-        self.composition = composition
-        self.current = current
+    def __init__(self, current, composition, execution_id:UUID, string:str=''):
+
+        if isinstance(current, ContextState):
+            self.current = current
+        else:
+            raise ContextError("\'current\' argument in call to {} must be a {}".
+                               format(self.__name__, ContextState.__name__))
+
+        from psyneulink.composition import Composition
+        if isinstance(composition, Composition):
+            self.composition = composition
+        else:
+            raise ContextError("\'composition\' argument in call to {} must be a {}".
+                               format(self.__name__, Composition.__name__))
+
+        self.execution_id = execution_id
         self.string = string
 
 
