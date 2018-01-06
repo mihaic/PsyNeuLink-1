@@ -362,7 +362,7 @@ from psyneulink.globals.keywords import COMMAND_LINE, DEFERRED_INITIALIZATION, D
     OUTPUT_STATES, \
     PARAMS, PARAMS_CURRENT, PARAM_CLASS_DEFAULTS, PARAM_INSTANCE_DEFAULTS, PREFS_ARG, SEPARATOR_BAR, SET_ATTRIBUTE, \
     SIZE, USER_PARAMS, VALUE, VARIABLE, MODULATORY_SPEC_KEYWORDS, kwComponentCategory
-# from psyneulink.globals.log import Log, ContextState
+# from psyneulink.globals.log import Log, ContextStatus
 from psyneulink.globals.preferences.componentpreferenceset import ComponentPreferenceSet, kpVerbosePref
 from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel, PreferenceSet
 from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, convert_all_elements_to_np_array, convert_to_np_array, is_matrix, is_same_function_spec, iscompatible, kwCompatibilityLength
@@ -2879,14 +2879,14 @@ class Component(object):
 
     @property
     def loggable_items(self):
-        """Diciontary of items that can be logged in the Component's `log <Component.log>` and their current `ContextState`.
+        """Diciontary of items that can be logged in the Component's `log <Component.log>` and their current `ContextStatus`.
         This is a convenience method that calls the `loggable_items <Log.loggable_items>` property of the Component's
         `log <Component.log>`.
         """
         return self.log.loggable_items
 
-    from psyneulink.globals.log import ContextState
-    def set_log_conditions(self, items, log_condition=ContextState.EXECUTION):
+    from psyneulink.globals.log import ContextStatus
+    def set_log_conditions(self, items, log_condition=ContextStatus.EXECUTION):
         """
         set_log_conditions(               \
             items                \
@@ -2914,7 +2914,7 @@ class Component(object):
 
     @property
     def logged_items(self):
-        """Dictionary of all items that have entries in the log, and their currently assigned `ContextState`\\s
+        """Dictionary of all items that have entries in the log, and their currently assigned `ContextStatus`\\s
         This is a convenience method that calls the `logged_items <Log.logged_items>` property of the Component's
         `log <Component.log>`.
         """

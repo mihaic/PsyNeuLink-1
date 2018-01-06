@@ -665,14 +665,13 @@ def run(object,
             if RUN in context and not EVC_SIMULATION in context:
                 context = RUN + ": EXECUTING " + object_type.upper() + " " + object.name
                 object.execution_status = ExecutionStatus.EXECUTING
-            result = object.execute(
-                input=execution_inputs,
-                execution_id=execution_id,
-                time_scale=time_scale,
-                termination_processing=termination_processing,
-                termination_learning=termination_learning,
-                context=context
-            )
+            result = object.execute(input=execution_inputs,
+                                    execution_id=execution_id,
+                                    time_scale=time_scale,
+                                    termination_processing=termination_processing,
+                                    termination_learning=termination_learning,
+                                    context=context
+                                    )
 
             if call_after_time_step:
                 call_after_time_step()
@@ -687,9 +686,9 @@ def run(object,
         if call_after_trial:
             call_after_trial()
 
-        from psyneulink.globals.log import _log_trials_and_runs, ContextState
+        from psyneulink.globals.log import _log_trials_and_runs, ContextStatus
         _log_trials_and_runs(composition=object,
-                             curr_condition=ContextState.TRIAL,
+                             curr_condition=ContextStatus.TRIAL,
                              context=context)
 
     try:
@@ -707,9 +706,9 @@ def run(object,
     else:
         object._learning_enabled = learning_state_buffer
 
-    from psyneulink.globals.log import _log_trials_and_runs, ContextState
+    from psyneulink.globals.log import _log_trials_and_runs, ContextStatus
     _log_trials_and_runs(composition=object,
-                         curr_condition=ContextState.RUN,
+                         curr_condition=ContextStatus.RUN,
                          context=context)
 
     return object.results

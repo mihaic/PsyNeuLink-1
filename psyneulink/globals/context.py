@@ -19,9 +19,11 @@ from psyneulink.globals.keywords import INITIALIZING, VALIDATE, EXECUTING, CONTR
 
 __all__ = [
     'Context',
-    'ContextState',
+    'ContextStatus',
     '_get_context'
 ]
+
+STATUS = 'status'
 
 
 class ContextError(Exception):
@@ -30,13 +32,9 @@ class ContextError(Exception):
 
 
 class Context():
-    def __init__(self, current, composition, execution_id:UUID, string:str=''):
+    def __init__(self, status, composition, execution_id:UUID, string:str=''):
 
-        if isinstance(current, ContextState):
-            self.current = current
-        else:
-            raise ContextError("\'current\' argument in call to {} must be a {}".
-                               format(self.__name__, ContextState.__name__))
+        self.status = status
 
         from psyneulink.composition import Composition
         if isinstance(composition, Composition):
@@ -48,32 +46,43 @@ class Context():
         self.execution_id = execution_id
         self.string = string
 
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, status):
+        if isinstance(status, ContextStatus):
+            self._status = status
+        else:
+            raise ContextError("{} argument in call to {} must be a {}".
+                               format(STATUS, self.__name__, ContextStatus.__name__))
+
 
 # FIX: REPLACE IntEnum WITH Flags and auto IF/WHEN MOVE TO Python 3.6
-class ContextState(IntEnum):
-    """Used to identify the context in which the value of a `Component` or its attribute is being accessed.
-    Also used to specify the conditions under which a value of the Component or its attribute is `logged
-    <Log_Conditions>`.
+class ContextStatus(IntEnum):
+    """Used to identify the status of a `Component` when its value or one of its attributes is being accessed.
+    Also used to specify the context in which a value of the Component or its attribute is `logged <Log_Conditions>`.
     """
     OFF = 0
     # """No recording."""
-    INITIALIZATION =     1<<1       # 2
+    INITIALIZATION = 1<<1  # 2
     """Set during execution of the Component's constructor."""
-    VALIDATION =         1<<2       # 4
+    VALIDATION =     1<<2  # 4
     """Set during validation of the value of a Component or its attribute."""
-    EXECUTION =          1<<3       # 8
+    EXECUTION =      1<<3  # 8
     """Set during any execution of the Component."""
-    PROCESSING =         1<<4       # 16
+    PROCESSING =     1<<4  # 16
     """Set during the `processing phase <System_Execution_Processing>` of execution of a Composition."""
-    LEARNING =           1<<5       # 32
+    LEARNING =       1<<5  # 32
     """Set during the `learning phase <System_Execution_Learning>` of execution of a Composition."""
-    CONTROL =            1<<6       # 64
+    CONTROL =        1<<6  # 64
     """Set during the `control phase System_Execution_Control>` of execution of a Composition."""
-    TRIAL =              1<<7       # 128
+    TRIAL =          1<<7  # 128
     """Set at the end of a `TRIAL`."""
-    RUN =                1<<8       # 256
+    RUN =            1<<8  # 256
     """Set at the end of a `RUN`."""
-    COMMAND_LINE =      1<<9        # 512
+    COMMAND_LINE =   1<<9  # 512
     # Component accessed by user
     ALL_ASSIGNMENTS = \
         INITIALIZATION | VALIDATION | EXECUTION | PROCESSING | LEARNING | CONTROL
@@ -88,14 +97,14 @@ class ContextState(IntEnum):
             string = ""
         flagged_items = []
         # If OFF or ALL_ASSIGNMENTS, just return that
-        if condition in (ContextState.ALL_ASSIGNMENTS, ContextState.OFF):
+        if condition in (ContextStatus.ALL_ASSIGNMENTS, ContextStatus.OFF):
             return condition.name
         # Otherwise, append each flag's name to the string
         for c in list(cls.__members__):
             # Skip ALL_ASSIGNMENTS (handled above)
-            if c is ContextState.ALL_ASSIGNMENTS.name:
+            if c is ContextStatus.ALL_ASSIGNMENTS.name:
                 continue
-            if ContextState[c] & condition:
+            if ContextStatus[c] & condition:
                flagged_items.append(c)
         string += ", ".join(flagged_items)
         return string
@@ -103,23 +112,23 @@ class ContextState(IntEnum):
 
 def _get_context(context):
 
-    if isinstance(context, ContextState):
+    if isinstance(context, ContextStatus):
         return context
-    context_flag = ContextState.OFF
+    context_flag = ContextStatus.OFF
     if INITIALIZING in context:
-        context_flag |= ContextState.INITIALIZATION
+        context_flag |= ContextStatus.INITIALIZATION
     if VALIDATE in context:
-        context_flag |= ContextState.VALIDATION
+        context_flag |= ContextStatus.VALIDATION
     if EXECUTING in context:
-        context_flag |= ContextState.EXECUTION
+        context_flag |= ContextStatus.EXECUTION
     if CONTROL in context:
-        context_flag |= ContextState.CONTROL
+        context_flag |= ContextStatus.CONTROL
     if LEARNING in context:
-        context_flag |= ContextState.LEARNING
-    if context == ContextState.TRIAL.name:
-        context_flag |= ContextState.TRIAL
-    if context == ContextState.RUN.name:
-        context_flag |= ContextState.RUN
-    if context == ContextState.COMMAND_LINE.name:
-        context_flag |= ContextState.COMMAND_LINE
+        context_flag |= ContextStatus.LEARNING
+    if context == ContextStatus.TRIAL.name:
+        context_flag |= ContextStatus.TRIAL
+    if context == ContextStatus.RUN.name:
+        context_flag |= ContextStatus.RUN
+    if context == ContextStatus.COMMAND_LINE.name:
+        context_flag |= ContextStatus.COMMAND_LINE
     return context_flag

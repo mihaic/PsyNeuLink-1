@@ -189,7 +189,7 @@ stim_list_dict = {
 
 mySystem.controller.reportOutputPref = True
 
-Flanker_Rep.set_log_conditions((pnl.SLOPE, pnl.ContextState.CONTROL))
+Flanker_Rep.set_log_conditions((pnl.SLOPE, pnl.ContextStatus.CONTROL))
 
 mySystem.run(
     num_trials=nTrials,
