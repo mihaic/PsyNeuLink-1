@@ -2,14 +2,16 @@ import numpy as np
 import psyneulink as pnl
 
 # Control Parameters
-signalSearchRange = np.arange(0.8, 2.0, 0.2) # why 0.8 to 2.0 in increments of 0.2
+signalSearchRange = np.arange(0.8, 1.7, 0.2) # why 0.8 to 2.0 in increments of 0.2
 
 
-# test_mech = pnl.TransferMechanism(size=3)
+test_mech = pnl.TransferMechanism(size=1)
 
 # Stimulus Mechanisms
-Target_Stim = pnl.TransferMechanism(name='Target Stimulus', function=pnl.Linear)
-Flanker_Stim = pnl.TransferMechanism(name='Flanker Stimulus', function=pnl.Linear)
+Target_Stim = pnl.TransferMechanism(name='Target Stimulus', function=pnl.Linear(slope=1.5))
+Target_Stim.set_log_conditions('value')
+Flanker_Stim = pnl.TransferMechanism(name='Flanker Stimulus', function=pnl.Linear(slope=1.0))
+Flanker_Stim.set_log_conditions('value')
 
 # Processing Mechanisms (Control)
 Target_Rep = pnl.TransferMechanism(name='Target Representation',
@@ -34,9 +36,9 @@ Automatic_Component.set_log_conditions('value')
 
 # Decision Mechanisms
 Decision = pnl.DDM(function=pnl.BogaczEtAl(
-        drift_rate=(0.5),
+        drift_rate=(0.5 ),
         threshold=(1.0),
-        # noise=(0.8),
+        # noise=(0.5),
         starting_point=(0),
         t0=0.15
     ),name='Decision',
@@ -47,7 +49,7 @@ Decision = pnl.DDM(function=pnl.BogaczEtAl(
         {
             pnl.NAME: 'OFFSET RT',
             pnl.INDEX: 2,
-            pnl.CALCULATE: pnl.Linear(0, slope=1.0, intercept=1).function
+            pnl.CALCULATE: pnl.Linear(0, slope=0.3, intercept=1).function
         }
     ],) #drift_rate=(1.0),threshold=(0.2645),noise=(0.5),starting_point=(0), t0=0.15
 Decision.set_log_conditions('DECISION_VARIABLE')
@@ -85,23 +87,24 @@ FlankerAutomaticProcess = pnl.Process(
     name='Flanker1 Automatic Process'
 )
 
-# RewardProcess = pnl.Process(
-#     default_variable=[0],
-#     pathway=[Reward, test_mech],
-#     name='RewardProcess'
-# )
+RewardProcess = pnl.Process(
+    default_variable=[0],
+    pathway=[Reward, test_mech],
+    name='RewardProcess'
+)
 
 
 # System:
 mySystem = pnl.System(processes=[TargetControlProcess,
         FlankerControlProcess,
         TargetAutomaticProcess,
-        FlankerAutomaticProcess],
+        FlankerAutomaticProcess,
+        RewardProcess],
     controller=pnl.EVCControlMechanism,
     enable_controller=True,
     monitor_for_control=[
-        # (None, None, np.ones((2,1))),
-        # Reward,
+        # (None, None, np.ones((1,1))),
+        Reward,
         Decision.PROBABILITY_UPPER_THRESHOLD,
         ('OFFSET RT', 1, -1),
     ],
@@ -112,7 +115,7 @@ mySystem.show()
 # mySystem.controller.show()
 
 # Show graph of system
-# mySystem.show_graph()# show_control=True,show_dimensions=True)
+# mySystem.show_graph(show_control=pnl.ALL, show_dimensions=pnl.ALL)# show_control=True,show_dimensions=True)
 
 
 
@@ -126,22 +129,22 @@ mySystem.show()
 
 # generate stimulus environment
 nTrials = 5
-targetFeatures = [1.0]
-flankerFeatures_inc = [-1.5]
+targetFeatures = [1.0, 1.0, 1.0, 1.0, 1.0]
+flankerFeatures_inc = [-1.5, -1.5, 1.5, 1.5,-1.5]
 # flankerFeatures_con = [1.5, 0]
-# reward = [100, 100, 100]
+reward = [100, 100, 100, 100, 100]
 
 
 targetInputList = targetFeatures
 flankerInputList = flankerFeatures_inc
-# rewardList = reward
+rewardList = reward
 
 
 
 stim_list_dict = {
     Target_Stim: targetInputList,
     Flanker_Stim: flankerInputList,
-    # Reward: rewardList
+    Reward: rewardList
 
 }
 
