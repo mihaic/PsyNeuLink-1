@@ -2,7 +2,7 @@ import numpy as np
 import psyneulink as pnl
 
 # Control Parameters
-signalSearchRange = np.arange(0.8, 1.7, 0.2) # why 0.8 to 2.0 in increments of 0.2
+signalSearchRange = np.arange(3.0,4.1,0.5) # why 0.8 to 2.0 in increments of 0.2
 
 
 test_mech = pnl.TransferMechanism(size=1)
@@ -36,10 +36,10 @@ Automatic_Component.set_log_conditions('value')
 
 # Decision Mechanisms
 Decision = pnl.DDM(function=pnl.BogaczEtAl(
-        drift_rate=(0.5 ),
-        threshold=(0.2645),
+        drift_rate=1.0,
+        threshold=0.2645,
         # noise=(0.5),
-        starting_point=(0),
+        starting_point=0,
         t0=0.15
     ),name='Decision',
     output_states=[
@@ -49,7 +49,7 @@ Decision = pnl.DDM(function=pnl.BogaczEtAl(
         {
             pnl.NAME: 'OFFSET_RT',
             pnl.INDEX: 1,
-            pnl.CALCULATE: pnl.Linear(0, slope=0.3, intercept=1).function
+            pnl.CALCULATE: pnl.Linear(0, slope=0.0, intercept=1).function
         }
     ],) #drift_rate=(1.0),threshold=(0.2645),noise=(0.5),starting_point=(0), t0=0.15
 Decision.set_log_conditions('DECISION_VARIABLE')
@@ -57,11 +57,15 @@ Decision.set_log_conditions('value')
 Decision.set_log_conditions('PROBABILITY_UPPER_THRESHOLD')
 Decision.set_log_conditions('InputState-0')
 
+Decision.set_log_conditions('OFFSET_RT')
+
+Decision.set_log_conditions('RESPONSE_TIME')
+
 Decision.loggable_items
 
 # Outcome Mechanisms:
 Reward = pnl.TransferMechanism(name='Reward')
-
+Reward.set_log_conditions('value')
 # Processes:
 TargetControlProcess = pnl.Process(
     default_variable=[0],
@@ -123,33 +127,32 @@ mySystem.controller.loggable_items
 mySystem.controller.set_log_conditions('InputState-0')
 mySystem.controller.set_log_conditions('value')
 mySystem.controller.objective_mechanism.set_log_conditions('value')
-mySystem.controller.objective_mechanism.set_log_conditions('outcome')
 # print('current input value',mySystem.controller.input_states.values)
 # print('current objective mech output value',mySystem.controller.objective_mechanism.output_states.values)
 #
 
 
 # configure EVC components
-# mySystem.controller.control_signals[0].intensity_cost_function = pnl.Exponential(rate=0.8046).function
-# mySystem.controller.control_signals[1].intensity_cost_function = pnl.Exponential(rate=0.8046).function
+mySystem.controller.control_signals[0].intensity_cost_function = pnl.Exponential(rate=0.8046).function
+mySystem.controller.control_signals[1].intensity_cost_function = pnl.Exponential(rate=0.8046).function
 #
 # #change prediction mechanism function_object.rate for all 3 prediction mechanisms
 #
-# mySystem.controller.prediction_mechanisms.mechanisms[0].function_object.rate = 1.0
-# mySystem.controller.prediction_mechanisms.mechanisms[1].function_object.rate = 0.8  # reward rate
-# mySystem.controller.prediction_mechanisms.mechanisms[2].function_object.rate = 1.0
+mySystem.controller.prediction_mechanisms.mechanisms[0].function_object.rate = 1.0
+mySystem.controller.prediction_mechanisms.mechanisms[1].function_object.rate = 1.0  # reward rate
+mySystem.controller.prediction_mechanisms.mechanisms[2].function_object.rate = 1.0
 
 
-# for mech in mySystem.controller.prediction_mechanisms.mechanisms:
-#     if mech.name == 'Flanker Stimulus Prediction Mechanism' or mech.name == 'Target Stimulus Prediction Mechanism':
-#         # when you find a key mechanism (transfer mechanism) with the correct name, print its name
-#         print(mech.name)
-#         mech.function_object.rate = 1.0
-#
-#     if 'Reward' in mech.name:
-#         print(mech.name)
-#         mech.function_object.rate = 0.8
-#         # mySystem.controller.prediction_mechanisms[mech].parameterStates['rate'].base_value = 1.0
+for mech in mySystem.controller.prediction_mechanisms.mechanisms:
+    if mech.name == 'Flanker Stimulus Prediction Mechanism' or mech.name == 'Target Stimulus Prediction Mechanism':
+        # when you find a key mechanism (transfer mechanism) with the correct name, print its name
+        # print(mech.name)
+        mech.function_object.rate = 1.0
+
+    if 'Reward' in mech.name:
+        # print(mech.name)
+        mech.function_object.rate = 1.0
+        # mySystem.controller.prediction_mechanisms[mech].parameterStates['rate'].base_value = 1.0
 
 
 
@@ -162,11 +165,11 @@ mySystem.controller.objective_mechanism.set_log_conditions('outcome')
 
 
 # generate stimulus environment
-nTrials = 2
-targetFeatures = [1.0, 1.0, 1.0, 1.0, 1.0,1.0]
-flankerFeatures_inc = [-1.5, -1.5, 1.5, 1.5,-1.5, -1.5]
+nTrials = 7
+targetFeatures = [1.0, 1.0, 1.0, 1.0, 1.0,1.0, 1.0]
+flankerFeatures_inc = [1.0, 1.0, -1.0, 1.0, 1.0,-1.0, -1.0]
 # flankerFeatures_con = [1.5, 0]
-reward = [100, 100, 100, 100, 100, 100]
+reward = [100, 100, 100, 100, 100, 100, 100]
 
 
 targetInputList = targetFeatures
@@ -194,3 +197,4 @@ print('output state of objective mechanism', mySystem.controller.objective_mecha
 print('input state of EVC Control mechanism', mySystem.controller.input_state.value)
 
 print('mapping projection from objective mechanism to EVC Control mechanism',mySystem.controller.projections[0].matrix)
+
