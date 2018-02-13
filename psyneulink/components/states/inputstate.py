@@ -862,14 +862,14 @@ class InputState(State_Base):
         """
         self._instantiate_projections_to_state(projections=projections, context=context)
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, function_variable=None, runtime_params=None, context=None):
         """Call self.function with self._path_proj_values
 
         If there were no Transmissive Projections, ignore and return None
         """
 
-        if variable is not None:
-            return self.function(variable, runtime_params, context)
+        if function_variable is not None:
+            return self.function(function_variable, runtime_params, context)
         # If there were any Transmissive Projections:
         elif self._path_proj_values:
             # Combine Projection values

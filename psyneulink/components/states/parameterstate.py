@@ -834,15 +834,15 @@ class ParameterState(State_Base):
 
         return state_spec, params_dict
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, function_variable=None, runtime_params=None, context=None):
         """Call self.function with current parameter value as the variable
 
         Get backingfield ("base") value of param of function of Mechanism to which the ParameterState belongs.
         Update its value in call to state's function.
         """
 
-        if variable is not None:
-            return self.function(variable, runtime_params, context)
+        if function_variable is not None:
+            return self.function(function_variable, runtime_params, context)
         else:
             # Most commonly, ParameterState is for the parameter of a function
             try:

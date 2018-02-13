@@ -883,6 +883,9 @@ class Projection_Base(Projection):
     def add_to(self, receiver, state, context=None):
         _add_projection_to(receiver=receiver, state=state, projection_spec=self, context=context)
 
+    def execute(self, variable=None, runtime_params=None, context=None):
+        return self._execute(variable=variable, runtime_params=runtime_params, context=context)
+
     def _execute(self, variable, runtime_params=None, context=None):
         self.value = self.function(variable=self.sender.value, params=runtime_params, context=context)
         return self.value

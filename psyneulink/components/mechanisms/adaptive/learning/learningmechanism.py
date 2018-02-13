@@ -936,6 +936,15 @@ class LearningMechanism(AdaptiveMechanism_Base):
                          prefs=prefs,
                          context=self)
 
+    def _parse_function_variable(self, variable):
+        function_variable = np.zeros_like(
+            variable[np.array([ACTIVATION_INPUT_INDEX, ACTIVATION_OUTPUT_INDEX, ERROR_OUTPUT_INDEX])]
+        )
+        function_variable[ACTIVATION_INPUT_INDEX] = variable[ACTIVATION_INPUT_INDEX]
+        function_variable[ACTIVATION_OUTPUT_INDEX] = variable[ACTIVATION_OUTPUT_INDEX]
+
+        return function_variable
+
     def _validate_variable(self, variable, context=None):
         """Validate that variable has exactly three items: activation_input, activation_output and error_signal
         """
@@ -1120,10 +1129,13 @@ class LearningMechanism(AdaptiveMechanism_Base):
             if ERROR_SIGNAL in input_state.name:
                 self._error_signal_input_states.append(input_state)
 
-    def _execute(self,
-                variable=None,
-                runtime_params=None,
-                context=None):
+    def _execute(
+        self,
+        variable=None,
+        function_variable=None,
+        runtime_params=None,
+        context=None
+    ):
         """Execute LearningMechanism function and return learning_signal
 
         Identify error_signals received from LearningMechanisms currently being executed
@@ -1147,13 +1159,6 @@ class LearningMechanism(AdaptiveMechanism_Base):
         for i, matrix in enumerate(error_matrices):
             if isinstance(error_matrices[i], ParameterState):
                 error_matrices[i] = error_matrices[i].value
-
-        # Construct variable for function
-        function_variable = np.zeros_like(variable[np.array([ACTIVATION_INPUT_INDEX,
-                                                             ACTIVATION_OUTPUT_INDEX,
-                                                             ERROR_OUTPUT_INDEX])])
-        function_variable[ACTIVATION_INPUT_INDEX] = variable[ACTIVATION_INPUT_INDEX]
-        function_variable[ACTIVATION_OUTPUT_INDEX] = variable[ACTIVATION_OUTPUT_INDEX]
 
         # Compute learning_signal for each error_signal (and corresponding error-Matrix:
         for error_signal_input, error_matrix in zip(error_signal_inputs, error_matrices):

@@ -569,10 +569,13 @@ class LCA(RecurrentTransferMechanism):
                          prefs=prefs,
                          context=context)
 
-    def _execute(self,
-                 variable=None,
-                 runtime_params=None,
-                 context=None):
+    def _execute(
+        self,
+        variable=None,
+        function_variable=None,
+        runtime_params=None,
+        context=None
+    ):
         """Execute TransferMechanism function and return transform of input
 
         Execute TransferMechanism function on input, and assign to output_values:
@@ -656,15 +659,15 @@ class LCA(RecurrentTransferMechanism):
             )
         else:
         # elif time_scale is TimeScale.TRIAL:
-            noise = self._try_execute_param(noise, variable)
+            noise = self._try_execute_param(noise, function_variable)
             # formerly: current_input = self.input_state.value + noise
             # (MODIFIED 7/13/17 CW) this if/else below is hacky: just allows a nicer error message
             # when the input is given as a string.
             if (np.array(noise) != 0).any():
-                current_input = variable[0] + noise
+                current_input = function_variable[0] + noise
             else:
 
-                current_input = variable[0]
+                current_input = function_variable[0]
 
         # Apply TransferMechanism function
         output_vector = self.function(variable=current_input, params=runtime_params)

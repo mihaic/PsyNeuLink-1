@@ -858,15 +858,20 @@ class LCControlMechanism(ControlMechanism):
         # MODIFIED 9/3/17 END
         super()._instantiate_output_states(context=context)
 
-    def _execute(self,
-                    variable=None,
-                    runtime_params=None,
-                    context=None):
+    def _execute(
+        self,
+        variable=None,
+        function_variable=None,
+        runtime_params=None,
+        context=None
+    ):
         """Updates LCControlMechanism's ControlSignal based on input and mode parameter value
         """
-        output_values = self.function(variable=variable,
-                             params=runtime_params,
-                             context=context)
+        output_values = self.function(
+            variable=function_variable,
+            params=runtime_params,
+            context=context
+        )
 
         gain_t = self.scaling_factor_gain*output_values[1] + self.base_level_gain
 

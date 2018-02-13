@@ -324,6 +324,9 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
                          prefs=prefs,
                          context=self)
 
+    def _parse_function_variable(self, variable):
+        return variable
+
     def _validate_variable(self, variable, context=None):
         """Validate that variable has only one item: activation_input.
         """
@@ -339,19 +342,24 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
                                                         format(self.name, variable))
         return variable
 
-    def _execute(self,
-                variable=None,
-                runtime_params=None,
-                context=None):
+    def _execute(
+        self,
+        variable=None,
+        function_variable=None,
+        runtime_params=None,
+        context=None
+    ):
         """Execute AutoAssociativeLearningMechanism. function and return learning_signal
 
         :return: (2D np.array) self.learning_signal
         """
 
         # COMPUTE LEARNING SIGNAL (note that function is assumed to return only one value)
-        self.learning_signal = self.function(variable=variable,
-                                             params=runtime_params,
-                                             context=context)
+        self.learning_signal = self.function(
+            variable=variable,
+            params=runtime_params,
+            context=context
+        )
 
         if not INITIALIZING in context and self.reportOutputPref:
             print("\n{} weight change matrix: \n{}\n".format(self.name, self.learning_signal))

@@ -869,10 +869,13 @@ class TransferMechanism(ProcessingMechanism_Base):
                 self.output_states.append({NAME: RESULT, INDEX: i})
         super()._instantiate_output_states(context=context)
 
-    def _execute(self,
-                 variable=None,
-                 runtime_params=None,
-                 context=None):
+    def _execute(
+        self,
+        variable=None,
+        function_variable=None,
+        runtime_params=None,
+        context=None
+    ):
         """Execute TransferMechanism function and return transform of input
 
         Execute TransferMechanism function on input, and assign to output_values:
@@ -935,11 +938,12 @@ class TransferMechanism(ProcessingMechanism_Base):
             if not self.integrator_function:
 
                 self.integrator_function = AdaptiveIntegrator(
-                                            variable,
-                                            initializer=initial_value,
-                                            noise=noise,
-                                            rate=smoothing_factor,
-                                            owner=self)
+                    function_variable,
+                    initializer=initial_value,
+                    noise=noise,
+                    rate=smoothing_factor,
+                    owner=self
+                )
 
             current_input = self.integrator_function.execute(
                 variable,
@@ -952,14 +956,14 @@ class TransferMechanism(ProcessingMechanism_Base):
                 context=context
             )
         else:
-            noise = self._try_execute_param(self.noise, variable)
+            noise = self._try_execute_param(self.noise, function_variable)
             # formerly: current_input = self.input_state.value + noise
             # (MODIFIED 7/13/17 CW) this if/else below is hacky: just allows a nicer error message
             # when the input is given as a string.
             if (np.array(noise) != 0).any():
-                current_input = variable + noise
+                current_input = function_variable + noise
             else:
-                current_input = variable
+                current_input = function_variable
 
         if isinstance(self.function_object, TransferFunction):
 

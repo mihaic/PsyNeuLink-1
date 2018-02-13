@@ -1011,12 +1011,12 @@ class OutputState(State_Base):
                                                     receiver=proj,
                                                     context=context)
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, function_variable=None, runtime_params=None, context=None):
         """Call self.function with owner's value as variable
         """
 
-        if variable is not None:
-            return self.function(variable, runtime_params, context)
+        if function_variable is not None:
+            return self.function(function_variable, runtime_params, context)
         else:
             # Most common case is OutputState has index, so assume that for efficiency
             try:

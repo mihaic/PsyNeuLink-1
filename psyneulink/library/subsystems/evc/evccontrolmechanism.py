@@ -869,10 +869,13 @@ class EVCControlMechanism(ControlMechanism):
         self._instantiate_prediction_mechanisms(system=system, context=context)
         super().assign_as_controller(system=system, context=context)
 
-    def _execute(self,
-                    variable=None,
-                    runtime_params=None,
-                    context=None):
+    def _execute(
+        self,
+        variable=None,
+        function_variable=None,
+        runtime_params=None,
+        context=None
+    ):
         """Determine `allocation_policy <EVCControlMechanism.allocation_policy>` for next run of System
 
         Update prediction mechanisms
@@ -911,10 +914,12 @@ class EVCControlMechanism(ControlMechanism):
         # IMPLEMENTATION NOTE:
         # self.system._store_system_state()
 
-        allocation_policy = self.function(controller=self,
-                                          variable=variable,
-                                          runtime_params=runtime_params,
-                                          context=context)
+        allocation_policy = self.function(
+            controller=self,
+            variable=function_variable,
+            runtime_params=runtime_params,
+            context=context
+        )
         # IMPLEMENTATION NOTE:
         # self.system._restore_system_state()
 
