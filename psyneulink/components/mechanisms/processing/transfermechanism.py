@@ -298,7 +298,6 @@ Class Reference
 """
 import inspect
 import numbers
-
 from collections import Iterable
 
 import numpy as np
@@ -311,11 +310,10 @@ from psyneulink.components.mechanisms.mechanism import Mechanism, MechanismError
 from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism_Base
 from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.states.outputstate import OutputState, PRIMARY, StandardOutputStates, standard_output_states
-from psyneulink.globals.keywords import FUNCTION, INDEX, INITIALIZER, INITIALIZING, MEAN, MEDIAN, NAME, NOISE, NORMALIZING_FUNCTION_TYPE, RATE, RESULT, RESULTS, STANDARD_DEVIATION, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIANCE, kwPreferenceSetName
-from psyneulink.globals.preferences.componentpreferenceset import is_pref_set, kpReportOutputPref, kpRuntimeParamStickyAssignmentPref
-from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
+from psyneulink.globals.keywords import FUNCTION, INDEX, INITIALIZER, INITIALIZING, MEAN, MEDIAN, NAME, NOISE, NORMALIZING_FUNCTION_TYPE, RATE, RESULT, RESULTS, STANDARD_DEVIATION, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIANCE
+from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import append_type_to_name, iscompatible
-from psyneulink.scheduling.time import TimeScale
 
 __all__ = [
     'INITIAL_VALUE', 'CLIP', 'SMOOTHING_FACTOR', 'Transfer_DEFAULT_BIAS', 'Transfer_DEFAULT_GAIN', 'Transfer_DEFAULT_LENGTH',
@@ -794,7 +792,6 @@ class TransferMechanism(ProcessingMechanism_Base):
 
     def _validate_noise(self, noise, var):
         # Noise is a list or array
-        from psyneulink.components.functions.function import DistributionFunction
 
         if isinstance(noise, (np.ndarray, list)):
             if len(noise) == 1:

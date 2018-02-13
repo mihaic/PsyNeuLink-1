@@ -281,13 +281,11 @@ Class Reference
 ---------------
 """
 import logging
-import numbers
 import random
+from collections import Iterable
 
 import numpy as np
 import typecheck as tc
-
-from collections import Iterable
 
 from psyneulink.components.component import method_type
 from psyneulink.components.functions.function import BogaczEtAl, DriftDiffusionIntegrator, Integrator, NF_Results, NavarroAndFuss, STARTING_POINT, THRESHOLD

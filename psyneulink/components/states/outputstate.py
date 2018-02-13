@@ -538,9 +538,9 @@ import typecheck as tc
 
 from psyneulink.components.component import Component, InitStatus
 from psyneulink.components.functions.function import Linear, is_function_type
-from psyneulink.components.shellclasses import Mechanism, Projection
+from psyneulink.components.shellclasses import Mechanism
 from psyneulink.components.states.state import ADD_STATES, State_Base, _instantiate_state_list, state_type_keywords
-from psyneulink.globals.keywords import ALL, CALCULATE, COMMAND_LINE, GATING_SIGNAL, INDEX, INPUT_STATE, INPUT_STATES, MAPPING_PROJECTION, MEAN, MECHANISM_VALUE, MEDIAN, NAME, OUTPUT_STATE, OUTPUT_STATES, OUTPUT_STATE_PARAMS, PARAMS, PROJECTION, PROJECTIONS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, RESULT, STANDARD_DEVIATION, STANDARD_OUTPUT_STATES, STATE, VARIANCE
+from psyneulink.globals.keywords import ALL, CALCULATE, COMMAND_LINE, GATING_SIGNAL, INDEX, INPUT_STATE, INPUT_STATES, MAPPING_PROJECTION, MEAN, MECHANISM_VALUE, MEDIAN, NAME, OUTPUT_STATE, OUTPUT_STATE_PARAMS, PARAMS, PROJECTION, PROJECTIONS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, RESULT, STANDARD_DEVIATION, STANDARD_OUTPUT_STATES, STATE, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import UtilitiesError, is_numeric, iscompatible, type_match
@@ -981,13 +981,9 @@ class OutputState(State_Base):
         Call _instantiate_projections_from_state to assign MappingProjections to .efferents
 
         """
-        from psyneulink.components.projections.modulatory.modulatoryprojection import ModulatoryProjection_Base
         from psyneulink.components.states.modulatorysignals.modulatorysignal import \
-            ModulatorySignal, _is_modulatory_spec
-        from psyneulink.components.mechanisms.adaptive.adaptivemechanism import AdaptiveMechanism_Base
+            _is_modulatory_spec
         from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
-        from psyneulink.components.projections.projection import ProjectionTuple
-
 
         # Treat as ModulatoryProjection spec if it is a ModulatoryProjection, ModulatorySignal or AdaptiveMechanism
         # or one of those is the first or last item of a ProjectionTuple
@@ -1066,7 +1062,6 @@ class OutputState(State_Base):
         #      THIS WOULD ALLOW FULLY GENEREAL (HIEARCHICALLY NESTED) ALGEBRAIC COMBINATION OF INPUT VALUES
         #      TO A MECHANISM
         from psyneulink.components.projections.projection import _parse_connection_specs, ProjectionTuple
-        from psyneulink.components.system import MonitoredOutputStatesOption
 
         params_dict = {}
         state_spec = state_specific_spec

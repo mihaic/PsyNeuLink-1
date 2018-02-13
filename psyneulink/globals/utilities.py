@@ -79,7 +79,6 @@ import collections
 import inspect
 import numbers
 import warnings
-
 from enum import Enum, EnumMeta, IntEnum
 
 import numpy as np

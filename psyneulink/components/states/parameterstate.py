@@ -352,8 +352,6 @@ Class Reference
 
 import inspect
 
-from collections import Iterable
-
 import numpy as np
 import typecheck as tc
 
@@ -934,7 +932,6 @@ def _instantiate_parameter_state(owner, param_name, param_value, context):
     """
     from psyneulink.components.states.modulatorysignals.modulatorysignal import _is_modulatory_spec
     from psyneulink.components.projections.modulatory.modulatoryprojection import ModulatoryProjection_Base
-    from psyneulink.components.states.state import _parse_state_spec
 
     def _get_tuple_for_single_item_modulatory_spec(obj, name, value):
         """Return (<default param value>, <modulatory spec>) for modulatory spec
@@ -1088,7 +1085,6 @@ def _instantiate_parameter_state(owner, param_name, param_value, context):
 
 def _is_legal_param_value(owner, value):
 
-    from psyneulink.components.states.modulatorysignals.modulatorysignal import _is_modulatory_spec
     from psyneulink.components.mechanisms.adaptive.control.controlmechanism import _is_control_spec
     from psyneulink.components.mechanisms.adaptive.gating.gatingmechanism import _is_gating_spec
 

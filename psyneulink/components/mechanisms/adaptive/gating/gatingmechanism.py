@@ -156,10 +156,10 @@ Class Reference
 # IMPLEMENTATION NOTE: COPIED FROM DefaultProcessingMechanism;
 #                      ADD IN GENERIC CONTROL STUFF FROM DefaultGatingMechanism
 
+import warnings
+
 import numpy as np
 import typecheck as tc
-
-import warnings
 
 from psyneulink.components.component import InitStatus
 from psyneulink.components.functions.function import ModulationParam, _is_modulation_param
@@ -172,7 +172,6 @@ from psyneulink.globals.keywords import GATING, GATING_POLICY, GATING_PROJECTION
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import ContentAddressableList
-from psyneulink.scheduling.time import TimeScale
 
 __all__ = [
     'GatingMechanism', 'GatingMechanismError', 'GatingMechanismRegistry'

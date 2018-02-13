@@ -382,20 +382,17 @@ Class Reference
 ---------------
 
 """
-import warnings
 import inspect
-import typecheck as tc
-from collections import namedtuple, OrderedDict
+import warnings
+from collections import OrderedDict, namedtuple
 # from enum import IntEnum, unique, auto
-from enum import IntEnum, unique
+from enum import IntEnum
 
 import numpy as np
+import typecheck as tc
 
-from psyneulink.scheduling.time import TimeScale
-from psyneulink.globals.utilities import ContentAddressableList, AutoNumber, is_component
-from psyneulink.globals.keywords \
-    import INITIALIZING, EXECUTING, VALIDATE, CONTROL, LEARNING, TRIAL, RUN, COMMAND_LINE, CONTEXT, VALUE, TIME, ALL
-
+from psyneulink.globals.keywords import ALL, COMMAND_LINE, CONTEXT, CONTROL, EXECUTING, INITIALIZING, LEARNING, TIME, VALIDATE, VALUE
+from psyneulink.globals.utilities import AutoNumber, ContentAddressableList, is_component
 
 __all__ = [
     'EntriesDict', 'Log', 'LogEntry', 'LogError', 'LogCondition',

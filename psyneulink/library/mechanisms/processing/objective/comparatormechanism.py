@@ -126,10 +126,10 @@ Class Reference
 
 """
 
+from collections import Iterable
+
 import numpy as np
 import typecheck as tc
-
-from collections import Iterable
 
 from psyneulink.components.functions.function import LinearCombination
 from psyneulink.components.mechanisms.mechanism import Mechanism_Base

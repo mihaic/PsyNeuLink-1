@@ -771,8 +771,6 @@ Class Reference
 
 import inspect
 import logging
-import numbers
-
 from collections import Iterable, OrderedDict
 from inspect import isclass
 
@@ -1174,7 +1172,6 @@ class Mechanism_Base(Mechanism):
         * registers Mechanism with MechanismRegistry
 
         """
-        from psyneulink.components.states.inputstate import InputState
 
         # Forbid direct call to base class constructor
         # this context stuff is confusing: when do I use super().__init__(context=self)
@@ -2424,8 +2421,8 @@ class Mechanism_Base(Mechanism):
             State specification(s) can be an InputState or OutputState object or the name of one.
 
         """
-        from psyneulink.components.states.inputstate import InputState, _instantiate_input_states, INPUT_STATE
-        from psyneulink.components.states.outputstate import OutputState, _instantiate_output_states, OUTPUT_STATE
+        from psyneulink.components.states.inputstate import INPUT_STATE
+        from psyneulink.components.states.outputstate import OutputState, OUTPUT_STATE
 
         # Put in list to standardize treatment below
         if not isinstance(states, list):
