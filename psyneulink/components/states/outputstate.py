@@ -923,8 +923,6 @@ class OutputState(State_Base):
                                            format(INDEX, self.name, target_set[INDEX], len(self.owner.instance_defaults.value),
                                                   self.owner.name))
 
-        # IMPLEMENT: VALIDATE THAT ASSIGN FUNCTION ACCEPTS VALUE CONSISTENT WITH
-        #            CORRESPONDING ITEM OF OWNER MECHANISM'S VALUE
         if ASSIGN in target_set and target_set[ASSIGN] is not None:
 
             try:
