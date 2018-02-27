@@ -27,7 +27,7 @@ print('reward prediction weights: \n', action_selection.input_state.path_afferen
 print('target_mechanism weights: \n', action_selection.output_state.efferents[0].matrix)
 
 actions = ['left', 'middle', 'right']
-reward_values = [10, 10, 10]
+reward_values = [10, 0, 0]
 first_reward = 0
 
 # Must initialize reward (won't be used, but needed for declaration of lambda function)
@@ -66,6 +66,8 @@ s = pnl.System(
     processes=[p],
     targets=[0]
 )
+
+s.show_graph(show_learning=pnl.ALL)
 
 s.run(
     num_trials=10,
