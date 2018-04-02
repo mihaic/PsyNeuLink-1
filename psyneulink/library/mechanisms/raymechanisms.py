@@ -23,5 +23,5 @@ class RayTransferMechanismWrapper():
     def mechanism(self) -> str:
         return str(self._mechanism)
 
-    def execute(self, input: Union[List, np.ndarray]) -> List:
-        return self._mechanism.execute()
+    def execute(self, mechanism_input: Union[List, np.ndarray]) -> List:
+        return self._mechanism.execute(mechanism_input)
