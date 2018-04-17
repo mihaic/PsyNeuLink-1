@@ -193,10 +193,12 @@ from enum import Enum, IntEnum
 from random import randint
 
 import numpy as np
+import ray
 import typecheck as tc
 
 from psyneulink.components.component import ComponentError, DefaultsFlexibility, function_type, method_type, parameter_keywords
 from psyneulink.components.shellclasses import Function
+from psyneulink.components.shellclasses import RayFunction
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import ACCUMULATOR_INTEGRATOR_FUNCTION, \
     ADAPTIVE_INTEGRATOR_FUNCTION, ALL, ARGUMENT_THERAPY_FUNCTION, AUTO_ASSIGN_MATRIX, HAS_INITIALIZERS, \
@@ -245,6 +247,8 @@ __all__ = [
     'kwNavarrosAndFuss', 'LCAIntegrator', 'LEARNING_ACTIVATION_FUNCTION',
     'LEARNING_ACTIVATION_INPUT', 'LEARNING_ACTIVATION_OUTPUT',
     'LEARNING_ERROR_OUTPUT', 'LearningFunction', 'Linear', 'LinearCombination',
+    'LinearCombinationFunctional',
+    'LinearFunctional',
     'LinearMatrix', 'Logistic', 'max_vs_avg', 'max_vs_next', 'MODE', 'ModulatedParam',
     'ModulationParam', 'MULTIPLICATIVE', 'MULTIPLICATIVE_PARAM',
     'MultiplicativeParam', 'NavarroAndFuss', 'NF_Results', 'NON_DECISION_TIME',
@@ -797,6 +801,26 @@ class Function_Base(Function):
             return self.owner.name
         except AttributeError:
             return '<no owner>'
+
+
+class RayFunctionMixin(Function_Base, RayFunction):
+    def execute(self, variable=None, runtime_params=None, context=None):
+        if variable is None or runtime_params is None:
+            self._update_variable(self._check_args(variable=variable,
+                                                   params=runtime_params,
+                                                   context=context))
+        else:
+            self.variable = variable
+            self.paramsCurrent = runtime_params
+        function_parameters = {}
+        banned_keys = {"function"}
+        for key, value in self.paramsCurrent.items():
+            if key not in banned_keys:
+                function_parameters[key] = value
+        object_id = self.function.remote(self.variable, function_parameters,
+                                         context)
+        return ray.get(object_id)
+
 
 # *****************************************   EXAMPLE FUNCTION   *******************************************************
 
@@ -11206,3 +11230,166 @@ def max_vs_avg(x):
     return max_val - np.mean(others)
 
 #endregion
+
+
+def linear_combination_function(variable=None, params=None, context=None):
+    """Compute linear combination"""
+
+    weights = params.get(WEIGHTS)
+    exponents = params.get(EXPONENTS)
+    operation = params.get(OPERATION)
+    scale = params.get(SCALE)
+    offset = params.get(OFFSET)
+
+    # QUESTION:  WHICH IS LESS EFFICIENT:
+    #                A) UNECESSARY ARITHMETIC OPERATIONS IF SCALE AND/OR OFFSET ARE 1.0 AND 0, RESPECTIVELY?
+    #                   (DOES THE COMPILER KNOW NOT TO BOTHER WITH MULT BY 1 AND/OR ADD 0?)
+    #                B) EVALUATION OF IF STATEMENTS TO DETERMINE THE ABOVE?
+    # IMPLEMENTATION NOTE:  FOR NOW, ASSUME B) ABOVE, AND ASSIGN DEFAULT "NULL" VALUES TO offset AND scale
+    if offset is None:
+        offset = 0.0
+
+    if scale is None:
+        scale = 1.0
+
+    # IMPLEMENTATION NOTE: CONFIRM: SHOULD NEVER OCCUR, AS _validate_variable NOW ENFORCES 2D np.ndarray
+    # If variable is 0D or 1D:
+    if np_array_less_than_2d(variable):
+        return (variable * scale) + offset
+
+    # FIX FOR EFFICIENCY: CHANGE THIS AND WEIGHTS TO TRY/EXCEPT // OR IS IT EVEN NECESSARY, GIVEN VALIDATION ABOVE??
+    # Apply exponents if they were specified
+    if exponents is not None:
+        try:
+            variable = variable ** exponents
+        # Avoid divide by zero warning:
+        #    make sure there are no zeros for an element that is assigned a negative exponent
+        except ZeroDivisionError:
+            # Allow during initialization because 0s are common in
+            # default_variable argument
+            if context is not None and INITIALIZING in context: # cxt-test
+                variable = np.ones_like(variable)
+            else:
+            # if this fails with ZeroDivisionError it should not be caught
+            # outside of initialization
+                raise
+
+    # Apply weights if they were specified
+    if weights is not None:
+        variable = variable * weights
+
+    # CW 3/19/18: a total hack, e.g. to make scale=[4.] turn into scale=4. Used b/c the `scale` ParameterState
+    # changes scale's format: e.g. if you write c = pnl.LinearCombination(scale = 4), print(c.scale) returns [4.]
+    if isinstance(scale, (list, np.ndarray)):
+        if len(scale) == 1 and isinstance(scale[0], numbers.Number):
+            scale = scale[0]
+    if isinstance(offset, (list, np.ndarray)):
+        if len(offset) == 1 and isinstance(offset[0], numbers.Number):
+            offset = offset[0]
+
+    # CALCULATE RESULT USING RELEVANT COMBINATION OPERATION AND MODULATION
+    if operation is SUM:
+        combination = np.sum(variable, axis=0)
+    elif operation is PRODUCT:
+        combination = np.product(variable, axis=0)
+    else:
+        raise FunctionError("Unrecognized operator ({0}) for LinearCombination function".
+                            format(operation.self.Operation.SUM))
+    if isinstance(scale, numbers.Number):
+        product = combination * scale
+        # Scalar scale and offset
+        if isinstance(offset, numbers.Number):
+            result = product + offset
+        # Scalar scale and Hadamard offset
+        else:
+            result = np.sum([product, offset], axis=0)
+    else:
+        hadamard_product = np.product([combination, scale], axis=0)
+        # Hadamard scale, scalar offset
+        if isinstance(offset, numbers.Number):
+            result = hadamard_product + offset
+        # Hadamard scale and offset
+        else:
+            result = np.sum([hadamard_product, offset], axis=0)
+
+    return result
+
+
+class LinearCombinationFunctional(LinearCombination, RayFunctionMixin):
+    function = ray.remote(linear_combination_function)
+
+
+def linear_function(variable=None, params=None, context=None):
+    """slope * variable + intercept."""
+
+    slope = params.get(SLOPE)
+    intercept = params.get(INTERCEPT)
+    outputType = params.get(FUNCTION_OUTPUT_TYPE)
+
+    # MODIFIED 11/9/17 NEW:
+    try:
+    # By default, result should be returned as np.ndarray with same dimensionality as input
+        result = variable * slope + intercept
+    except TypeError:
+        # If variable is an array with mixed sizes or types, try item-by-item operation
+        if variable.dtype == object:
+            result = np.zeros_like(variable)
+            for i, item in enumerate(variable):
+                result[i] = variable[i] * slope + intercept
+        else:
+            raise FunctionError("Unrecognized type for {} ({})".format(VARIABLE, variable))
+    # MODIFIED 11/9/17 END
+
+
+    # region Type conversion (specified by outputType):
+    # Convert to 2D array, irrespective of variable type:
+    if outputType is FunctionOutputType.NP_2D_ARRAY:
+        result = np.atleast_2d(result)
+
+    # Convert to 1D array, irrespective of variable type:
+    # Note: if 2D array (or higher) has more than two items in the outer dimension, generate exception
+    elif outputType is FunctionOutputType.NP_1D_ARRAY:
+        # If variable is 2D
+        if variable.ndim == 2:
+            # If there is only one item:
+            if len(variable) == 1:
+                result = result[0]
+            else:
+                raise FunctionError("Can't convert result ({0}: 2D np.ndarray object with more than one array)"
+                                    " to 1D array".format(result))
+        elif len(variable) == 1:
+            result = result
+        elif len(variable) == 0:
+            result = np.atleast_1d(result)
+        else:
+            raise FunctionError("Can't convert result ({0} to 1D array".format(result))
+
+    # Convert to raw number, irrespective of variable type:
+    # Note: if 2D or 1D array has more than two items, generate exception
+    elif outputType is FunctionOutputType.RAW_NUMBER:
+        # If variable is 2D
+        if variable.ndim == 2:
+            # If there is only one item:
+            if len(variable) == 1 and len(variable[0]) == 1:
+                result = result[0][0]
+            else:
+                raise FunctionError("Can't convert result ({0}) with more than a single number to a raw number".
+                                    format(result))
+        elif len(variable) == 1:
+            if len(variable) == 1:
+                result = result[0]
+            else:
+                raise FunctionError("Can't convert result ({0}) with more than a single number to a raw number".
+                                    format(result))
+        else:
+            return result
+    # endregion
+
+    return result
+
+
+linear_function_ray = ray.remote(linear_function)
+
+
+class LinearFunctional(Linear, RayFunctionMixin):
+    function = staticmethod(ray.remote(linear_function))

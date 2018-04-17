@@ -30,7 +30,7 @@ TBI:
 from psyneulink.components.component import Component
 
 __all__ = [
-    'Function', 'Mechanism', 'Process_Base', 'Projection', 'ShellClass', 'ShellClassError', 'State', 'System_Base',
+    'Function', 'Mechanism', 'Process_Base', 'Projection', 'RayFunction', 'ShellClass', 'ShellClassError', 'State', 'System_Base',
 ]
 
 
@@ -170,3 +170,7 @@ class Function(ShellClass):
 
     def _instantiate_function(self, function, function_params=None, context=None):
         return
+
+
+class RayFunction(Function):
+    pass

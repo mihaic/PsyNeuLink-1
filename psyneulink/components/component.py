@@ -2730,7 +2730,7 @@ class Component(object):
 
         # GET/SET CONTEXT
 
-        from psyneulink.components.functions.function import Function
+        from psyneulink.components.functions.function import Function, RayFunctionMixin
         if isinstance(self, Function):
             pass # Functions don't have a Logs or maintain execution_counts or time
         else:
@@ -2764,9 +2764,16 @@ class Component(object):
         #                     that are specific to particular class of Functions
         #                     (e.g., error_matrix for LearningMechanism and controller for EVCControlMechanism)
         function_variable = self._parse_function_variable(variable, context)
-        value = self.function(variable=function_variable, params=runtime_params, context=context, **kwargs)
+        if (hasattr(self, "function_object")
+                and isinstance(self.function_object, RayFunctionMixin)):
+            value = self.function_object.execute(function_variable,
+                                                 runtime_params, context,
+                                                 **kwargs)
+        else:
+            value = self.function(variable=function_variable,
+                                  params=runtime_params, context=context,
+                                  **kwargs)
         fct_context_attrib.execution_phase = ContextFlags.IDLE
-
         return value
 
     @property
