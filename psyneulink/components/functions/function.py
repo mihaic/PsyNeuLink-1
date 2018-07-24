@@ -249,7 +249,9 @@ __all__ = [
     'LEARNING_ERROR_OUTPUT', 'LearningFunction', 'Linear', 'LinearCombination',
     'LinearCombinationFunctional',
     'LinearFunctional',
-    'LinearMatrix', 'Logistic', 'max_vs_avg', 'max_vs_next', 'MODE', 'ModulatedParam',
+    'LinearMatrix', 'Logistic',
+    'LogisticFunctional',
+    'max_vs_avg', 'max_vs_next', 'MODE', 'ModulatedParam',
     'ModulationParam', 'MULTIPLICATIVE', 'MULTIPLICATIVE_PARAM',
     'MultiplicativeParam', 'NavarroAndFuss', 'NF_Results', 'NON_DECISION_TIME',
     'NormalDist', 'ObjectiveFunction', 'OrnsteinUhlenbeckIntegrator',
@@ -11388,8 +11390,24 @@ def linear_function(variable=None, params=None, context=None):
     return result
 
 
-linear_function_ray = ray.remote(linear_function)
-
-
 class LinearFunctional(Linear, RayFunctionMixin):
     function = staticmethod(ray.remote(linear_function))
+
+
+def logistic_function(variable=None, params=None, context=None):
+    """Apply logistic function.
+
+    .. math::
+
+        \\frac{1}{1 + e^{ - gain ( variable - bias ) + offset}}
+    """
+
+    gain = params.get(GAIN)
+    bias = params.get(BIAS)
+    offset = params.get(OFFSET)
+
+    return 1 / (1 + np.exp(-gain*(variable-bias) + offset))
+
+
+class LogisticFunctional(Logistic, RayFunctionMixin):
+    function = staticmethod(ray.remote(logistic_function))
